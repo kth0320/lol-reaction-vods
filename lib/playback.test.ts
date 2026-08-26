@@ -27,8 +27,18 @@ describe("getPlayback", () => {
     }
   });
 
+  it("sends Twitch to the original link instead of an iframe", () => {
+    const playback = getPlayback("twitch", "caedrel", "https://www.twitch.tv/caedrel");
+    assert.equal(playback.mode, "link-out");
+    if (playback.mode === "link-out") {
+      assert.equal(playback.platform, "twitch");
+      assert.equal(playback.originalUrl, "https://www.twitch.tv/caedrel");
+    }
+  });
+
   it("rejects unknown platforms", () => {
-    assert.equal(isPlatform("twitch"), false);
+    assert.equal(isPlatform("twitch"), true);
+    assert.equal(isPlatform("kick"), false);
     assert.equal(isPlatform("youtube"), true);
   });
 });

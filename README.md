@@ -60,11 +60,13 @@ Phase 1은 시드 JSON으로 라이브 허브(다시보기 포함)를 보여 줍
 | 방송인 | LEC 국내 + 아래 해외 6명 | LCK/LPL 중계진, 그 외 채널 |
 | 공개 | 후보 수집. 홈에 자동 올리지 않음 | 운영 화면에서 확인 후 게시 |
 
-프로토타입 화이트리스트 (안 켜는 날이면 후보 0이 정상입니다):
+프로토타입 화이트리스트 (안 켜는 날이면 후보 0이 정상입니다). 채널 ID는 `data/creators/channels.json`에 수동으로 넣는다.
 
 - 치지직: **와디드**, 울프, 강퀴 (울프·강퀴는 거의 중계하지 않음)
 - 숲: **롱다리코치**, **훈수킹**, 아뚱 (아뚱은 거의 중계하지 않음)
-- Twitch: **Caedrel**, **Jankos**, **YamatoCannon**, **Kameto**, **Ibai**, **Obsess**
+- Twitch: **Caedrel**(풀 슬레이트), **Jankos**(G2), **YamatoCannon**(SK), **Kameto**(KC), **Ibai**(KOI 경기 위주), **Obsess**(FNC 위주)
+
+2026 LEC 공식 팀 코스트리머는 자기 팀 기본 응원으로 둔다. Ibai는 KOI, Obsess는 FNC. Caedrel은 자기 팀(Los Ratones)이 있어도 리그 전체를 중계하므로 기본 응원을 비운다.
 
 성공 기준: LEC 경기 시간창에 와디드·롱다리코치·훈수킹·Caedrel·Jankos 중 한 명이 켜면, 시드가 아니라 수집 후보로 그 경기가 잡힌다. Twitch는 라이브 링크만. VOD는 휘발되어서 프로토타입에서 모으지 않는다.
 
@@ -99,9 +101,10 @@ Phase 1 공개 사이트는 레포 루트 Next.js 앱입니다 (`app/`, `lib/`, 
 | 경로 | 역할 |
 | --- | --- |
 | `app/` | 메인(생중계 캐러셀 + 다시보기), 경기별 라이브/리액션 페이지 |
-| `lib/playback.ts` | YouTube·숲 임베드 / 치지직 링크 아웃 |
+| `lib/playback.ts` | YouTube·숲 임베드 / 치지직·Twitch 링크 아웃 |
 | `prisma/` | 스키마·마이그레이션·시드 |
-| `data/creators/` | 방송인 화이트리스트 JSON |
+| `data/creators/` | 방송인 화이트리스트·채널 ID JSON |
+| `lib/creators.ts` | 프로토타입 수집 대상 필터 |
 | `data/team-aliases/` | 제목 점수용 팀 별칭 (팀 시드는 `data/teams.json`) |
 | `data/matches/` | 경기/일정 JSON |
 | `data/reactions/` | Phase 1 시드 다시보기 링크 |

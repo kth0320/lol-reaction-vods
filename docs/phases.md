@@ -24,8 +24,9 @@ LCK 중계진을 처음부터 넣지 않습니다. 채널이 많아서 매칭·�
 - 플랫폼: **치지직 · 숲 · Twitch 라이브**(원본 링크). YouTube 수집과 Twitch 다시보기는 이후
 - 방송인:
   - 국내: 치지직 와디드·울프·강퀴, 숲 롱다리코치·훈수킹·아뚱 (울프·강퀴·아뚱은 거의 안 켜도 목록에 둠)
-  - 해외 Twitch: Caedrel, Jankos, YamatoCannon, Kameto, Ibai, Obsess
-- 파이프라인: 화이트리스트 + 경기 시간창 → 후보. 홈에 자동 게시하지 않음
+  - 해외 Twitch: Caedrel(풀 슬레이트), Jankos(G2), YamatoCannon(SK), Kameto(KC), Ibai(KOI 위주), Obsess(FNC 위주)
+- 파이프라인: 화이트리스트 채널 ID + 경기 시간창 → `LiveCandidate` 후보. 홈 `LiveCast`에 자동 게시하지 않음
+- 채널 ID는 `data/creators/channels.json`에 저장. 검색으로 매번 다시 찾지 않음
 - LCK/LPL 시드 중계진(김민교·운타라 등)은 이 페이즈에서 크롤하지 않음
 
 성공: LEC 한 경기에서 국내 또는 해외 화이트리스트 라이브가 **시드가 아닌 수집 결과**로 붙는다.

@@ -46,5 +46,23 @@
     "name": "Fnatic",
     "abbr": "FNC",
     "aliases": ["FNC", "Fnatic"]
+  },
+  {
+    "id": "kc",
+    "name": "Karmine Corp",
+    "abbr": "KC",
+    "aliases": ["KC", "Karmine", "Karmine Corp"]
+  },
+  {
+    "id": "koi",
+    "name": "Movistar KOI",
+    "abbr": "KOI",
+    "aliases": ["KOI", "MKOI", "Movistar", "Movistar KOI"]
+  },
+  {
+    "id": "sk",
+    "name": "SK Gaming",
+    "abbr": "SK",
+    "aliases": ["SK", "SK Gaming"]
   }
 ]
