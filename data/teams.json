@@ -3,66 +3,119 @@
     "id": "t1",
     "name": "T1",
     "abbr": "T1",
+    "league": "LCK",
     "aliases": ["T1", "티원", "SKT"]
   },
   {
     "id": "gen",
     "name": "Gen.G",
     "abbr": "GEN",
+    "league": "LCK",
     "aliases": ["Gen.G", "GEN", "젠지"]
   },
   {
     "id": "dk",
     "name": "Dplus KIA",
     "abbr": "DK",
-    "aliases": ["DK", "Dplus", "디플러스", "기아"]
+    "league": "LCK",
+    "aliases": ["DK", "Dplus", "디플러스"]
   },
   {
     "id": "hle",
     "name": "Hanwha Life Esports",
     "abbr": "HLE",
+    "league": "LCK",
     "aliases": ["HLE", "한화", "한화생명"]
+  },
+  {
+    "id": "kt",
+    "name": "KT Rolster",
+    "abbr": "KT",
+    "league": "LCK",
+    "aliases": ["KT", "케이티"]
+  },
+  {
+    "id": "bro",
+    "name": "BRION",
+    "abbr": "BRO",
+    "league": "LCK",
+    "aliases": ["BRO", "BRION", "브리온", "OK저축은행"]
+  },
+  {
+    "id": "drx",
+    "name": "DRX",
+    "abbr": "DRX",
+    "league": "LCK",
+    "aliases": ["DRX"]
+  },
+  {
+    "id": "ns",
+    "name": "Nongshim RedForce",
+    "abbr": "NS",
+    "league": "LCK",
+    "aliases": ["NS", "농심", "RedForce"]
+  },
+  {
+    "id": "bfx",
+    "name": "BNK FEARX",
+    "abbr": "BFX",
+    "league": "LCK",
+    "aliases": ["BFX", "FearX", "FEARX"]
+  },
+  {
+    "id": "dnf",
+    "name": "DN Freecs",
+    "abbr": "DNF",
+    "league": "LCK",
+    "aliases": ["DNF", "Freecs", "디엔", "광동"]
   },
   {
     "id": "jdg",
     "name": "JD Gaming",
     "abbr": "JDG",
+    "league": "LPL",
     "aliases": ["JDG", "京东"]
   },
   {
     "id": "blg",
     "name": "Bilibili Gaming",
     "abbr": "BLG",
+    "league": "LPL",
     "aliases": ["BLG", "哔哩哔哩"]
   },
   {
     "id": "g2",
     "name": "G2 Esports",
     "abbr": "G2",
+    "league": "LEC",
     "aliases": ["G2"]
   },
   {
     "id": "fnc",
     "name": "Fnatic",
     "abbr": "FNC",
+    "league": "LEC",
     "aliases": ["FNC", "Fnatic"]
   },
   {
     "id": "kc",
     "name": "Karmine Corp",
     "abbr": "KC",
+    "league": "LEC",
     "aliases": ["KC", "Karmine", "Karmine Corp"]
   },
   {
     "id": "koi",
     "name": "Movistar KOI",
     "abbr": "KOI",
-    "aliases": ["KOI", "MKOI", "Movistar", "Movistar KOI"]
+    "league": "LEC",
+    "aliases": ["KOI", "MKOI", "Movistar KOI"]
   },
   {
     "id": "sk",
     "name": "SK Gaming",
     "abbr": "SK",
-    "aliases": ["SK", "SK Gaming"]
+    "league": "LEC",
+    "aliases": ["SK Gaming"]
   }
 ]

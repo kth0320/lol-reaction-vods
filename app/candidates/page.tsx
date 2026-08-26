@@ -21,11 +21,11 @@ export default async function CandidatesPage() {
       </Link>
       <h1 className="section-title">수집 후보</h1>
       <p className="page-lead">
-        프로토타입 화이트리스트 12명을 지금 조회한 결과입니다. 홈 vs 카드에는 올리지 않습니다. LEC 제목이 아니면
-        경기에 연결하지 않습니다. (오늘 LCK 플레이오프가 켜 있으면 라이브로만 보이고, 시드 LEC 경기에는 안 붙습니다.)
+        프로토타입 화이트리스트 12명을 지금 조회한 결과입니다. 제목에서 리그·두 팀을 읽으면 홈 vs 카드와 경기에
+        연결합니다. 공식 일정 API는 아직 없습니다.
       </p>
       <p className="section-note">
-        {liveCount}명 라이브 · LEC 매칭 {matchedCount} · 마지막 조회{" "}
+        {liveCount}명 라이브 · 경기 연결 {matchedCount} · 마지막 조회{" "}
         {fetchedAt ? fetchedAt.fetchedAt.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) : "-"}
       </p>
       <div className="reaction-list">
@@ -43,7 +43,7 @@ export default async function CandidatesPage() {
             <p className="reaction-title">{row.error ?? (row.title || "제목 없음")}</p>
             <div className="match-meta">
               <span className="platform-badge">{isPlatform(row.platform) ? platformLabel(row.platform) : row.platform}</span>
-              <span>{row.matchLabel ?? "LEC 경기 미연결"}</span>
+              <span>{row.matchLabel ?? "경기 미연결"}</span>
             </div>
             <div className="button-row" style={{ marginTop: 12 }}>
               <a className="button ghost" href={row.url} target="_blank" rel="noreferrer">

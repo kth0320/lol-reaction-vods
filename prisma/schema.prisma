@@ -17,6 +17,7 @@ model Team {
   supportedCasts        LiveCast[]      @relation("SupportedTeam")
   defaultCreators       Creator[]       @relation("CreatorDefaultTeam")
   supportedCandidates   LiveCandidate[] @relation("CandidateSupportedTeam")
+  league                String          @default("")
 }
 
 model TeamAlias {
@@ -42,6 +43,7 @@ model Match {
   reactions      ReactionVod[]
   liveCasts      LiveCast[]
   liveCandidates LiveCandidate[]
+  source         String          @default("seed")
 }
 
 model Creator {

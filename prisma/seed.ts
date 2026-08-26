@@ -10,7 +10,7 @@ function readJson<T>(relativePath: string): T {
   return JSON.parse(readFileSync(join(root, relativePath), "utf8")) as T;
 }
 
-type TeamRow = { id: string; name: string; abbr: string; aliases: string[] };
+type TeamRow = { id: string; name: string; abbr: string; league?: string; aliases: string[] };
 type MatchRow = {
   id: string;
   tournament: string;
@@ -65,6 +65,7 @@ async function main() {
         id: team.id,
         name: team.name,
         abbr: team.abbr,
+        league: team.league ?? "",
         aliases: {
           create: team.aliases.map((alias) => ({ alias })),
         },

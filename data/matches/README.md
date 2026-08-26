@@ -2,5 +2,6 @@
 
 경기/일정 식별 데이터.
 
-Phase 1 시드: `lck-2026-summer.json`(다시보기), `live-now.json`(LCK·LPL·LEC 생중계).
-공식 대회 VOD를 아카이브하지 않습니다.
+Phase 1 시드: `lck-2026-summer.json`(다시보기), `live-now.json`(목업 생중계).
+홈 상단 라이브 카드는 시드를 쓰지 않고, 화이트리스트 방송 제목에서 경기를 만든다.
+공식 대회 일정 API 연동은 이후 페이즈. 공식 대회 VOD를 아카이브하지 않습니다.

@@ -21,6 +21,11 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
         include: { creator: true, supportingTeam: true },
         orderBy: { creator: { name: "asc" } },
       },
+      liveCandidates: {
+        where: { isLive: true },
+        include: { creator: true, supportingTeam: true },
+        orderBy: { creator: { name: "asc" } },
+      },
       reactions: {
         include: { creator: true },
         orderBy: { publishedAt: "asc" },
@@ -33,6 +38,17 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
   }
 
   const live = match.status === "live";
+  const liveCastViews = (match.source === "ingest" ? match.liveCandidates : match.liveCasts).map((cast) => ({
+    id: cast.id,
+    creatorName: cast.creator.name,
+    creatorKind: cast.creator.kind,
+    platform: cast.platform,
+    title: cast.title,
+    url: cast.url,
+    externalId: cast.externalId,
+    supportingTeamId: cast.supportingTeamId,
+    supportingTeamAbbr: cast.supportingTeam?.abbr ?? null,
+  }));
 
   return (
     <main>
@@ -73,17 +89,7 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
         <LiveCasterBoard
           blue={{ id: match.blueTeam.id, abbr: match.blueTeam.abbr }}
           red={{ id: match.redTeam.id, abbr: match.redTeam.abbr }}
-          casts={match.liveCasts.map((cast) => ({
-            id: cast.id,
-            creatorName: cast.creator.name,
-            creatorKind: cast.creator.kind,
-            platform: cast.platform,
-            title: cast.title,
-            url: cast.url,
-            externalId: cast.externalId,
-            supportingTeamId: cast.supportingTeamId,
-            supportingTeamAbbr: cast.supportingTeam?.abbr ?? null,
-          }))}
+          casts={liveCastViews}
         />
       ) : null}
       {match.reactions.length > 0 || !live ? (

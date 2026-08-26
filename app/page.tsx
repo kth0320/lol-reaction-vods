@@ -1,6 +1,7 @@
 import { LiveCarousel } from "@/components/live-carousel";
 import type { LiveSlide } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
+import { pollLiveCandidates } from "@/lib/ingest/poll-live";
 import { isLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -8,13 +9,19 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [liveRows, vodRows] = await Promise.all([
+  try {
+    await pollLiveCandidates();
+  } catch {
+    // 조회가 실패해도 마지막 수집 결과로 화면은 연다.
+  }
+
+  const [ingestLive, vodRows] = await Promise.all([
     prisma.match.findMany({
-      where: { status: "live" },
+      where: { status: "live", source: "ingest" },
       include: { blueTeam: true, redTeam: true },
     }),
     prisma.match.findMany({
-      where: { status: "ended" },
+      where: { status: "ended", source: "seed" },
       include: {
         blueTeam: true,
         redTeam: true,
@@ -23,6 +30,8 @@ export default async function HomePage() {
       orderBy: { startsAt: "desc" },
     }),
   ]);
+
+  const liveRows = ingestLive;
 
   const slides: LiveSlide[] = sortLiveMatchesByLeague(liveRows)
     .filter((match): match is typeof match & { tournament: LiveSlide["tournament"] } => isLeague(match.tournament))
@@ -41,7 +50,8 @@ export default async function HomePage() {
   return (
     <main>
       <p className="page-lead">
-        공식 중계가 아니라 방송인 라이브·다시보기입니다. 위는 지금 생중계, 아래는 지난 경기 리액션입니다.
+        공식 중계가 아니라 방송인 라이브·다시보기입니다. 위 카드는 화이트리스트가 지금 켠 제목에서 경기를 읽습니다.
+        아래는 지난 경기 리액션입니다.
       </p>
       {slides.length === 0 ? (
         <p className="empty">지금은 생중계 중인 LCK · LPL · LEC 경기가 없습니다.</p>
