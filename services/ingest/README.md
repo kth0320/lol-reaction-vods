@@ -9,6 +9,6 @@
 3. 제목 점수 — `data/team-aliases` 팀 별칭으로 보조 매칭
 4. `data/corrections` 수동 보정 적용
 
-**프로토타입 범위:** 리그 **LEC만**. 플랫폼 **치지직 · 숲 · Twitch 라이브**. 방송인 국내 + 해외 Twitch 6명(Caedrel, Jankos, YamatoCannon, Kameto, Ibai, Obsess). 채널 ID는 `data/creators/channels.json`. 결과는 `LiveCandidate`에만 넣고 홈 `LiveCast`에 자동 올리지 않음. LCK · LPL · YouTube 수집 · Twitch 다시보기는 프로토타입이 돈 뒤.
+**프로토타입 범위:** 리그 **LCK · LEC**. LPL은 홈에 안 올림. 플랫폼 **치지직 · 숲 · Twitch 라이브**. 방송인 **20명**. 채널 ID는 `data/creators/channels.json`. 제목에서 읽은 LCK·LEC 경기는 홈 vs 카드로 올린다. YouTube 수집 · Twitch 다시보기는 이후.
 
 Phase 0에서는 이 README만 둔다. 크롤러, 워커, 매칭 로직, 외부 API 클라이언트를 추가하지 않는다.

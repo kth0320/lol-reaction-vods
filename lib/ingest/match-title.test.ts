@@ -22,6 +22,11 @@ describe("pickPrototypeLiveMatch", () => {
     assert.equal(scoreTitleForMatch("[LCK P.O] KT vs 브리온 #LCKWatchparty", lec), 0);
   });
 
+  it("attaches an LCK title with both teams to the LCK match", () => {
+    const picked = pickPrototypeLiveMatch("울챔스 GEN vs DK #LCKWatchParty", [lec, lck]);
+    assert.equal(picked?.id, "lck-live-gen-dk");
+  });
+
   it("attaches an LEC title with both teams to the LEC match", () => {
     const picked = pickPrototypeLiveMatch("Caedrel G2 vs FNC LEC", [lec, lck]);
     assert.equal(picked?.id, "lec-live-g2-fnc");

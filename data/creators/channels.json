@@ -1,9 +1,15 @@
 [
   {
-    "creatorId": "wadid",
+    "creatorId": "minkyo",
+    "platform": "soop",
+    "channelId": "phonics1",
+    "url": "https://play.sooplive.com/phonics1"
+  },
+  {
+    "creatorId": "untara",
     "platform": "chzzk",
-    "channelId": "bad6d7da33aec001343a51b85a70fcdb",
-    "url": "https://chzzk.naver.com/bad6d7da33aec001343a51b85a70fcdb"
+    "channelId": "aedecd121e2cf471fd8510f980cac8b1",
+    "url": "https://chzzk.naver.com/aedecd121e2cf471fd8510f980cac8b1"
   },
   {
     "creatorId": "wolf",
@@ -16,6 +22,42 @@
     "platform": "chzzk",
     "channelId": "1a1dd9ce56fb61a37ffb6f69f6d5b978",
     "url": "https://chzzk.naver.com/1a1dd9ce56fb61a37ffb6f69f6d5b978"
+  },
+  {
+    "creatorId": "goemuljwi",
+    "platform": "chzzk",
+    "channelId": "c7ded8ea6b0605d3c78e18650d2df83b",
+    "url": "https://chzzk.naver.com/c7ded8ea6b0605d3c78e18650d2df83b"
+  },
+  {
+    "creatorId": "ralo",
+    "platform": "chzzk",
+    "channelId": "3497a9a7221cc3ee5d3f95991d9f95e9",
+    "url": "https://chzzk.naver.com/3497a9a7221cc3ee5d3f95991d9f95e9"
+  },
+  {
+    "creatorId": "ambition",
+    "platform": "chzzk",
+    "channelId": "8a59b34b46271960c1bf172bb0fac758",
+    "url": "https://chzzk.naver.com/8a59b34b46271960c1bf172bb0fac758"
+  },
+  {
+    "creatorId": "ddahyoni",
+    "platform": "chzzk",
+    "channelId": "0dad8baf12a436f722faa8e5001c5011",
+    "url": "https://chzzk.naver.com/0dad8baf12a436f722faa8e5001c5011"
+  },
+  {
+    "creatorId": "poongwolyang",
+    "platform": "chzzk",
+    "channelId": "7ce8032370ac5121dcabce7bad375ced",
+    "url": "https://chzzk.naver.com/7ce8032370ac5121dcabce7bad375ced"
+  },
+  {
+    "creatorId": "runner",
+    "platform": "chzzk",
+    "channelId": "19e3b97ca1bca954d1ac84cf6862e0dc",
+    "url": "https://chzzk.naver.com/19e3b97ca1bca954d1ac84cf6862e0dc"
   },
   {
     "creatorId": "longdari",
@@ -34,6 +76,12 @@
     "platform": "soop",
     "channelId": "gjstn7637",
     "url": "https://play.sooplive.com/gjstn7637"
+  },
+  {
+    "creatorId": "wadid",
+    "platform": "chzzk",
+    "channelId": "bad6d7da33aec001343a51b85a70fcdb",
+    "url": "https://chzzk.naver.com/bad6d7da33aec001343a51b85a70fcdb"
   },
   {
     "creatorId": "caedrel",

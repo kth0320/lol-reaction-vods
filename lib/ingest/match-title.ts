@@ -1,4 +1,4 @@
-import { PROTOTYPE_LEAGUE } from "@/lib/creators";
+import { isPrototypeLiveLeague } from "@/lib/leagues";
 
 export type TitleMatchInput = {
   id: string;
@@ -25,12 +25,11 @@ export function aliasInTitle(title: string, alias: string): boolean {
 }
 
 export function scoreTitleForMatch(title: string, match: TitleMatchInput): number {
-  if (match.tournament !== PROTOTYPE_LEAGUE) return 0;
-  if (titleMentionsLeague(title, "LCK") && !titleMentionsLeague(title, "LEC")) return 0;
-  if (titleMentionsLeague(title, "LPL") && !titleMentionsLeague(title, "LEC")) return 0;
+  if (!isPrototypeLiveLeague(match.tournament)) return 0;
+  if (titleMentionsLeague(title, "LPL") && !titleMentionsLeague(title, match.tournament)) return 0;
 
   let score = 0;
-  if (titleMentionsLeague(title, "LEC")) score += 5;
+  if (titleMentionsLeague(title, match.tournament)) score += 5;
   if (match.blueAliases.some((alias) => aliasInTitle(title, alias))) score += 3;
   if (match.redAliases.some((alias) => aliasInTitle(title, alias))) score += 3;
   return score;
@@ -40,7 +39,7 @@ export function pickPrototypeLiveMatch(title: string, matches: TitleMatchInput[]
   let best: { match: TitleMatchInput; score: number } | null = null;
   for (const match of matches) {
     const score = scoreTitleForMatch(title, match);
-    if (score < 5) continue;
+    if (score < 8) continue;
     if (!best || score > best.score) best = { match, score };
   }
   return best?.match ?? null;

@@ -1,8 +1,10 @@
+import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
 import { inferLiveMatchFromTitle, type InferredLiveMatch } from "@/lib/ingest/infer-match";
 import { isLivePollFresh, LIVE_POLL_FRESH_MS } from "@/lib/ingest/poll-fresh";
 import { probeLive, type LiveProbe } from "@/lib/ingest/live-status";
 import { prisma } from "@/lib/prisma";
 import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
+import { isPrototypeLiveLeague } from "@/lib/leagues";
 
 export { LIVE_POLL_FRESH_MS };
 
@@ -117,6 +119,7 @@ export async function pollLiveCandidates(options: { maxAgeMs?: number | null } =
 }
 
 async function runLivePoll(): Promise<PollRow[]> {
+  await ensureCreatorCatalog();
   const inferTeams = await ensureTeamCatalog();
   const creators = await prisma.creator.findMany({
     where: { ingestEnabled: true },
@@ -144,8 +147,12 @@ async function runLivePoll(): Promise<PollRow[]> {
             error = caught instanceof Error ? caught.message : String(caught);
           }
           const title = probe?.title ?? "";
-          const inferred = probe?.isLive && title ? inferLiveMatchFromTitle(title, inferTeams) : null;
-          return { creator, channel, probe, error, inferred };
+          const inferred =
+            probe?.isLive && title
+              ? inferLiveMatchFromTitle(title, inferTeams)
+              : null;
+          const scoped = inferred && isPrototypeLiveLeague(inferred.league) ? inferred : null;
+          return { creator, channel, probe, error, inferred: scoped };
         }),
       ),
     )

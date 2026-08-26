@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-export const PROTOTYPE_LEAGUE = "LEC";
-
 export type CreatorWhitelistRow = {
   id: string;
   name: string;

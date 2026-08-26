@@ -2,7 +2,7 @@ import { LiveCarousel } from "@/components/live-carousel";
 import type { LiveSlide } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
-import { isLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
+import { PROTOTYPE_LIVE_LEAGUES, isLeague, isPrototypeLiveLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { after } from "next/server";
@@ -16,7 +16,7 @@ export default async function HomePage() {
 
   const [ingestLive, vodRows] = await Promise.all([
     prisma.match.findMany({
-      where: { status: "live", source: "ingest" },
+      where: { status: "live", source: "ingest", tournament: { in: [...PROTOTYPE_LIVE_LEAGUES] } },
       include: { blueTeam: true, redTeam: true },
     }),
     prisma.match.findMany({
@@ -33,7 +33,9 @@ export default async function HomePage() {
   const liveRows = ingestLive;
 
   const slides: LiveSlide[] = sortLiveMatchesByLeague(liveRows)
-    .filter((match): match is typeof match & { tournament: LiveSlide["tournament"] } => isLeague(match.tournament))
+    .filter((match): match is typeof match & { tournament: LiveSlide["tournament"] } =>
+      isLeague(match.tournament) && isPrototypeLiveLeague(match.tournament),
+    )
     .map((match) => ({
       id: match.id,
       tournament: match.tournament,
@@ -53,7 +55,7 @@ export default async function HomePage() {
         아래는 지난 경기 리액션입니다.
       </p>
       {slides.length === 0 ? (
-        <p className="empty">지금은 생중계 중인 LCK · LPL · LEC 경기가 없습니다.</p>
+        <p className="empty">지금은 생중계 중인 LCK · LEC 경기가 없습니다.</p>
       ) : (
         <LiveCarousel slides={slides} />
       )}

@@ -22,10 +22,15 @@ describe("inferLiveMatchFromTitle", () => {
     assert.equal(fromObsess?.key, "ingest-lck-bro-kt");
   });
 
-  it("does not treat variety or LEC titles as LCK KT vs BRO", () => {
+  it("does not treat variety, LPL, or LEC-only noise as LCK KT vs BRO", () => {
     assert.equal(inferLiveMatchFromTitle("버츄얼 인간 가리지 않고 뎀프시롤 갈기기 (감컴/뚱딴지)", teams), null);
     const lec = inferLiveMatchFromTitle("Caedrel G2 vs FNC LEC", teams);
     assert.equal(lec?.key, "ingest-lec-fnc-g2");
+    assert.equal(inferLiveMatchFromTitle("울프 LPL JDG vs BLG", [
+      ...teams,
+      { id: "jdg", league: "LPL", aliases: ["JDG"] },
+      { id: "blg", league: "LPL", aliases: ["BLG"] },
+    ]), null);
   });
 
   it("does not match SK inside LCK", () => {

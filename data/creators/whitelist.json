@@ -1,46 +1,67 @@
 [
   {
-    "id": "wolf",
-    "name": "울프",
-    "kind": "streamer",
-    "ingestEnabled": true,
-    "note": "치지직 한국어 코스트리머. LEC는 거의 안 켬."
-  },
-  {
     "id": "minkyo",
     "name": "김민교",
     "kind": "bj",
-    "ingestEnabled": false,
-    "note": "Phase 1 LCK/LPL 목업. 프로토타입 크롤 대상 아님."
+    "ingestEnabled": true,
+    "note": "숲 LCK 중계. Phase 1 시드에도 있음."
   },
   {
     "id": "untara",
     "name": "운타라",
     "kind": "streamer",
-    "ingestEnabled": false,
-    "note": "Phase 1 LCK/LEC 목업. 프로토타입 크롤 대상 아님."
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "t1",
+    "note": "치지직 T1 스트리머. LCK 위주."
   },
   {
-    "id": "caedrel",
-    "name": "Caedrel",
+    "id": "wolf",
+    "name": "울프",
     "kind": "streamer",
     "ingestEnabled": true,
-    "note": "LEC 풀 슬레이트 코스트리머. Los Ratones 경기가 있어도 자기 팀만 하는 건 아님."
-  },
-  {
-    "id": "wadid",
-    "name": "와디드",
-    "kind": "streamer",
-    "ingestEnabled": true,
-    "defaultSupportingTeamId": "g2",
-    "note": "2026 LEC 공식 G2 팀 스트리머. 다른 LEC도 할 수 있음."
+    "note": "치지직. LCK 코스트리머로도 켬."
   },
   {
     "id": "kangqui",
     "name": "강퀴",
     "kind": "streamer",
-    "ingestEnabled": true,
-    "note": "치지직 한국어 코스트리머. LEC는 거의 안 켬."
+    "ingestEnabled": true
+  },
+  {
+    "id": "goemuljwi",
+    "name": "괴물쥐",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "ralo",
+    "name": "랄로",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "ambition",
+    "name": "앰비션",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "ddahyoni",
+    "name": "따효니",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "poongwolyang",
+    "name": "풍월량",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "runner",
+    "name": "러너",
+    "kind": "streamer",
+    "ingestEnabled": true
   },
   {
     "id": "longdari",
@@ -58,8 +79,22 @@
     "id": "addung",
     "name": "아뚱",
     "kind": "bj",
+    "ingestEnabled": true
+  },
+  {
+    "id": "wadid",
+    "name": "와디드",
+    "kind": "streamer",
     "ingestEnabled": true,
-    "note": "LEC는 거의 안 켬."
+    "defaultSupportingTeamId": "g2",
+    "note": "2026 LEC 공식 G2 팀 스트리머."
+  },
+  {
+    "id": "caedrel",
+    "name": "Caedrel",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "note": "LEC 풀 슬레이트 코스트리머. Los Ratones 경기가 있어도 자기 팀만 하는 건 아님."
   },
   {
     "id": "jankos",
@@ -99,6 +134,6 @@
     "kind": "streamer",
     "ingestEnabled": true,
     "defaultSupportingTeamId": "fnc",
-    "note": "2026 LEC 공식 Fnatic 팀 코스트리머. FNC 경기 위주, 다른 LEC도 할 수 있음."
+    "note": "2026 LEC 공식 Fnatic 팀 코스트리머. FNC 경기 위주."
   }
 ]

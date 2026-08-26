@@ -1,4 +1,4 @@
-import { LEAGUES, isLeague, type League } from "@/lib/leagues";
+import { LEAGUES, isLeague, isPrototypeLiveLeague, type League } from "@/lib/leagues";
 
 export type InferTeam = {
   id: string;
@@ -30,7 +30,7 @@ export function titleMentionsLeague(title: string, league: string): boolean {
 }
 
 export function mentionedLeagues(title: string): League[] {
-  return LEAGUES.filter((league) => titleMentionsLeague(title, league));
+  return LEAGUES.filter((league) => isPrototypeLiveLeague(league) && titleMentionsLeague(title, league));
 }
 
 function escapeRegExp(value: string): string {
