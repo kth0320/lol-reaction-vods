@@ -19,7 +19,7 @@ export function VodPlayer({
     );
   }
 
-  const playback = getPlayback(platform, externalId, url);
+  const playback = getPlayback(platform, externalId, url, { live });
   const action = live ? "같이 보기" : "원본 열기";
 
   if (playback.mode === "link-out") {

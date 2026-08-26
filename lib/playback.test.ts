@@ -19,6 +19,14 @@ describe("getPlayback", () => {
     }
   });
 
+  it("sends SOOP live to the original channel instead of the VOD embed", () => {
+    const playback = getPlayback("soop", "ksh0162", "https://play.sooplive.com/ksh0162", { live: true });
+    assert.equal(playback.mode, "link-out");
+    if (playback.mode === "link-out") {
+      assert.equal(playback.originalUrl, "https://play.sooplive.com/ksh0162");
+    }
+  });
+
   it("sends Chzzk to the original link instead of an iframe", () => {
     const playback = getPlayback("chzzk", "14594686", "https://chzzk.naver.com/video/14594686");
     assert.equal(playback.mode, "link-out");
