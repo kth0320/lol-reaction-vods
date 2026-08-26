@@ -1,3 +1,4 @@
+import { prototypeIngestCreators } from "@/lib/creators";
 import { pollLiveCandidates } from "@/lib/ingest/poll-live";
 import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
 import { prisma } from "@/lib/prisma";
@@ -21,8 +22,8 @@ export default async function CandidatesPage() {
       </Link>
       <h1 className="section-title">수집 후보</h1>
       <p className="page-lead">
-        프로토타입 화이트리스트 20명을 지금 조회한 결과입니다. 홈은 LCK·LEC만 켭니다. 제목에서 리그·두 팀을 읽으면
-        vs 카드와 경기에 연결합니다. 공식 일정 API는 아직 없습니다.
+        프로토타입 화이트리스트 {prototypeIngestCreators().length}명을 지금 조회한 결과입니다. 홈은 LCK·LEC만
+        켭니다. 제목에서 리그·두 팀을 읽으면 vs 카드와 경기에 연결합니다. 공식 일정 API는 아직 없습니다.
       </p>
       <p className="section-note">
         {liveCount}명 라이브 · 경기 연결 {matchedCount} · 마지막 조회{" "}
