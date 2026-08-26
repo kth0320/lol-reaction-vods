@@ -1,35 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { LEAGUES, LIVE_CAROUSEL_INTERVAL_MS, type League } from "@/lib/leagues";
 import { VsCard, type LiveSlide } from "@/components/vs-card";
 
 export function LiveCarousel({ slides }: { slides: LiveSlide[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [animate, setAnimate] = useState(true);
+
+  const looping = slides.length > 1;
+  const trackSlides = looping ? [...slides, slides[0]] : slides;
+  const realIndex = looping && index === slides.length ? 0 : index;
+  const active = slides[realIndex] ?? slides[0];
+  const present = new Set(slides.map((slide) => slide.tournament));
 
   useEffect(() => {
-    if (slides.length <= 1 || paused) {
+    if (!looping || paused) {
       return;
     }
     const timer = window.setInterval(() => {
-      setIndex((current) => (current + 1) % slides.length);
+      setAnimate(true);
+      setIndex((current) => current + 1);
     }, LIVE_CAROUSEL_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [slides.length, paused]);
+  }, [looping, paused]);
 
-  if (slides.length === 0) {
-    return null;
+  useLayoutEffect(() => {
+    if (animate || index !== 0) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => setAnimate(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [animate, index]);
+
+  function onTrackTransitionEnd() {
+    if (looping && index >= slides.length) {
+      setAnimate(false);
+      setIndex(0);
+    }
   }
-
-  const active = slides[index] ?? slides[0];
-  const present = new Set(slides.map((slide) => slide.tournament));
 
   function selectLeague(league: League) {
     const next = slides.findIndex((slide) => slide.tournament === league);
-    if (next >= 0) {
-      setIndex(next);
+    if (next < 0) {
+      return;
     }
+    setAnimate(true);
+    setIndex(next);
+  }
+
+  if (slides.length === 0) {
+    return null;
   }
 
   return (
@@ -62,7 +84,17 @@ export function LiveCarousel({ slides }: { slides: LiveSlide[] }) {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        <VsCard slide={active} href={`/matches/${active.id}`} />
+        <div
+          className={`live-track${animate ? "" : " no-animate"}`}
+          style={{ transform: `translateX(-${index * 100}%)` }}
+          onTransitionEnd={onTrackTransitionEnd}
+        >
+          {trackSlides.map((slide, slideIndex) => (
+            <div className="live-slide" key={`${slide.id}-${slideIndex}`}>
+              <VsCard slide={slide} href={`/matches/${slide.id}`} />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
