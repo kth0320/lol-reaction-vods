@@ -60,9 +60,9 @@ a {
 
 .brand-title {
   margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 .brand-note {
@@ -326,8 +326,10 @@ a {
 }
 
 .live-slide {
-  flex: 0 0 100%;
-  min-width: 100%;
+  box-sizing: border-box;
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

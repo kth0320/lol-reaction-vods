@@ -86,7 +86,10 @@ export function LiveCarousel({ slides }: { slides: LiveSlide[] }) {
       >
         <div
           className={`live-track${animate ? "" : " no-animate"}`}
-          style={{ transform: `translateX(-${index * 100}%)` }}
+          style={{
+            width: `${trackSlides.length * 100}%`,
+            transform: `translateX(-${(index * 100) / trackSlides.length}%)`,
+          }}
           onTransitionEnd={onTrackTransitionEnd}
         >
           {trackSlides.map((slide, slideIndex) => (
