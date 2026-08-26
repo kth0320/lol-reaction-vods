@@ -25,6 +25,8 @@
 3. **제목 점수** — `T1` / `티원`, `Gen.G` / `GEN` / `젠지` 같은 팀 별칭으로 보조 매칭
 4. **수동 보정** — 자동 매칭이 놓치거나 틀린 링크는 관리 화면에서 연결·해제
 
+Phase 1은 4번을 시드 JSON으로 대신합니다. 수집 워커와 관리 화면은 아직 없습니다.
+
 ## 지원 플랫폼
 
 | 플랫폼 | 수집 | 사이트 내 재생 |
@@ -36,8 +38,6 @@
 
 ## 로컬 실행
 
-앱·DB가 붙은 뒤의 실행 순서입니다. 지금(Phase 0) 레포에는 `package.json` / Prisma가 아직 없습니다.
-
 ```bash
 npm install
 npx prisma migrate dev
@@ -45,19 +45,23 @@ npx prisma db seed
 npm run dev -- -p 43123
 ```
 
-## 레포 구조 (Phase 0)
+브라우저에서 `http://localhost:43123` → 경기 목록 → 경기 상세(리액션).
 
-구현 코드는 없습니다. 이후 페이즈가 붙을 폴더 placeholder만 있습니다.
+시드 데이터는 `data/` JSON입니다. SQLite 파일(`prisma/dev.db`)은 커밋하지 않습니다.
+
+## 레포 구조
+
+Phase 1 공개 사이트는 레포 루트 Next.js 앱입니다 (`app/`, `lib/`, `prisma/`).
 
 | 경로 | 역할 |
 | --- | --- |
-| `apps/web/` | 공개 사이트 |
-| `apps/ops/` | 수동 보정(관리 화면) |
-| `services/api/` | 경기·리액션 조회 API |
-| `services/ingest/` | 화이트리스트 + 시간창 + 제목 점수 수집 |
-| `packages/shared/` | 공유 도메인 설명 |
-| `data/creators/` | 방송인 화이트리스트 |
-| `data/team-aliases/` | 제목 점수용 팀 별칭 |
-| `data/matches/` | 경기/일정 |
-| `data/corrections/` | 수동 보정 |
-| `docs/` | 페이즈 메모 |
+| `app/` | 경기 목록, 경기별 리액션 페이지 |
+| `lib/playback.ts` | YouTube·숲 임베드 / 치지직 링크 아웃 |
+| `prisma/` | 스키마·마이그레이션·시드 |
+| `data/creators/` | 방송인 화이트리스트 JSON |
+| `data/team-aliases/` | 제목 점수용 팀 별칭 (팀 시드는 `data/teams.json`) |
+| `data/matches/` | 경기/일정 JSON |
+| `data/reactions/` | Phase 1 시드 링크 (이후 수동 보정과 분리) |
+| `data/corrections/` | 이후 수동 보정 |
+| `apps/web/`, `apps/ops/` | 이후 분리용 placeholder |
+| `services/ingest/` | 수집 파이프라인 (아직 없음) |

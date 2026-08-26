@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id          String      @id
+  name        String
+  abbr        String
+  aliases     TeamAlias[]
+  blueMatches Match[]     @relation("BlueTeam")
+  redMatches  Match[]     @relation("RedTeam")
+}
+
+model TeamAlias {
+  id     String @id @default(cuid())
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  alias  String
+
+  @@unique([teamId, alias])
+}
+
+model Match {
+  id         String        @id
+  tournament String
+  split      String
+  bestOf     Int
+  startsAt   DateTime
+  blueTeamId String
+  redTeamId  String
+  blueTeam   Team          @relation("BlueTeam", fields: [blueTeamId], references: [id])
+  redTeam    Team          @relation("RedTeam", fields: [redTeamId], references: [id])
+  reactions  ReactionVod[]
+}
+
+model Creator {
+  id        String        @id
+  name      String
+  kind      String
+  reactions ReactionVod[]
+}
+
+model ReactionVod {
+  id          String    @id @default(cuid())
+  matchId     String
+  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  creatorId   String
+  creator     Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  platform    String
+  title       String
+  url         String
+  externalId  String
+  publishedAt DateTime?
+
+  @@unique([platform, externalId])
+  @@index([matchId])
+}

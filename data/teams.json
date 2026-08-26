@@ -1,0 +1,26 @@
+[
+  {
+    "id": "t1",
+    "name": "T1",
+    "abbr": "T1",
+    "aliases": ["T1", "티원", "SKT"]
+  },
+  {
+    "id": "gen",
+    "name": "Gen.G",
+    "abbr": "GEN",
+    "aliases": ["Gen.G", "GEN", "젠지"]
+  },
+  {
+    "id": "dk",
+    "name": "Dplus KIA",
+    "abbr": "DK",
+    "aliases": ["DK", "Dplus", "디플러스", "기아"]
+  },
+  {
+    "id": "hle",
+    "name": "Hanwha Life Esports",
+    "abbr": "HLE",
+    "aliases": ["HLE", "한화", "한화생명"]
+  }
+]
