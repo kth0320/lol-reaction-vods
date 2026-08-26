@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start --port 43123",
     "lint": "next lint",
-    "test": "tsx --test lib/playback.test.ts",
+    "test": "tsx --test lib/*.test.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

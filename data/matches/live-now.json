@@ -1,0 +1,32 @@
+[
+  {
+    "id": "lck-live-gen-dk",
+    "tournament": "LCK",
+    "split": "2026 서머",
+    "bestOf": 3,
+    "status": "live",
+    "startsAt": "2026-08-26T17:00:00+09:00",
+    "blueTeamId": "gen",
+    "redTeamId": "dk"
+  },
+  {
+    "id": "lpl-live-jdg-blg",
+    "tournament": "LPL",
+    "split": "2026 Summer",
+    "bestOf": 3,
+    "status": "live",
+    "startsAt": "2026-08-26T17:00:00+08:00",
+    "blueTeamId": "jdg",
+    "redTeamId": "blg"
+  },
+  {
+    "id": "lec-live-g2-fnc",
+    "tournament": "LEC",
+    "split": "2026 Summer",
+    "bestOf": 3,
+    "status": "live",
+    "startsAt": "2026-08-26T18:00:00+02:00",
+    "blueTeamId": "g2",
+    "redTeamId": "fnc"
+  }
+]

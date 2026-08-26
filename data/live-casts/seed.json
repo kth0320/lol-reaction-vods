@@ -1,0 +1,65 @@
+[
+  {
+    "matchId": "lck-live-gen-dk",
+    "creatorId": "minkyo",
+    "platform": "soop",
+    "title": "김민교 LCK GEN vs DK #LckWatchParty",
+    "url": "https://vod.sooplive.com/player/203559103",
+    "externalId": "203559103",
+    "supportingTeamId": "gen"
+  },
+  {
+    "matchId": "lck-live-gen-dk",
+    "creatorId": "wolf",
+    "platform": "youtube",
+    "title": "울챔스 LIVE GEN vs DK",
+    "url": "https://www.youtube.com/watch?v=ujj0H0ycY4k",
+    "externalId": "ujj0H0ycY4k",
+    "supportingTeamId": "dk"
+  },
+  {
+    "matchId": "lck-live-gen-dk",
+    "creatorId": "untara",
+    "platform": "chzzk",
+    "title": "운챔스 GEN vs DK #LCKWatchParty",
+    "url": "https://chzzk.naver.com/video/14594686",
+    "externalId": "14594686",
+    "supportingTeamId": null
+  },
+  {
+    "matchId": "lpl-live-jdg-blg",
+    "creatorId": "wolf",
+    "platform": "youtube",
+    "title": "울프 LPL JDG vs BLG",
+    "url": "https://www.youtube.com/watch?v=TzYWpUCZ1mE",
+    "externalId": "TzYWpUCZ1mE",
+    "supportingTeamId": "jdg"
+  },
+  {
+    "matchId": "lpl-live-jdg-blg",
+    "creatorId": "minkyo",
+    "platform": "soop",
+    "title": "김민교 LPL JDG vs BLG",
+    "url": "https://vod.sooplive.com/player/203731555",
+    "externalId": "203731555",
+    "supportingTeamId": "blg"
+  },
+  {
+    "matchId": "lec-live-g2-fnc",
+    "creatorId": "caedrel",
+    "platform": "youtube",
+    "title": "Caedrel G2 vs FNC LEC",
+    "url": "https://www.youtube.com/watch?v=RxF_OZTbneM",
+    "externalId": "RxF_OZTbneM",
+    "supportingTeamId": "g2"
+  },
+  {
+    "matchId": "lec-live-g2-fnc",
+    "creatorId": "untara",
+    "platform": "chzzk",
+    "title": "운타라 LEC G2 vs FNC",
+    "url": "https://chzzk.naver.com/video/14594686",
+    "externalId": "14594686-lec",
+    "supportingTeamId": "fnc"
+  }
+]

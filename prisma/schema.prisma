@@ -8,12 +8,13 @@ datasource db {
 }
 
 model Team {
-  id          String      @id
-  name        String
-  abbr        String
-  aliases     TeamAlias[]
-  blueMatches Match[]     @relation("BlueTeam")
-  redMatches  Match[]     @relation("RedTeam")
+  id             String      @id
+  name           String
+  abbr           String
+  aliases        TeamAlias[]
+  blueMatches    Match[]     @relation("BlueTeam")
+  redMatches     Match[]     @relation("RedTeam")
+  supportedCasts LiveCast[]  @relation("SupportedTeam")
 }
 
 model TeamAlias {
@@ -30,12 +31,14 @@ model Match {
   tournament String
   split      String
   bestOf     Int
+  status     String        @default("ended")
   startsAt   DateTime
   blueTeamId String
   redTeamId  String
   blueTeam   Team          @relation("BlueTeam", fields: [blueTeamId], references: [id])
   redTeam    Team          @relation("RedTeam", fields: [redTeamId], references: [id])
   reactions  ReactionVod[]
+  liveCasts  LiveCast[]
 }
 
 model Creator {
@@ -43,6 +46,7 @@ model Creator {
   name      String
   kind      String
   reactions ReactionVod[]
+  liveCasts LiveCast[]
 }
 
 model ReactionVod {
@@ -58,5 +62,22 @@ model ReactionVod {
   publishedAt DateTime?
 
   @@unique([platform, externalId])
+  @@index([matchId])
+}
+
+model LiveCast {
+  id                 String   @id @default(cuid())
+  matchId            String
+  match              Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  creatorId          String
+  creator            Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  platform           String
+  title              String
+  url                String
+  externalId         String
+  supportingTeamId   String?
+  supportingTeam     Team?    @relation("SupportedTeam", fields: [supportingTeamId], references: [id])
+
+  @@unique([matchId, creatorId, platform])
   @@index([matchId])
 }
