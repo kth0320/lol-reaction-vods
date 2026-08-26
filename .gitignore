@@ -12,6 +12,7 @@ build/
 out/
 coverage/
 *.log
+tsconfig.tsbuildinfo
 
 .venv/
 venv/
@@ -21,3 +22,7 @@ __pycache__/
 .idea/
 .vscode/
 *.swp
+
+prisma/*.db
+prisma/*.db-journal
+prisma/dev.db

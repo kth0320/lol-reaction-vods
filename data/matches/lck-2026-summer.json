@@ -1,0 +1,29 @@
+[
+  {
+    "id": "lck-2026-summer-gen-t1",
+    "tournament": "LCK",
+    "split": "2026 서머",
+    "bestOf": 3,
+    "startsAt": "2026-07-12T17:00:00+09:00",
+    "blueTeamId": "gen",
+    "redTeamId": "t1"
+  },
+  {
+    "id": "lck-2026-summer-t1-dk",
+    "tournament": "LCK",
+    "split": "2026 서머",
+    "bestOf": 3,
+    "startsAt": "2026-08-06T19:00:00+09:00",
+    "blueTeamId": "t1",
+    "redTeamId": "dk"
+  },
+  {
+    "id": "lck-2026-summer-t1-hle",
+    "tournament": "LCK",
+    "split": "2026 서머",
+    "bestOf": 3,
+    "startsAt": "2026-08-08T17:00:00+09:00",
+    "blueTeamId": "t1",
+    "redTeamId": "hle"
+  }
+]

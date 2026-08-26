@@ -1,0 +1,105 @@
+import { PrismaClient } from "@prisma/client";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const prisma = new PrismaClient();
+const root = join(import.meta.dirname, "..");
+
+function readJson<T>(relativePath: string): T {
+  return JSON.parse(readFileSync(join(root, relativePath), "utf8")) as T;
+}
+
+type TeamRow = { id: string; name: string; abbr: string; aliases: string[] };
+type CreatorRow = { id: string; name: string; kind: string };
+type MatchRow = {
+  id: string;
+  tournament: string;
+  split: string;
+  bestOf: number;
+  startsAt: string;
+  blueTeamId: string;
+  redTeamId: string;
+};
+type ReactionRow = {
+  matchId: string;
+  creatorId: string;
+  platform: string;
+  title: string;
+  url: string;
+  externalId: string;
+  publishedAt?: string;
+};
+
+async function main() {
+  const teams = readJson<TeamRow[]>("data/teams.json");
+  const creators = readJson<CreatorRow[]>("data/creators/whitelist.json");
+  const matches = readJson<MatchRow[]>("data/matches/lck-2026-summer.json");
+  const reactions = readJson<ReactionRow[]>("data/reactions/seed.json");
+
+  await prisma.reactionVod.deleteMany();
+  await prisma.match.deleteMany();
+  await prisma.teamAlias.deleteMany();
+  await prisma.team.deleteMany();
+  await prisma.creator.deleteMany();
+
+  for (const team of teams) {
+    await prisma.team.create({
+      data: {
+        id: team.id,
+        name: team.name,
+        abbr: team.abbr,
+        aliases: {
+          create: team.aliases.map((alias) => ({ alias })),
+        },
+      },
+    });
+  }
+
+  for (const creator of creators) {
+    await prisma.creator.create({
+      data: {
+        id: creator.id,
+        name: creator.name,
+        kind: creator.kind,
+      },
+    });
+  }
+
+  for (const match of matches) {
+    await prisma.match.create({
+      data: {
+        id: match.id,
+        tournament: match.tournament,
+        split: match.split,
+        bestOf: match.bestOf,
+        startsAt: new Date(match.startsAt),
+        blueTeamId: match.blueTeamId,
+        redTeamId: match.redTeamId,
+      },
+    });
+  }
+
+  for (const reaction of reactions) {
+    await prisma.reactionVod.create({
+      data: {
+        matchId: reaction.matchId,
+        creatorId: reaction.creatorId,
+        platform: reaction.platform,
+        title: reaction.title,
+        url: reaction.url,
+        externalId: reaction.externalId,
+        publishedAt: reaction.publishedAt ? new Date(reaction.publishedAt) : null,
+      },
+    });
+  }
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (error) => {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
+  });
