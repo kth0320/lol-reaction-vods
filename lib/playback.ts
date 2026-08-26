@@ -1,16 +1,22 @@
-export const PLATFORMS = ["youtube", "soop", "chzzk"] as const;
+export const PLATFORMS = ["youtube", "soop", "chzzk", "twitch"] as const;
 
 export type Platform = (typeof PLATFORMS)[number];
+export type EmbedPlatform = "youtube" | "soop";
 
 export type Playback =
-  | { mode: "embed"; platform: Exclude<Platform, "chzzk">; embedUrl: string; originalUrl: string; label: string }
-  | { mode: "link-out"; platform: "chzzk"; originalUrl: string; label: string };
+  | { mode: "embed"; platform: EmbedPlatform; embedUrl: string; originalUrl: string; label: string }
+  | { mode: "link-out"; platform: Platform; originalUrl: string; label: string };
 
 export function isPlatform(value: string): value is Platform {
   return (PLATFORMS as readonly string[]).includes(value);
 }
 
-export function getPlayback(platform: Platform, externalId: string, url: string): Playback {
+export function getPlayback(
+  platform: Platform,
+  externalId: string,
+  url: string,
+  options: { live?: boolean } = {},
+): Playback {
   if (platform === "youtube") {
     return {
       mode: "embed",
@@ -21,13 +27,31 @@ export function getPlayback(platform: Platform, externalId: string, url: string)
     };
   }
 
-  if (platform === "soop") {
+  if (platform === "soop" && !options.live && /^\d+$/.test(externalId)) {
     return {
       mode: "embed",
       platform,
       embedUrl: `https://vod.sooplive.com/player/${encodeURIComponent(externalId)}/embed`,
       originalUrl: url,
       label: "숲",
+    };
+  }
+
+  if (platform === "soop") {
+    return {
+      mode: "link-out",
+      platform,
+      originalUrl: url,
+      label: "숲",
+    };
+  }
+
+  if (platform === "twitch") {
+    return {
+      mode: "link-out",
+      platform,
+      originalUrl: url,
+      label: "Twitch",
     };
   }
 
@@ -42,6 +66,7 @@ export function getPlayback(platform: Platform, externalId: string, url: string)
 export function platformLabel(platform: Platform): string {
   if (platform === "youtube") return "YouTube";
   if (platform === "soop") return "숲";
+  if (platform === "twitch") return "Twitch";
   return "치지직";
 }
 

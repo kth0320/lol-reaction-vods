@@ -1,6 +1,182 @@
 [
-  { "id": "wolf", "name": "울프", "kind": "streamer" },
-  { "id": "minkyo", "name": "김민교", "kind": "bj" },
-  { "id": "untara", "name": "운타라", "kind": "streamer" },
-  { "id": "caedrel", "name": "Caedrel", "kind": "streamer" }
+  {
+    "id": "minkyo",
+    "name": "김민교",
+    "kind": "bj",
+    "ingestEnabled": true,
+    "note": "숲 LCK 중계. Phase 1 시드에도 있음."
+  },
+  {
+    "id": "untara",
+    "name": "운타라",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "t1",
+    "note": "치지직 T1 스트리머. LCK 위주."
+  },
+  {
+    "id": "wolf",
+    "name": "울프",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "kangqui",
+    "name": "강퀴",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "tamtam",
+    "name": "탬탬버린",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "beryl",
+    "name": "베릴",
+    "kind": "streamer",
+    "ingestEnabled": true
+  },
+  {
+    "id": "longdari",
+    "name": "롱다리코치",
+    "kind": "bj",
+    "ingestEnabled": true
+  },
+  {
+    "id": "hunsuking",
+    "name": "훈수킹",
+    "kind": "bj",
+    "ingestEnabled": true
+  },
+  {
+    "id": "addung",
+    "name": "아뚱",
+    "kind": "bj",
+    "ingestEnabled": true
+  },
+  {
+    "id": "clid",
+    "name": "클리드",
+    "kind": "bj",
+    "ingestEnabled": true
+  },
+  {
+    "id": "sangho",
+    "name": "이상호",
+    "kind": "bj",
+    "ingestEnabled": true
+  },
+  {
+    "id": "kimgoon",
+    "name": "김군",
+    "kind": "bj",
+    "ingestEnabled": true
+  },
+  {
+    "id": "sooya",
+    "name": "안녕수야",
+    "kind": "bj",
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "gen",
+    "note": "Gen.G 콘텐츠 크리에이터."
+  },
+  {
+    "id": "caedrel",
+    "name": "Caedrel",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "note": "LEC 풀 슬레이트 코스트리머. Los Ratones 경기가 있어도 자기 팀만 하는 건 아님."
+  },
+  {
+    "id": "jankos",
+    "name": "Jankos",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "g2",
+    "note": "2026 LEC 공식 G2 팀 코스트리머."
+  },
+  {
+    "id": "yamatocannon",
+    "name": "YamatoCannon",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "sk",
+    "note": "2026 SK 코스트리머."
+  },
+  {
+    "id": "kameto",
+    "name": "Kameto",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "kc",
+    "note": "2026 LEC 공식 KC 팀 코스트리머."
+  },
+  {
+    "id": "ibai",
+    "name": "Ibai",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "koi",
+    "note": "2026 Movistar KOI 공식 팀 코스트리머. KOI 경기 위주."
+  },
+  {
+    "id": "obsess",
+    "name": "Obsess",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "fnc",
+    "note": "2026 LEC 공식 Fnatic 팀 코스트리머. FNC 경기 위주."
+  },
+  {
+    "id": "wadid",
+    "name": "와디드",
+    "kind": "streamer",
+    "ingestEnabled": true,
+    "defaultSupportingTeamId": "g2",
+    "note": "치지직. 2026 LEC 공식 G2 팀 스트리머."
+  },
+  {
+    "id": "goemuljwi",
+    "name": "괴물쥐",
+    "kind": "streamer",
+    "ingestEnabled": false,
+    "note": "롤 대회 중계를 거의 안 함. 수동 목록에서 뺌. 이후 자동 수집 API에서 켜면 보임."
+  },
+  {
+    "id": "ralo",
+    "name": "랄로",
+    "kind": "streamer",
+    "ingestEnabled": false,
+    "note": "롤 대회 중계를 거의 안 함. 수동 목록에서 뺌. 이후 자동 수집 API에서 켜면 보임."
+  },
+  {
+    "id": "ambition",
+    "name": "앰비션",
+    "kind": "streamer",
+    "ingestEnabled": false,
+    "note": "롤 대회 중계를 거의 안 함. 수동 목록에서 뺌. 이후 자동 수집 API에서 켜면 보임."
+  },
+  {
+    "id": "ddahyoni",
+    "name": "따효니",
+    "kind": "streamer",
+    "ingestEnabled": false,
+    "note": "롤 대회 중계를 거의 안 함. 수동 목록에서 뺌. 이후 자동 수집 API에서 켜면 보임."
+  },
+  {
+    "id": "poongwolyang",
+    "name": "풍월량",
+    "kind": "streamer",
+    "ingestEnabled": false,
+    "note": "롤 대회 중계를 거의 안 함. 수동 목록에서 뺌. 이후 자동 수집 API에서 켜면 보임."
+  },
+  {
+    "id": "runner",
+    "name": "러너",
+    "kind": "streamer",
+    "ingestEnabled": false,
+    "note": "롤 대회 중계를 거의 안 함. 수동 목록에서 뺌. 이후 자동 수집 API에서 켜면 보임."
+  }
 ]

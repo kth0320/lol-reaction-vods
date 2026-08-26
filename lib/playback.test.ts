@@ -19,6 +19,14 @@ describe("getPlayback", () => {
     }
   });
 
+  it("sends SOOP live to the original channel instead of the VOD embed", () => {
+    const playback = getPlayback("soop", "ksh0162", "https://play.sooplive.com/ksh0162", { live: true });
+    assert.equal(playback.mode, "link-out");
+    if (playback.mode === "link-out") {
+      assert.equal(playback.originalUrl, "https://play.sooplive.com/ksh0162");
+    }
+  });
+
   it("sends Chzzk to the original link instead of an iframe", () => {
     const playback = getPlayback("chzzk", "14594686", "https://chzzk.naver.com/video/14594686");
     assert.equal(playback.mode, "link-out");
@@ -27,8 +35,18 @@ describe("getPlayback", () => {
     }
   });
 
+  it("sends Twitch to the original link instead of an iframe", () => {
+    const playback = getPlayback("twitch", "caedrel", "https://www.twitch.tv/caedrel");
+    assert.equal(playback.mode, "link-out");
+    if (playback.mode === "link-out") {
+      assert.equal(playback.platform, "twitch");
+      assert.equal(playback.originalUrl, "https://www.twitch.tv/caedrel");
+    }
+  });
+
   it("rejects unknown platforms", () => {
-    assert.equal(isPlatform("twitch"), false);
+    assert.equal(isPlatform("twitch"), true);
+    assert.equal(isPlatform("kick"), false);
     assert.equal(isPlatform("youtube"), true);
   });
 });

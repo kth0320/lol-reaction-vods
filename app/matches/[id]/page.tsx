@@ -2,22 +2,40 @@ import { LiveCasterBoard } from "@/components/live-caster-board";
 import { VodPlayer } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
+import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
 import { isLeague } from "@/lib/leagues";
 import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { after } from "next/server";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function MatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  after(() => {
+    void refreshLiveCandidatesInBackground();
+  });
+  const head = await prisma.match.findUnique({
+    where: { id },
+    select: { status: true, source: true },
+  });
+  if (!head) {
+    notFound();
+  }
+
   const match = await prisma.match.findUnique({
     where: { id },
     include: {
       blueTeam: true,
       redTeam: true,
       liveCasts: {
+        include: { creator: true, supportingTeam: true },
+        orderBy: { creator: { name: "asc" } },
+      },
+      liveCandidates: {
+        where: { isLive: true },
         include: { creator: true, supportingTeam: true },
         orderBy: { creator: { name: "asc" } },
       },
@@ -33,6 +51,19 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
   }
 
   const live = match.status === "live";
+  const liveCastViews = (match.source === "ingest" ? match.liveCandidates : match.liveCasts).map((cast) => ({
+    id: cast.id,
+    creatorName: cast.creator.name,
+    creatorKind: cast.creator.kind,
+    platform: cast.platform,
+    title: cast.title,
+    url: cast.url,
+    externalId: cast.externalId,
+    supportingTeamId: cast.supportingTeamId,
+    supportingTeamAbbr: cast.supportingTeam?.abbr ?? null,
+    imageUrl: "imageUrl" in cast ? cast.imageUrl : "",
+    viewerCount: "viewerCount" in cast ? cast.viewerCount : null,
+  }));
 
   return (
     <main>
@@ -73,17 +104,7 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
         <LiveCasterBoard
           blue={{ id: match.blueTeam.id, abbr: match.blueTeam.abbr }}
           red={{ id: match.redTeam.id, abbr: match.redTeam.abbr }}
-          casts={match.liveCasts.map((cast) => ({
-            id: cast.id,
-            creatorName: cast.creator.name,
-            creatorKind: cast.creator.kind,
-            platform: cast.platform,
-            title: cast.title,
-            url: cast.url,
-            externalId: cast.externalId,
-            supportingTeamId: cast.supportingTeamId,
-            supportingTeamAbbr: cast.supportingTeam?.abbr ?? null,
-          }))}
+          casts={liveCastViews}
         />
       ) : null}
       {match.reactions.length > 0 || !live ? (

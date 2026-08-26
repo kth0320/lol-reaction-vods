@@ -9,6 +9,6 @@
 3. 제목 점수 — `data/team-aliases` 팀 별칭으로 보조 매칭
 4. `data/corrections` 수동 보정 적용
 
-플랫폼: 치지직 · 숲(SOOP) · YouTube. Twitch는 후순위(VOD 휘발).
+**프로토타입 범위:** 리그 **LCK · LEC**. LPL은 홈에 안 올림. 플랫폼 **치지직 · 숲 · Twitch 라이브**. 대회 중계를 자주 하는 채널만 수동 화이트리스트. 채널 ID는 `data/creators/channels.json`. 제목에서 읽은 LCK·LEC 경기는 홈 vs 카드로 올린다. YouTube 수집 · Twitch 다시보기는 이후.
 
 Phase 0에서는 이 README만 둔다. 크롤러, 워커, 매칭 로직, 외부 API 클라이언트를 추가하지 않는다.
