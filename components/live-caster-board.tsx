@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { VodPlayer } from "@/components/vod-player";
-import { creatorKindLabel, isPlatform, platformLabel, type Platform } from "@/lib/playback";
+import { formatViewers } from "@/lib/format";
+import { isPlatform, platformLabel, type Platform } from "@/lib/playback";
 import { filterLiveCasts, supportLabel, type PlatformFilter, type TeamFilter } from "@/lib/live-filters";
 
 export type LiveCasterView = {
@@ -15,6 +15,8 @@ export type LiveCasterView = {
   externalId: string;
   supportingTeamId: string | null;
   supportingTeamAbbr: string | null;
+  imageUrl?: string;
+  viewerCount?: number | null;
 };
 
 export function LiveCasterBoard({
@@ -29,7 +31,9 @@ export function LiveCasterBoard({
   const [team, setTeam] = useState<TeamFilter>("all");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
 
-  const visible = useMemo(() => filterLiveCasts(casts, team, platform), [casts, team, platform]);
+  const visible = useMemo(() => {
+    return filterLiveCasts(casts, team, platform).slice().sort((a, b) => (b.viewerCount ?? -1) - (a.viewerCount ?? -1));
+  }, [casts, team, platform]);
   const platforms = Array.from(new Set(casts.map((cast) => cast.platform)));
 
   return (
@@ -64,27 +68,55 @@ export function LiveCasterBoard({
       {visible.length === 0 ? (
         <p className="empty">이 필터에 해당하는 생방송이 없습니다.</p>
       ) : (
-        <div className="reaction-list">
-          {visible.map((cast) => (
-            <article key={cast.id} className="reaction-card">
-              <div className="reaction-head">
-                <div>
-                  <h3 className="creator-name">{cast.creatorName}</h3>
-                  <p className="creator-kind">
-                    {creatorKindLabel(cast.creatorKind)} · {supportLabel(cast.supportingTeamAbbr)}
+        <div className="caster-list">
+          {visible.map((cast) => {
+            const platformName = isPlatform(cast.platform) ? platformLabel(cast.platform) : cast.platform;
+            return (
+              <a
+                key={cast.id}
+                className="caster-row"
+                href={cast.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <CasterAvatar name={cast.creatorName} src={cast.imageUrl} />
+                <div className="caster-copy">
+                  <p className="creator-name">{cast.creatorName}</p>
+                  <p className="caster-meta">
+                    {platformName} · {supportLabel(cast.supportingTeamAbbr)}
                   </p>
+                  <p className="caster-viewers">시청자 {formatViewers(cast.viewerCount)}</p>
                 </div>
-                <span className="platform-badge">
-                  {isPlatform(cast.platform) ? platformLabel(cast.platform) : cast.platform}
+                <span className="caster-chevron" aria-hidden>
+                  ›
                 </span>
-              </div>
-              <p className="reaction-title">{cast.title}</p>
-              <VodPlayer platform={cast.platform} externalId={cast.externalId} url={cast.url} live />
-            </article>
-          ))}
+              </a>
+            );
+          })}
         </div>
       )}
     </section>
+  );
+}
+
+function CasterAvatar({ name, src }: { name: string; src?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return (
+      <span className="caster-avatar caster-avatar-fallback" aria-hidden>
+        {name.slice(0, 1)}
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className="caster-avatar"
+      src={src}
+      alt=""
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
   );
 }
 

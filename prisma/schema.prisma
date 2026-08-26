@@ -86,6 +86,8 @@ model LiveCandidate {
   status           String    @default("candidate")
   isLive           Boolean   @default(true)
   fetchedAt        DateTime  @default(now())
+  viewerCount      Int?
+  imageUrl         String    @default("")
 
   @@unique([platform, externalId])
   @@unique([creatorId, platform])

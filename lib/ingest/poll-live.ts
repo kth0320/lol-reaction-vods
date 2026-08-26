@@ -142,6 +142,8 @@ export async function pollLiveCandidates(): Promise<PollRow[]> {
         status: "candidate",
         isLive,
         fetchedAt: new Date(),
+        viewerCount: probe?.viewerCount ?? null,
+        imageUrl: probe?.imageUrl ?? "",
       },
       update: {
         title: title || `${creator.name} ${isLive ? "LIVE" : "OFF"}`,
@@ -152,6 +154,8 @@ export async function pollLiveCandidates(): Promise<PollRow[]> {
         status: "candidate",
         isLive,
         fetchedAt: new Date(),
+        viewerCount: probe?.viewerCount ?? null,
+        imageUrl: probe?.imageUrl ?? "",
       },
     });
 
