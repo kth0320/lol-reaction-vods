@@ -16,6 +16,7 @@ type MatchRow = {
   tournament: string;
   split: string;
   bestOf: number;
+  status?: string;
   startsAt: string;
   blueTeamId: string;
   redTeamId: string;
@@ -29,13 +30,26 @@ type ReactionRow = {
   externalId: string;
   publishedAt?: string;
 };
+type LiveCastRow = {
+  matchId: string;
+  creatorId: string;
+  platform: string;
+  title: string;
+  url: string;
+  externalId: string;
+  supportingTeamId: string | null;
+};
 
 async function main() {
   const teams = readJson<TeamRow[]>("data/teams.json");
   const creators = readJson<CreatorRow[]>("data/creators/whitelist.json");
-  const matches = readJson<MatchRow[]>("data/matches/lck-2026-summer.json");
+  const vodMatches = readJson<MatchRow[]>("data/matches/lck-2026-summer.json");
+  const liveMatches = readJson<MatchRow[]>("data/matches/live-now.json");
+  const matches = [...vodMatches, ...liveMatches];
   const reactions = readJson<ReactionRow[]>("data/reactions/seed.json");
+  const liveCasts = readJson<LiveCastRow[]>("data/live-casts/seed.json");
 
+  await prisma.liveCast.deleteMany();
   await prisma.reactionVod.deleteMany();
   await prisma.match.deleteMany();
   await prisma.teamAlias.deleteMany();
@@ -72,6 +86,7 @@ async function main() {
         tournament: match.tournament,
         split: match.split,
         bestOf: match.bestOf,
+        status: match.status ?? "ended",
         startsAt: new Date(match.startsAt),
         blueTeamId: match.blueTeamId,
         redTeamId: match.redTeamId,
@@ -89,6 +104,20 @@ async function main() {
         url: reaction.url,
         externalId: reaction.externalId,
         publishedAt: reaction.publishedAt ? new Date(reaction.publishedAt) : null,
+      },
+    });
+  }
+
+  for (const liveCast of liveCasts) {
+    await prisma.liveCast.create({
+      data: {
+        matchId: liveCast.matchId,
+        creatorId: liveCast.creatorId,
+        platform: liveCast.platform,
+        title: liveCast.title,
+        url: liveCast.url,
+        externalId: liveCast.externalId,
+        supportingTeamId: liveCast.supportingTeamId,
       },
     });
   }

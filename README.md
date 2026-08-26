@@ -47,7 +47,7 @@
 4. **응원 팀** — 방송인이 어느 팀을 보고 있는지(또는 중립). 라이브 목록 필터에 사용
 5. **수동 보정** — 자동 매칭이 놓치거나 틀린 링크는 관리 화면에서 연결·해제
 
-Phase 1은 다시보기만 시드 JSON으로 보여 줍니다. 라이브 허브·수집 워커·관리 화면은 아직 없습니다.
+Phase 1은 시드 JSON으로 라이브 허브(다시보기 포함)를 보여 줍니다. 수집 워커와 관리 화면은 아직 없습니다.
 
 ## 지원 플랫폼
 
@@ -60,7 +60,7 @@ Phase 1은 다시보기만 시드 JSON으로 보여 줍니다. 라이브 허브�
 
 ## 로컬 실행
 
-지금 돌아가는 것은 Phase 1 다시보기 목록입니다. 라이브 상단 허브는 아직 코드가 없습니다.
+지금 로컬 앱은 상단 생중계 캐러셀(LCK · LPL · LEC, 5초)과 하단 다시보기입니다. 공식 vs 이미지는 플레이스홀더 카드입니다.
 
 ```bash
 npm install
@@ -69,7 +69,7 @@ npx prisma db seed
 npm run dev -- -p 43123
 ```
 
-브라우저에서 `http://localhost:43123` → 경기 목록 → 경기 상세(리액션).
+브라우저에서 `http://localhost:43123` → 상단 vs 카드(리그 탭 / 5초 전환) → 경기 화면(응원 팀·플랫폼 필터) / 하단 다시보기.
 
 시드 데이터는 `data/` JSON입니다. SQLite 파일(`prisma/dev.db`)은 커밋하지 않습니다.
 
@@ -79,13 +79,14 @@ Phase 1 공개 사이트는 레포 루트 Next.js 앱입니다 (`app/`, `lib/`, 
 
 | 경로 | 역할 |
 | --- | --- |
-| `app/` | 경기 목록, 경기별 리액션 페이지. 라이브 허브는 이후 |
+| `app/` | 메인(생중계 캐러셀 + 다시보기), 경기별 라이브/리액션 페이지 |
 | `lib/playback.ts` | YouTube·숲 임베드 / 치지직 링크 아웃 |
 | `prisma/` | 스키마·마이그레이션·시드 |
 | `data/creators/` | 방송인 화이트리스트 JSON |
 | `data/team-aliases/` | 제목 점수용 팀 별칭 (팀 시드는 `data/teams.json`) |
 | `data/matches/` | 경기/일정 JSON |
-| `data/reactions/` | Phase 1 시드 링크 (이후 수동 보정과 분리) |
+| `data/reactions/` | Phase 1 시드 다시보기 링크 |
+| `data/live-casts/` | Phase 1 시드 라이브 중계 링크 |
 | `data/corrections/` | 이후 수동 보정 |
 | `apps/web/`, `apps/ops/` | 이후 분리용 placeholder |
 | `services/ingest/` | 수집 파이프라인 (아직 없음) |

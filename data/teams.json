@@ -22,5 +22,29 @@
     "name": "Hanwha Life Esports",
     "abbr": "HLE",
     "aliases": ["HLE", "한화", "한화생명"]
+  },
+  {
+    "id": "jdg",
+    "name": "JD Gaming",
+    "abbr": "JDG",
+    "aliases": ["JDG", "京东"]
+  },
+  {
+    "id": "blg",
+    "name": "Bilibili Gaming",
+    "abbr": "BLG",
+    "aliases": ["BLG", "哔哩哔哩"]
+  },
+  {
+    "id": "g2",
+    "name": "G2 Esports",
+    "abbr": "G2",
+    "aliases": ["G2"]
+  },
+  {
+    "id": "fnc",
+    "name": "Fnatic",
+    "abbr": "FNC",
+    "aliases": ["FNC", "Fnatic"]
   }
 ]
