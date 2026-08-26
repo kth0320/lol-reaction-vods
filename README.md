@@ -90,7 +90,8 @@ npx prisma db seed
 npm run dev -- -p 43123
 ```
 
-브라우저에서 `http://localhost:43123` → 상단 vs 카드(리그 탭 / 5초 전환) → 경기 화면(응원 팀·플랫폼 필터) / 하단 다시보기.
+브라우저에서 `http://localhost:43123` → 상단 vs 카드(리그 탭 / 5초 전환) → 경기 화면(응원 팀·플랫폼 필터) / 하단 다시보기.  
+수집 후보는 `http://localhost:43123/candidates` (홈에 자동으로 안 올라감). 수동 조회: `npm run ingest:live`.
 
 시드 데이터는 `data/` JSON입니다. SQLite 파일(`prisma/dev.db`)은 커밋하지 않습니다.
 

@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start --port 43123",
     "lint": "next lint",
-    "test": "tsx --test lib/*.test.ts",
+    "test": "tsx --test lib/*.test.ts lib/ingest/*.test.ts",
+    "ingest:live": "tsx scripts/ingest-live.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

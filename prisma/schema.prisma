@@ -86,6 +86,7 @@ model LiveCandidate {
   fetchedAt        DateTime  @default(now())
 
   @@unique([platform, externalId])
+  @@unique([creatorId, platform])
   @@index([creatorId])
   @@index([matchId])
 }

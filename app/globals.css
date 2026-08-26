@@ -71,6 +71,38 @@ a {
   font-size: 13px;
 }
 
+.nav-link {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nav-link:hover {
+  color: var(--gold);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.status-pill.on {
+  background: #7a1515;
+  color: #ffd0d0;
+}
+
+.status-pill.off {
+  background: #0f1218;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
 .page-lead {
   margin: 0 0 28px;
   color: var(--muted);

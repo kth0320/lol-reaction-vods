@@ -20,6 +20,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               </Link>
               <p className="brand-note">브랜드 후보 누렁카세 / 누렁이 특식 · 미정. 음식 사이트가 아닙니다.</p>
             </div>
+            <Link href="/candidates" className="nav-link">
+              수집 후보
+            </Link>
           </header>
           {children}
         </div>
