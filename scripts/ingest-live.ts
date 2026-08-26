@@ -6,7 +6,7 @@ async function main() {
   console.log(`polled ${rows.length} channels, ${live.length} live`);
   for (const row of rows) {
     const state = row.error ? `ERR ${row.error}` : row.isLive ? "LIVE" : "off";
-    const match = row.matchLabel ?? "no LEC match";
+    const match = row.matchLabel ?? "no match";
     console.log(`${row.creatorName.padEnd(14)} ${row.platform.padEnd(7)} ${state}  ${match}  ${row.title}`);
   }
 }
