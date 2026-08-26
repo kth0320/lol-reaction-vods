@@ -2,30 +2,27 @@ import { LiveCasterBoard } from "@/components/live-caster-board";
 import { VodPlayer } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
-import { pollLiveCandidates } from "@/lib/ingest/poll-live";
+import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
 import { isLeague } from "@/lib/leagues";
 import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { after } from "next/server";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function MatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  after(() => {
+    void refreshLiveCandidatesInBackground();
+  });
   const head = await prisma.match.findUnique({
     where: { id },
     select: { status: true, source: true },
   });
   if (!head) {
     notFound();
-  }
-  if (head.status === "live" && head.source === "ingest") {
-    try {
-      await pollLiveCandidates();
-    } catch {
-      // keep last poll
-    }
   }
 
   const match = await prisma.match.findUnique({

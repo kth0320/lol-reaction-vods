@@ -1,7 +1,15 @@
 import { inferLiveMatchFromTitle, type InferredLiveMatch } from "@/lib/ingest/infer-match";
+import { isLivePollFresh, LIVE_POLL_FRESH_MS } from "@/lib/ingest/poll-fresh";
 import { probeLive, type LiveProbe } from "@/lib/ingest/live-status";
 import { prisma } from "@/lib/prisma";
 import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
+
+export { LIVE_POLL_FRESH_MS };
+
+const pollState = globalThis as unknown as {
+  livePollInflight?: Promise<PollRow[]>;
+  livePollAt?: number;
+};
 
 export type PollRow = {
   creatorId: string;
@@ -65,7 +73,50 @@ async function syncIngestMatches(inferred: Map<string, { match: InferredLiveMatc
   });
 }
 
-export async function pollLiveCandidates(): Promise<PollRow[]> {
+async function lastPollMs(): Promise<number | null> {
+  if (pollState.livePollAt) return pollState.livePollAt;
+  const row = await prisma.liveCandidate.findFirst({
+    orderBy: { fetchedAt: "desc" },
+    select: { fetchedAt: true },
+  });
+  const ms = row?.fetchedAt.getTime() ?? null;
+  if (ms) pollState.livePollAt = ms;
+  return ms;
+}
+
+export async function refreshLiveCandidatesInBackground(maxAgeMs = LIVE_POLL_FRESH_MS): Promise<void> {
+  try {
+    await pollLiveCandidates({ maxAgeMs });
+  } catch {
+    // keep the last snapshot on the page
+  }
+}
+
+export async function pollLiveCandidates(options: { maxAgeMs?: number | null } = {}): Promise<PollRow[]> {
+  const maxAgeMs = options.maxAgeMs;
+  if (pollState.livePollInflight) {
+    return pollState.livePollInflight;
+  }
+  if (maxAgeMs != null && maxAgeMs >= 0) {
+    const last = await lastPollMs();
+    if (isLivePollFresh(last, Date.now(), maxAgeMs)) {
+      return [];
+    }
+  }
+
+  const work = runLivePoll()
+    .then((rows) => {
+      pollState.livePollAt = Date.now();
+      return rows;
+    })
+    .finally(() => {
+      if (pollState.livePollInflight === work) pollState.livePollInflight = undefined;
+    });
+  pollState.livePollInflight = work;
+  return work;
+}
+
+async function runLivePoll(): Promise<PollRow[]> {
   const inferTeams = await ensureTeamCatalog();
   const creators = await prisma.creator.findMany({
     where: { ingestEnabled: true },

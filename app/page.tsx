@@ -1,19 +1,18 @@
 import { LiveCarousel } from "@/components/live-carousel";
 import type { LiveSlide } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
-import { pollLiveCandidates } from "@/lib/ingest/poll-live";
+import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
 import { isLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { after } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  try {
-    await pollLiveCandidates();
-  } catch {
-    // 조회가 실패해도 마지막 수집 결과로 화면은 연다.
-  }
+  after(() => {
+    void refreshLiveCandidatesInBackground();
+  });
 
   const [ingestLive, vodRows] = await Promise.all([
     prisma.match.findMany({

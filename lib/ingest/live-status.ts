@@ -90,6 +90,8 @@ export function parseTwitchGql(payload: unknown, login: string, url: string): Li
   };
 }
 
+const FETCH_TIMEOUT_MS = 4000;
+
 async function readJson(response: Response): Promise<unknown> {
   const body = await response.text();
   if (!response.ok) {
@@ -98,14 +100,24 @@ async function readJson(response: Response): Promise<unknown> {
   return JSON.parse(body) as unknown;
 }
 
+async function fetchOk(fetchImpl: typeof fetch, url: string, init: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetchImpl(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function probeChzzkLive(channelId: string, url: string, fetchImpl: typeof fetch = fetch): Promise<LiveProbe> {
   const headers = { "User-Agent": USER_AGENT };
   const [statusRes, channelRes] = await Promise.all([
-    fetchImpl(`https://api.chzzk.naver.com/polling/v2/channels/${encodeURIComponent(channelId)}/live-status`, {
+    fetchOk(fetchImpl, `https://api.chzzk.naver.com/polling/v2/channels/${encodeURIComponent(channelId)}/live-status`, {
       headers,
       cache: "no-store",
     }),
-    fetchImpl(`https://api.chzzk.naver.com/service/v1/channels/${encodeURIComponent(channelId)}`, {
+    fetchOk(fetchImpl, `https://api.chzzk.naver.com/service/v1/channels/${encodeURIComponent(channelId)}`, {
       headers,
       cache: "no-store",
     }),
@@ -117,7 +129,7 @@ export async function probeChzzkLive(channelId: string, url: string, fetchImpl: 
 export async function probeSoopLive(channelId: string, url: string, fetchImpl: typeof fetch = fetch): Promise<LiveProbe> {
   const headers = { "User-Agent": USER_AGENT };
   const [liveRes, stationRes] = await Promise.all([
-    fetchImpl("https://live.sooplive.com/afreeca/player_live_api.php", {
+    fetchOk(fetchImpl, "https://live.sooplive.com/afreeca/player_live_api.php", {
       method: "POST",
       headers: {
         ...headers,
@@ -126,7 +138,7 @@ export async function probeSoopLive(channelId: string, url: string, fetchImpl: t
       body: `bid=${encodeURIComponent(channelId)}&type=json`,
       cache: "no-store",
     }),
-    fetchImpl(`https://chapi.sooplive.co.kr/api/${encodeURIComponent(channelId)}/station`, {
+    fetchOk(fetchImpl, `https://chapi.sooplive.co.kr/api/${encodeURIComponent(channelId)}/station`, {
       headers,
       cache: "no-store",
     }),
@@ -146,7 +158,7 @@ export async function probeSoopLive(channelId: string, url: string, fetchImpl: t
 }
 
 export async function probeTwitchLive(login: string, url: string, fetchImpl: typeof fetch = fetch): Promise<LiveProbe> {
-  const response = await fetchImpl("https://gql.twitch.tv/gql", {
+  const response = await fetchOk(fetchImpl, "https://gql.twitch.tv/gql", {
     method: "POST",
     headers: {
       "User-Agent": USER_AGENT,
