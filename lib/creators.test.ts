@@ -20,6 +20,7 @@ const INGEST_IDS = [
   "sooya",
   "tamtam",
   "untara",
+  "wadid",
   "wolf",
   "yamatocannon",
 ];
@@ -29,7 +30,7 @@ describe("prototype ingest whitelist", () => {
     const ingestIds = prototypeIngestCreators().map((creator) => creator.id).sort();
     assert.deepEqual(ingestIds, INGEST_IDS);
     const byId = Object.fromEntries(readCreatorWhitelist().map((creator) => [creator.id, creator]));
-    for (const id of ["goemuljwi", "ralo", "ambition", "ddahyoni", "poongwolyang", "runner", "wadid"]) {
+    for (const id of ["goemuljwi", "ralo", "ambition", "ddahyoni", "poongwolyang", "runner"]) {
       assert.equal(byId[id].ingestEnabled, false, id);
     }
   });
@@ -48,6 +49,8 @@ describe("prototype ingest whitelist", () => {
     assert.equal(byCreator.untara.channelId, "aedecd121e2cf471fd8510f980cac8b1");
     assert.equal(byCreator.tamtam.channelId, "a7e175625fdea5a7d98428302b7aa57f");
     assert.equal(byCreator.beryl.channelId, "dab6c354212f9c54b1ed805d7d832ae6");
+    assert.equal(byCreator.wadid.platform, "chzzk");
+    assert.equal(byCreator.wadid.channelId, "bad6d7da33aec001343a51b85a70fcdb");
     assert.equal(byCreator.wolf.channelId, "0b33823ac81de48d5b78a38cdbc0ab94");
     assert.equal(byCreator.kangqui.channelId, "1a1dd9ce56fb61a37ffb6f69f6d5b978");
     assert.equal(byCreator.longdari.channelId, "ksh0162");

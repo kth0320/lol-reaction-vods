@@ -133,9 +133,9 @@
     "id": "wadid",
     "name": "와디드",
     "kind": "streamer",
-    "ingestEnabled": false,
+    "ingestEnabled": true,
     "defaultSupportingTeamId": "g2",
-    "note": "치지직 수동 목록에서 뺌. 이후 자동 수집 API에서 다시 켤 수 있음."
+    "note": "치지직. 2026 LEC 공식 G2 팀 스트리머."
   },
   {
     "id": "goemuljwi",
