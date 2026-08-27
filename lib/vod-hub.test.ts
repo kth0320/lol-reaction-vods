@@ -6,6 +6,7 @@ import {
   hubMatchTournaments,
   isVodHubId,
   matchTournamentToHub,
+  vodHubMatchWhere,
 } from "./vod-hub";
 
 describe("vod hub", () => {
@@ -30,6 +31,13 @@ describe("vod hub", () => {
         assert.equal(matchTournamentToHub(tournament), card.id);
       }
     }
+  });
+
+  it("only lists ended matches that already have reaction VODs", () => {
+    const where = vodHubMatchWhere("lck");
+    assert.equal(where.status, "ended");
+    assert.deepEqual(where.tournament, { in: ["LCK"] });
+    assert.deepEqual(where.reactions, { some: {} });
   });
 
   it("counts seed LCK reactions on the LCK card only", () => {

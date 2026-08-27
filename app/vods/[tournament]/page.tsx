@@ -1,6 +1,6 @@
 import { formatKst } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { hubMatchTournaments, isVodHubId, vodHubCard } from "@/lib/vod-hub";
+import { isVodHubId, vodHubCard, vodHubMatchWhere } from "@/lib/vod-hub";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -17,7 +17,7 @@ export default async function VodHubPage({ params }: { params: Promise<{ tournam
   }
 
   const matches = await prisma.match.findMany({
-    where: { status: "ended", tournament: { in: hubMatchTournaments(tournament) } },
+    where: vodHubMatchWhere(tournament),
     include: {
       blueTeam: true,
       redTeam: true,

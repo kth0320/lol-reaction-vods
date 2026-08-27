@@ -53,6 +53,14 @@ export function hubMatchTournaments(hubId: VodHubId): string[] {
   return ["First Stand", "FIRST_STAND"];
 }
 
+export function vodHubMatchWhere(hubId: VodHubId) {
+  return {
+    status: "ended",
+    tournament: { in: hubMatchTournaments(hubId) },
+    reactions: { some: {} },
+  };
+}
+
 export function countReactionsByHub(
   rows: { tournament: string; reactionCount: number }[],
 ): Record<VodHubId, number> {
