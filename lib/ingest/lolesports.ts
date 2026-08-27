@@ -159,3 +159,8 @@ export async function fetchPrototypeSchedules(
   const pages = await Promise.all([...ids.entries()].map(([, leagueId]) => fetchSchedule(leagueId, fetchImpl)));
   return pages.flat();
 }
+
+export async function fetchEventDetails(eventId: string, fetchImpl: typeof fetch = fetch): Promise<unknown> {
+  const id = encodeURIComponent(eventId);
+  return fetchGw(`/getEventDetails?hl=${LOLESPORTS_HL}&id=${id}`, fetchImpl);
+}

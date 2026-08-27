@@ -3,6 +3,7 @@ import { VodPlayer } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
+import { backgroundForEvent } from "@/lib/ingest/official-stream";
 import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
 import { isLeague } from "@/lib/leagues";
 import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
@@ -52,6 +53,8 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
   }
 
   const live = match.status === "live";
+  const broadcast =
+    live && match.externalEventId ? await backgroundForEvent(match.externalEventId) : null;
   const liveCastViews = (usesLiveCandidates(match.source) ? match.liveCandidates : match.liveCasts).map((cast) => ({
     id: cast.id,
     creatorName: cast.creator.name,
@@ -85,6 +88,7 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
             redAbbr: match.redTeam.abbr,
             redName: match.redTeam.name,
             redImageUrl: match.redTeam.imageUrl,
+            broadcast,
           }}
         />
       ) : (

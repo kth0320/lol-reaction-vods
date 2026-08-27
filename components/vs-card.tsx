@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { MutedBroadcast } from "@/components/muted-broadcast";
+import type { BackgroundBroadcast } from "@/lib/ingest/official-stream";
 import type { League } from "@/lib/leagues";
 
 export type LiveSlide = {
@@ -13,24 +17,25 @@ export type LiveSlide = {
   redAbbr: string;
   redName: string;
   redImageUrl?: string;
+  broadcast?: BackgroundBroadcast | null;
 };
 
-function TeamSide({
+function TeamRow({
   abbr,
   name,
   imageUrl,
-  align,
 }: {
   abbr: string;
   name: string;
   imageUrl?: string;
-  align: "left" | "right";
 }) {
   return (
-    <div className={align === "right" ? "vs-right" : undefined}>
-      {imageUrl ? <img className="vs-logo" src={imageUrl} alt="" /> : null}
-      <p className="vs-abbr">{abbr}</p>
-      <p className="vs-full">{name}</p>
+    <div className="vs-team-row">
+      {imageUrl ? <img className="vs-logo" src={imageUrl} alt="" /> : <span className="vs-logo vs-logo-empty" />}
+      <div>
+        <p className="vs-abbr">{abbr}</p>
+        <p className="vs-full">{name}</p>
+      </div>
     </div>
   );
 }
@@ -38,21 +43,20 @@ function TeamSide({
 export function VsCard({ slide, href }: { slide: LiveSlide; href?: string }) {
   const inner = (
     <>
-      <div className="vs-card-top">
-        <span className="live-dot">LIVE</span>
-        <span>{slide.tournament} 지금 생중계</span>
-      </div>
-      <div className="vs-card-body">
-        <TeamSide abbr={slide.blueAbbr} name={slide.blueName} imageUrl={slide.blueImageUrl} align="left" />
-        <div className="vs-mid">
-          <span className="vs">VS</span>
-          <span>
-            {slide.tournament} {slide.split} · BO{slide.bestOf}
-          </span>
+      {slide.broadcast ? <MutedBroadcast broadcast={slide.broadcast} /> : null}
+      <div className="vs-card-overlay">
+        <div className="vs-card-top">
+          <span className="live-dot">생중계</span>
         </div>
-        <TeamSide abbr={slide.redAbbr} name={slide.redName} imageUrl={slide.redImageUrl} align="right" />
+        <div className="vs-teams-stack">
+          <TeamRow abbr={slide.blueAbbr} name={slide.blueName} imageUrl={slide.blueImageUrl} />
+          <TeamRow abbr={slide.redAbbr} name={slide.redName} imageUrl={slide.redImageUrl} />
+        </div>
+        <p className="vs-meta">
+          {slide.tournament} · {slide.split} · BO{slide.bestOf}
+          <span className="vs-time">{slide.startsAtLabel}</span>
+        </p>
       </div>
-      <p className="vs-time">{slide.startsAtLabel}</p>
     </>
   );
 
