@@ -22,7 +22,7 @@ export function MutedBroadcast({ broadcast }: { broadcast: BackgroundBroadcast }
       <iframe
         src={src}
         title=""
-        allow="autoplay; encrypted-media"
+        allow="autoplay; encrypted-media; fullscreen"
         allowFullScreen={false}
         tabIndex={-1}
       />

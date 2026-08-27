@@ -38,7 +38,7 @@ describe("official muted background", () => {
   it("builds a muted Twitch player URL for the page host", () => {
     assert.equal(
       mutedBroadcastSrc({ provider: "twitch", id: "lck" }, "127.0.0.1"),
-      "https://player.twitch.tv/?channel=lck&parent=127.0.0.1&autoplay=true&muted=true",
+      "https://player.twitch.tv/?channel=lck&parent=127.0.0.1&parent=localhost&autoplay=true&muted=true",
     );
   });
 });

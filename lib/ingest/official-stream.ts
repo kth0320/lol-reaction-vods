@@ -67,8 +67,11 @@ export function mutedBroadcastSrc(broadcast: BackgroundBroadcast, parentHost: st
   }
   if (broadcast.provider === "twitch") {
     const channel = encodeURIComponent(broadcast.id);
-    const parent = encodeURIComponent(parentHost);
-    return `https://player.twitch.tv/?channel=${channel}&parent=${parent}&autoplay=true&muted=true`;
+    const parents = [...new Set([parentHost, "localhost", "127.0.0.1"])]
+      .filter(Boolean)
+      .map((host) => `parent=${encodeURIComponent(host)}`)
+      .join("&");
+    return `https://player.twitch.tv/?channel=${channel}&${parents}&autoplay=true&muted=true`;
   }
   return `https://play.sooplive.com/${encodeURIComponent(broadcast.id)}/embed`;
 }
