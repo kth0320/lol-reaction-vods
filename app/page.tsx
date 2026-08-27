@@ -1,3 +1,4 @@
+import { VodHubGrid } from "@/components/vod-hub";
 import { LiveCarousel } from "@/components/live-carousel";
 import type { LiveSlide } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
@@ -7,7 +8,7 @@ import { SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import { PROTOTYPE_LIVE_LEAGUES, isLeague, isPrototypeLiveLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
+import { countReactionsByHub } from "@/lib/vod-hub";
 import { after } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -25,13 +26,8 @@ export default async function HomePage() {
       orderBy: { startsAt: "asc" },
     }),
     prisma.match.findMany({
-      where: { status: "ended", source: "seed" },
-      include: {
-        blueTeam: true,
-        redTeam: true,
-        _count: { select: { reactions: true } },
-      },
-      orderBy: { startsAt: "desc" },
+      where: { status: "ended" },
+      select: { tournament: true, _count: { select: { reactions: true } } },
     }),
   ]);
 
@@ -57,12 +53,15 @@ export default async function HomePage() {
     redImageUrl: match.redTeam.imageUrl,
     broadcast: broadcasts[index],
   }));
+  const vodCounts = countReactionsByHub(
+    vodRows.map((row) => ({ tournament: row.tournament, reactionCount: row._count.reactions })),
+  );
 
   return (
     <main>
       <p className="page-lead">
         위 카드는 LCK·LEC 공식 일정입니다. 배경은 공식 중계 음소거 프리뷰이고, 카드를 누르면 그 경기를 중계 중인
-        방송인이 나옵니다. 아래는 지난 경기 리액션입니다.
+        방송인이 나옵니다. 아래 대회 카드를 누르면 그 대회 다시보기입니다.
       </p>
       {slides.length === 0 ? (
         <p className="empty">지금은 생중계 중인 LCK · LEC 경기가 없습니다.</p>
@@ -71,34 +70,8 @@ export default async function HomePage() {
       )}
       <section className="vod-section">
         <h2 className="section-title">다시보기</h2>
-        {vodRows.length === 0 ? (
-          <p className="empty">등록된 다시보기가 없습니다. `npx prisma db seed`를 실행하세요.</p>
-        ) : (
-          <div className="match-list">
-            {vodRows.map((match) => (
-              <Link key={match.id} href={`/matches/${match.id}`} className="match-card">
-                <div className="match-meta">
-                  <span>
-                    {match.tournament} {match.split}
-                  </span>
-                  <span>BO{match.bestOf}</span>
-                  <span>{formatKst(match.startsAt)}</span>
-                </div>
-                <div className="match-teams">
-                  <p className="team-name">{match.blueTeam.abbr}</p>
-                  <span className="vs">VS</span>
-                  <p className="team-name right">{match.redTeam.abbr}</p>
-                </div>
-                <div className="match-meta">
-                  <span>
-                    {match.blueTeam.name} vs {match.redTeam.name}
-                  </span>
-                  <span className="reaction-count">리액션 {match._count.reactions}개</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        <p className="section-note">대회를 고르면 그 경기를 중계한 스트리머·BJ 다시보기가 나옵니다.</p>
+        <VodHubGrid counts={vodCounts} />
       </section>
     </main>
   );
