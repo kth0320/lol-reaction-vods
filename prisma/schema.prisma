@@ -30,20 +30,21 @@ model TeamAlias {
 }
 
 model Match {
-  id             String          @id
-  tournament     String
-  split          String
-  bestOf         Int
-  status         String          @default("ended")
-  startsAt       DateTime
-  blueTeamId     String
-  redTeamId      String
-  blueTeam       Team            @relation("BlueTeam", fields: [blueTeamId], references: [id])
-  redTeam        Team            @relation("RedTeam", fields: [redTeamId], references: [id])
-  reactions      ReactionVod[]
-  liveCasts      LiveCast[]
-  liveCandidates LiveCandidate[]
-  source         String          @default("seed")
+  id               String          @id
+  tournament       String
+  split            String
+  bestOf           Int
+  status           String          @default("ended")
+  startsAt         DateTime
+  blueTeamId       String
+  redTeamId        String
+  blueTeam         Team            @relation("BlueTeam", fields: [blueTeamId], references: [id])
+  redTeam          Team            @relation("RedTeam", fields: [redTeamId], references: [id])
+  reactions        ReactionVod[]
+  liveCasts        LiveCast[]
+  liveCandidates   LiveCandidate[]
+  source           String          @default("seed")
+  externalEventId  String?         @unique
 }
 
 model Creator {

@@ -43,10 +43,10 @@
   },
   {
     "id": "drx",
-    "name": "DRX",
+    "name": "KIWOOM DRX",
     "abbr": "DRX",
     "league": "LCK",
-    "aliases": ["DRX"]
+    "aliases": ["DRX", "KRX", "KIWOOM"]
   },
   {
     "id": "ns",
@@ -64,10 +64,10 @@
   },
   {
     "id": "dnf",
-    "name": "DN Freecs",
-    "abbr": "DNF",
+    "name": "DN SOOPers",
+    "abbr": "DNS",
     "league": "LCK",
-    "aliases": ["DNF", "Freecs", "디엔", "광동"]
+    "aliases": ["DNS", "DNF", "Freecs", "SOOPers", "디엔", "광동"]
   },
   {
     "id": "jdg",
@@ -117,5 +117,40 @@
     "abbr": "SK",
     "league": "LEC",
     "aliases": ["SK Gaming"]
+  },
+  {
+    "id": "th",
+    "name": "Team Heretics",
+    "abbr": "TH",
+    "league": "LEC",
+    "aliases": ["TH", "Heretics"]
+  },
+  {
+    "id": "vit",
+    "name": "Team Vitality",
+    "abbr": "VIT",
+    "league": "LEC",
+    "aliases": ["VIT", "Vitality"]
+  },
+  {
+    "id": "gx",
+    "name": "GIANTX",
+    "abbr": "GX",
+    "league": "LEC",
+    "aliases": ["GX", "GiantX", "GIANTX"]
+  },
+  {
+    "id": "navi",
+    "name": "Natus Vincere",
+    "abbr": "NAVI",
+    "league": "LEC",
+    "aliases": ["NAVI", "NaVi"]
+  },
+  {
+    "id": "shft",
+    "name": "Shifters",
+    "abbr": "SHFT",
+    "league": "LEC",
+    "aliases": ["SHFT", "Shifters"]
   }
 ]

@@ -58,7 +58,7 @@ export function LiveCarousel({ slides }: { slides: LiveSlide[] }) {
     <section className="live-hub">
       <div className="live-hub-head">
         <h2 className="section-title">지금 생중계</h2>
-        <p className="section-note">카드를 누르면 그 경기를 중계 중인 방송인이 나옵니다. LCK·LEC만 돌리고, 5초마다 바뀝니다.</p>
+        <p className="section-note">공식 LCK·LEC 일정 카드입니다. 누르면 그 경기를 중계 중인 방송인이 나옵니다. 5초마다 바뀝니다.</p>
       </div>
       <div className="league-tabs" role="tablist" aria-label="리그">
         {PROTOTYPE_LIVE_LEAGUES.map((league) => {
