@@ -1,7 +1,10 @@
 import { LiveCarousel } from "@/components/live-carousel";
 import type { LiveSlide } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
+import { backgroundForEvent } from "@/lib/ingest/official-stream";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
+import { SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
+import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import { PROTOTYPE_LIVE_LEAGUES, isLeague, isPrototypeLiveLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -10,14 +13,16 @@ import { after } from "next/server";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  await syncOfficialScheduleIfStale();
   after(() => {
     void refreshLiveCandidatesInBackground();
   });
 
-  const [ingestLive, vodRows] = await Promise.all([
+  const [scheduleLive, vodRows] = await Promise.all([
     prisma.match.findMany({
-      where: { status: "live", source: "ingest", tournament: { in: [...PROTOTYPE_LIVE_LEAGUES] } },
+      where: { status: "live", source: SCHEDULE_MATCH_SOURCE, tournament: { in: [...PROTOTYPE_LIVE_LEAGUES] } },
       include: { blueTeam: true, redTeam: true },
+      orderBy: { startsAt: "asc" },
     }),
     prisma.match.findMany({
       where: { status: "ended", source: "seed" },
@@ -30,29 +35,34 @@ export default async function HomePage() {
     }),
   ]);
 
-  const liveRows = ingestLive;
-
-  const slides: LiveSlide[] = sortLiveMatchesByLeague(liveRows)
-    .filter((match): match is typeof match & { tournament: LiveSlide["tournament"] } =>
+  const liveRows = sortLiveMatchesByLeague(scheduleLive).filter(
+    (match): match is typeof match & { tournament: LiveSlide["tournament"] } =>
       isLeague(match.tournament) && isPrototypeLiveLeague(match.tournament),
-    )
-    .map((match) => ({
-      id: match.id,
-      tournament: match.tournament,
-      split: match.split,
-      bestOf: match.bestOf,
-      startsAtLabel: formatKst(match.startsAt),
-      blueAbbr: match.blueTeam.abbr,
-      blueName: match.blueTeam.name,
-      redAbbr: match.redTeam.abbr,
-      redName: match.redTeam.name,
-    }));
+  );
+  const broadcasts = await Promise.all(
+    liveRows.map((match) => (match.externalEventId ? backgroundForEvent(match.externalEventId) : Promise.resolve(null))),
+  );
+
+  const slides: LiveSlide[] = liveRows.map((match, index) => ({
+    id: match.id,
+    tournament: match.tournament,
+    split: match.split,
+    bestOf: match.bestOf,
+    startsAtLabel: formatKst(match.startsAt),
+    blueAbbr: match.blueTeam.abbr,
+    blueName: match.blueTeam.name,
+    blueImageUrl: match.blueTeam.imageUrl,
+    redAbbr: match.redTeam.abbr,
+    redName: match.redTeam.name,
+    redImageUrl: match.redTeam.imageUrl,
+    broadcast: broadcasts[index],
+  }));
 
   return (
     <main>
       <p className="page-lead">
-        공식 중계가 아니라 방송인 라이브·다시보기입니다. 위 카드는 화이트리스트가 지금 켠 제목에서 경기를 읽습니다.
-        아래는 지난 경기 리액션입니다.
+        위 카드는 LCK·LEC 공식 일정입니다. 배경은 공식 중계 음소거 프리뷰이고, 카드를 누르면 그 경기를 중계 중인
+        방송인이 나옵니다. 아래는 지난 경기 리액션입니다.
       </p>
       {slides.length === 0 ? (
         <p className="empty">지금은 생중계 중인 LCK · LEC 경기가 없습니다.</p>

@@ -14,6 +14,17 @@ export function isPrototypeLiveLeague(value: string): value is PrototypeLiveLeag
   return (PROTOTYPE_LIVE_LEAGUES as readonly string[]).includes(value);
 }
 
+export const LEAGUE_SLUG: Record<League, string> = {
+  LCK: "lck",
+  LPL: "lpl",
+  LEC: "lec",
+};
+
+export function leagueFromSlug(slug: string): League | null {
+  const upper = slug.trim().toUpperCase();
+  return isLeague(upper) ? upper : null;
+}
+
 export function sortLiveMatchesByLeague<T extends { tournament: string }>(matches: T[]): T[] {
   return LEAGUES.flatMap((league) => matches.filter((match) => match.tournament === league));
 }

@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { MutedBroadcast } from "@/components/muted-broadcast";
+import type { BackgroundBroadcast } from "@/lib/ingest/official-stream";
 import type { League } from "@/lib/leagues";
 
 export type LiveSlide = {
@@ -9,44 +13,61 @@ export type LiveSlide = {
   startsAtLabel: string;
   blueAbbr: string;
   blueName: string;
+  blueImageUrl?: string;
   redAbbr: string;
   redName: string;
+  redImageUrl?: string;
+  broadcast?: BackgroundBroadcast | null;
 };
 
+function TeamRow({
+  abbr,
+  name,
+  imageUrl,
+}: {
+  abbr: string;
+  name: string;
+  imageUrl?: string;
+}) {
+  return (
+    <div className="vs-team-row">
+      {imageUrl ? <img className="vs-logo" src={imageUrl} alt="" /> : <span className="vs-logo vs-logo-empty" />}
+      <div>
+        <p className="vs-abbr">{abbr}</p>
+        <p className="vs-full">{name}</p>
+      </div>
+    </div>
+  );
+}
+
 export function VsCard({ slide, href }: { slide: LiveSlide; href?: string }) {
-  const inner = (
+  const className = `vs-card league-${slide.tournament.toLowerCase()}${slide.broadcast ? " has-broadcast" : ""}`;
+  const overlay = (
     <>
       <div className="vs-card-top">
-        <span className="live-dot">LIVE</span>
-        <span>{slide.tournament} 지금 생중계</span>
+        <span className="live-dot">생중계</span>
       </div>
-      <div className="vs-card-body">
-        <div>
-          <p className="vs-abbr">{slide.blueAbbr}</p>
-          <p className="vs-full">{slide.blueName}</p>
-        </div>
-        <div className="vs-mid">
-          <span className="vs">VS</span>
-          <span>
-            {slide.tournament} {slide.split} · BO{slide.bestOf}
-          </span>
-        </div>
-        <div className="vs-right">
-          <p className="vs-abbr">{slide.redAbbr}</p>
-          <p className="vs-full">{slide.redName}</p>
-        </div>
+      <div className="vs-teams-stack">
+        <TeamRow abbr={slide.blueAbbr} name={slide.blueName} imageUrl={slide.blueImageUrl} />
+        <TeamRow abbr={slide.redAbbr} name={slide.redName} imageUrl={slide.redImageUrl} />
       </div>
-      <p className="vs-time">{slide.startsAtLabel}</p>
+      <p className="vs-meta">
+        {slide.tournament} · {slide.split} · BO{slide.bestOf}
+        <span className="vs-time">{slide.startsAtLabel}</span>
+      </p>
     </>
   );
 
-  if (!href) {
-    return <div className={`vs-card league-${slide.tournament.toLowerCase()}`}>{inner}</div>;
-  }
-
   return (
-    <Link href={href} className={`vs-card league-${slide.tournament.toLowerCase()}`}>
-      {inner}
-    </Link>
+    <div className={className}>
+      {href ? (
+        <Link href={href} className="vs-card-overlay">
+          {overlay}
+        </Link>
+      ) : (
+        <div className="vs-card-overlay">{overlay}</div>
+      )}
+      {slide.broadcast ? <MutedBroadcast broadcast={slide.broadcast} /> : null}
+    </div>
   );
 }
