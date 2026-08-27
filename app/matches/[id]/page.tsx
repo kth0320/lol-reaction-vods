@@ -81,8 +81,10 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
             startsAtLabel: formatKst(match.startsAt),
             blueAbbr: match.blueTeam.abbr,
             blueName: match.blueTeam.name,
+            blueImageUrl: match.blueTeam.imageUrl,
             redAbbr: match.redTeam.abbr,
             redName: match.redTeam.name,
+            redImageUrl: match.redTeam.imageUrl,
           }}
         />
       ) : (

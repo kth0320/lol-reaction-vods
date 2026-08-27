@@ -438,6 +438,18 @@ a {
   align-items: center;
 }
 
+.vs-logo {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 0 16px;
+  object-fit: contain;
+}
+
+.vs-right .vs-logo {
+  margin-left: auto;
+}
+
 .vs-abbr {
   margin: 0;
   font-size: clamp(42px, 8vw, 72px);
@@ -494,6 +506,12 @@ a {
     min-height: 360px;
     height: 360px;
     padding: 24px 20px 20px;
+  }
+
+  .vs-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 10px;
   }
 }
 

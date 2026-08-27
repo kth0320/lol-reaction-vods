@@ -25,7 +25,16 @@ export type LolesportsLeague = {
 export type LolesportsScheduleTeam = {
   code: string;
   name: string;
+  imageUrl: string;
 };
+
+export function httpsAssetUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (trimmed.startsWith("http://")) return `https://${trimmed.slice("http://".length)}`;
+  return trimmed;
+}
 
 export type LolesportsScheduleEvent = {
   startTime: string;
@@ -96,6 +105,7 @@ function parseTeams(value: unknown): LolesportsScheduleTeam[] {
     teams.push({
       code: text(row?.code),
       name: text(row?.name),
+      imageUrl: httpsAssetUrl(text(row?.image)),
     });
   }
   return teams;

@@ -23,6 +23,8 @@ export type OfficialScheduleMatch = {
   startsAt: Date;
   blueTeamId: string;
   redTeamId: string;
+  blueImageUrl: string;
+  redImageUrl: string;
 };
 
 /** API codes that drifted from our stable team ids / abbreviations. */
@@ -106,6 +108,8 @@ export function mapScheduleEvent(
     startsAt,
     blueTeamId,
     redTeamId,
+    blueImageUrl: event.teams[0].imageUrl,
+    redImageUrl: event.teams[1].imageUrl,
   };
 }
 

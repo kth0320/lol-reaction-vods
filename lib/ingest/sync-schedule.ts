@@ -69,6 +69,15 @@ export async function syncOfficialSchedule(options: { now?: Date; fetchImpl?: ty
     });
   }
 
+  const logos = new Map<string, string>();
+  for (const match of mapped) {
+    if (match.blueImageUrl) logos.set(match.blueTeamId, match.blueImageUrl);
+    if (match.redImageUrl) logos.set(match.redTeamId, match.redImageUrl);
+  }
+  for (const [id, imageUrl] of logos) {
+    await prisma.team.update({ where: { id }, data: { imageUrl } });
+  }
+
   const keepIds = persist.map((match) => match.id);
   await prisma.match.updateMany({
     where: {

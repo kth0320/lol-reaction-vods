@@ -18,6 +18,7 @@ model Team {
   defaultCreators       Creator[]       @relation("CreatorDefaultTeam")
   supportedCandidates   LiveCandidate[] @relation("CandidateSupportedTeam")
   league                String          @default("")
+  imageUrl              String          @default("")
 }
 
 model TeamAlias {

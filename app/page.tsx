@@ -48,8 +48,10 @@ export default async function HomePage() {
       startsAtLabel: formatKst(match.startsAt),
       blueAbbr: match.blueTeam.abbr,
       blueName: match.blueTeam.name,
+      blueImageUrl: match.blueTeam.imageUrl,
       redAbbr: match.redTeam.abbr,
       redName: match.redTeam.name,
+      redImageUrl: match.redTeam.imageUrl,
     }));
 
   return (
