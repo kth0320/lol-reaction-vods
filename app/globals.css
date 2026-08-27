@@ -305,6 +305,74 @@ a {
   margin: 0 0 16px;
 }
 
+.vod-section {
+  margin-top: 8px;
+}
+
+.vod-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vod-hub-row {
+  display: grid;
+  gap: 12px;
+}
+
+.vod-hub-row.international {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vod-hub-row.leagues {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vod-hub-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 108px;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  color: inherit;
+}
+
+.vod-hub-card:hover {
+  border-color: var(--gold);
+}
+
+.vod-hub-label {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.vod-hub-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 800px) {
+  .vod-hub-row.international,
+  .vod-hub-row.leagues {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .vod-hub-row.international,
+  .vod-hub-row.leagues {
+    grid-template-columns: 1fr;
+  }
+}
+
 .live-hub {
   margin-bottom: 40px;
 }
