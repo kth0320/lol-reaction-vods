@@ -383,7 +383,8 @@ a {
 
 .vs-card {
   position: relative;
-  display: block;
+  display: grid;
+  grid-template-columns: 1fr;
   overflow: hidden;
   box-sizing: border-box;
   min-height: 420px;
@@ -392,6 +393,10 @@ a {
   border-radius: 24px;
   background: var(--bg-elevated);
   color: inherit;
+}
+
+.vs-card.has-broadcast {
+  grid-template-columns: minmax(240px, 34%) 1fr;
 }
 
 .vs-card.league-lck {
@@ -413,10 +418,10 @@ a {
 }
 
 .vs-card-media {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  min-width: 0;
   overflow: hidden;
-  pointer-events: none;
+  background: #000;
 }
 
 .vs-card-media iframe {
@@ -435,8 +440,9 @@ a {
   justify-content: space-between;
   box-sizing: border-box;
   height: 100%;
-  padding: 28px 32px;
-  background: linear-gradient(90deg, rgba(8, 10, 14, 0.88) 0%, rgba(8, 10, 14, 0.45) 42%, rgba(8, 10, 14, 0.12) 72%);
+  padding: 28px 28px 24px;
+  background: #0c0f16;
+  color: inherit;
 }
 
 .vs-card-top {
@@ -527,13 +533,20 @@ a {
 }
 
 @media (max-width: 720px) {
-  .vs-card {
-    min-height: 320px;
-    height: 320px;
+  .vs-card,
+  .vs-card.has-broadcast {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    height: auto;
   }
 
   .vs-card-overlay {
     padding: 20px 18px;
+    min-height: 220px;
+  }
+
+  .vs-card-media {
+    height: 220px;
   }
 
   .vs-logo {

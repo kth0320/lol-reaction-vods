@@ -41,32 +41,33 @@ function TeamRow({
 }
 
 export function VsCard({ slide, href }: { slide: LiveSlide; href?: string }) {
-  const inner = (
+  const className = `vs-card league-${slide.tournament.toLowerCase()}${slide.broadcast ? " has-broadcast" : ""}`;
+  const overlay = (
     <>
-      {slide.broadcast ? <MutedBroadcast broadcast={slide.broadcast} /> : null}
-      <div className="vs-card-overlay">
-        <div className="vs-card-top">
-          <span className="live-dot">생중계</span>
-        </div>
-        <div className="vs-teams-stack">
-          <TeamRow abbr={slide.blueAbbr} name={slide.blueName} imageUrl={slide.blueImageUrl} />
-          <TeamRow abbr={slide.redAbbr} name={slide.redName} imageUrl={slide.redImageUrl} />
-        </div>
-        <p className="vs-meta">
-          {slide.tournament} · {slide.split} · BO{slide.bestOf}
-          <span className="vs-time">{slide.startsAtLabel}</span>
-        </p>
+      <div className="vs-card-top">
+        <span className="live-dot">생중계</span>
       </div>
+      <div className="vs-teams-stack">
+        <TeamRow abbr={slide.blueAbbr} name={slide.blueName} imageUrl={slide.blueImageUrl} />
+        <TeamRow abbr={slide.redAbbr} name={slide.redName} imageUrl={slide.redImageUrl} />
+      </div>
+      <p className="vs-meta">
+        {slide.tournament} · {slide.split} · BO{slide.bestOf}
+        <span className="vs-time">{slide.startsAtLabel}</span>
+      </p>
     </>
   );
 
-  if (!href) {
-    return <div className={`vs-card league-${slide.tournament.toLowerCase()}`}>{inner}</div>;
-  }
-
   return (
-    <Link href={href} className={`vs-card league-${slide.tournament.toLowerCase()}`}>
-      {inner}
-    </Link>
+    <div className={className}>
+      {href ? (
+        <Link href={href} className="vs-card-overlay">
+          {overlay}
+        </Link>
+      ) : (
+        <div className="vs-card-overlay">{overlay}</div>
+      )}
+      {slide.broadcast ? <MutedBroadcast broadcast={slide.broadcast} /> : null}
+    </div>
   );
 }
