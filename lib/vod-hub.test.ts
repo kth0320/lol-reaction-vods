@@ -8,6 +8,7 @@ import {
   matchTournamentToHub,
   vodHubMatchWhere,
   vodHubSearchExample,
+  vodAttachTournaments,
 } from "./vod-hub";
 
 describe("vod hub", () => {
@@ -59,5 +60,11 @@ describe("vod hub", () => {
     assert.equal(counts.lec, 2);
     assert.equal(counts.worlds, 0);
     assert.equal(counts.lpl, 0);
+  });
+
+  it("lists every hub tournament so VOD attach is not limited to LCK/LEC", () => {
+    assert.ok(vodAttachTournaments().includes("LPL"));
+    assert.ok(vodAttachTournaments().includes("Worlds"));
+    assert.ok(vodAttachTournaments().includes("EWC"));
   });
 });

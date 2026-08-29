@@ -1,52 +1,70 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { filterVodMatches, vodMatchHaystack } from "./vod-search";
+import { filterVodMatches, teamFieldMatchesQuery } from "./vod-search";
+
+const ktBro = {
+  id: "kt-bro",
+  blue: { abbr: "KT", name: "KT Rolster", aliases: ["KT", "케이티"] },
+  red: { abbr: "BRO", name: "BRION", aliases: ["BRO", "브리온"] },
+};
+
+const t1Hle = {
+  id: "t1-hle",
+  blue: { abbr: "T1", name: "T1", aliases: ["T1", "티원", "SKT"] },
+  red: { abbr: "HLE", name: "Hanwha Life Esports", aliases: ["HLE", "한화"] },
+};
 
 describe("vod match search", () => {
-  const rows = [
-    {
-      id: "kt-bro",
-      haystack: vodMatchHaystack(["LCK", "KT", "KT Rolster", "케이티", "BRO", "OKSavingsBank BRION"]),
-    },
-    {
-      id: "t1-hle",
-      haystack: vodMatchHaystack(["LCK", "T1", "티원", "HLE", "한화"]),
-    },
-  ];
-
-  it("returns every match when the query is empty", () => {
+  it("does not treat KT as a substring of T1's old SKT alias", () => {
+    assert.equal(teamFieldMatchesQuery("SKT", "KT"), false);
+    assert.equal(teamFieldMatchesQuery("KT", "KT"), true);
     assert.deepEqual(
-      filterVodMatches(rows, "  ").map((row) => row.id),
+      filterVodMatches([ktBro, t1Hle], "KT").map((row) => row.id),
+      ["kt-bro"],
+    );
+  });
+
+  it("finds KT by Korean alias and ignores unrelated T1 matches", () => {
+    assert.deepEqual(
+      filterVodMatches([ktBro, t1Hle], "케이티").map((row) => row.id),
+      ["kt-bro"],
+    );
+  });
+
+  it("returns every match when the query is empty or a single letter", () => {
+    assert.deepEqual(
+      filterVodMatches([ktBro, t1Hle], "  ").map((row) => row.id),
+      ["kt-bro", "t1-hle"],
+    );
+    assert.deepEqual(
+      filterVodMatches([ktBro, t1Hle], "K").map((row) => row.id),
       ["kt-bro", "t1-hle"],
     );
   });
 
-  it("finds KT by abbr or Korean alias", () => {
+  it("requires every token to match a team in the series", () => {
     assert.deepEqual(
-      filterVodMatches(rows, "KT").map((row) => row.id),
-      ["kt-bro"],
-    );
-    assert.deepEqual(
-      filterVodMatches(rows, "케이티").map((row) => row.id),
-      ["kt-bro"],
-    );
-  });
-
-  it("requires every token to match", () => {
-    assert.deepEqual(
-      filterVodMatches(rows, "kt t1").map((row) => row.id),
+      filterVodMatches([ktBro, t1Hle], "kt t1").map((row) => row.id),
       [],
     );
     assert.deepEqual(
-      filterVodMatches(rows, "t1 한화").map((row) => row.id),
+      filterVodMatches([ktBro, t1Hle], "t1 한화").map((row) => row.id),
       ["t1-hle"],
     );
   });
 
   it("filters LEC teams the same way as LCK", () => {
     const lec = [
-      { id: "g2-fnc", haystack: vodMatchHaystack(["LEC", "G2", "G2 Esports", "FNC", "Fnatic"]) },
-      { id: "kc-vit", haystack: vodMatchHaystack(["LEC", "KC", "Karmine Corp", "VIT", "Team Vitality"]) },
+      {
+        id: "g2-fnc",
+        blue: { abbr: "G2", name: "G2 Esports", aliases: ["G2"] },
+        red: { abbr: "FNC", name: "Fnatic", aliases: ["FNC"] },
+      },
+      {
+        id: "kc-vit",
+        blue: { abbr: "KC", name: "Karmine Corp", aliases: ["KC"] },
+        red: { abbr: "VIT", name: "Team Vitality", aliases: ["VIT"] },
+      },
     ];
     assert.deepEqual(
       filterVodMatches(lec, "G2").map((row) => row.id),

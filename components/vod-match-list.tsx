@@ -15,7 +15,8 @@ export type VodMatchRow = {
   redAbbr: string;
   redName: string;
   reactionCount: number;
-  haystack: string;
+  blue: { abbr: string; name: string; aliases: string[] };
+  red: { abbr: string; name: string; aliases: string[] };
 };
 
 export function VodMatchList({

@@ -2,11 +2,11 @@ import { fetchPrototypeSchedules } from "@/lib/ingest/lolesports";
 import {
   SCHEDULE_MATCH_SOURCE,
   mapScheduleEvents,
-  prototypeLeagueSlugs,
+  vodHubScheduleSlugs,
   type OfficialScheduleMatch,
   type ScheduleTeam,
 } from "@/lib/ingest/schedule-map";
-import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
+import { ensureScheduleTeams, ensureTeamCatalog } from "@/lib/ingest/team-catalog";
 import { prisma } from "@/lib/prisma";
 
 export const SCHEDULE_FRESH_MS = 120_000;
@@ -36,11 +36,18 @@ export async function syncOfficialSchedule(options: { now?: Date; fetchImpl?: ty
   const inferTeams = await ensureTeamCatalog();
   const stored = await prisma.team.findMany({ select: { id: true, abbr: true, name: true } });
   const teams = catalogToScheduleTeams(inferTeams, stored);
-  const events = await fetchPrototypeSchedules(prototypeLeagueSlugs(), options.fetchImpl ?? fetch);
+  const events = await fetchPrototypeSchedules(vodHubScheduleSlugs(), options.fetchImpl ?? fetch);
   const mapped = mapScheduleEvents(events, teams, options.now ?? new Date());
 
   const persist = mapped.filter(
     (match) => match.status === "live" || match.status === "upcoming" || match.status === "ended",
+  );
+
+  await ensureScheduleTeams(
+    persist.flatMap((match) => [
+      { id: match.blueTeamId, abbr: match.blueAbbr, name: match.blueName, league: match.league },
+      { id: match.redTeamId, abbr: match.redAbbr, name: match.redName, league: match.league },
+    ]),
   );
 
   for (const match of persist) {

@@ -1,4 +1,6 @@
-import { isPrototypeLiveLeague } from "@/lib/leagues";
+import { titleMentionsTournament } from "@/lib/ingest/tournament-title";
+import { matchTournamentToHub } from "@/lib/vod-hub";
+import { teamFieldMatchesQuery } from "@/lib/vod-search";
 
 export type TitleMatchInput = {
   id: string;
@@ -7,25 +9,16 @@ export type TitleMatchInput = {
   redAliases: string[];
 };
 
-const LEAGUE_PATTERNS: Record<string, RegExp> = {
-  LCK: /\blck\b|#lck/i,
-  LPL: /\blpl\b|#lpl/i,
-  LEC: /\blec\b|#lec|#watchlec/i,
-};
-
 export function titleMentionsLeague(title: string, league: string): boolean {
-  const pattern = LEAGUE_PATTERNS[league];
-  return pattern ? pattern.test(title) : false;
+  return titleMentionsTournament(title, league);
 }
 
 export function aliasInTitle(title: string, alias: string): boolean {
-  const needle = alias.trim();
-  if (needle.length < 2) return false;
-  return title.toLowerCase().includes(needle.toLowerCase());
+  return teamFieldMatchesQuery(title, alias);
 }
 
 export function scoreTitleForMatch(title: string, match: TitleMatchInput): number {
-  if (!isPrototypeLiveLeague(match.tournament)) return 0;
+  if (!matchTournamentToHub(match.tournament)) return 0;
   if (titleMentionsLeague(title, "LPL") && !titleMentionsLeague(title, match.tournament)) return 0;
 
   let score = 0;

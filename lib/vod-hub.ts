@@ -61,6 +61,10 @@ export function hubMatchTournaments(hubId: VodHubId): string[] {
   return ["First Stand", "FIRST_STAND"];
 }
 
+export function vodAttachTournaments(): string[] {
+  return VOD_HUB_CARDS.flatMap((card) => hubMatchTournaments(card.id));
+}
+
 export function vodHubMatchWhere(hubId: VodHubId) {
   return {
     status: "ended",

@@ -4,7 +4,6 @@ import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import { prisma } from "@/lib/prisma";
 import { isVodHubId, vodHubCard, vodHubMatchWhere, vodHubSearchExample } from "@/lib/vod-hub";
-import { vodMatchHaystack } from "@/lib/vod-search";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
@@ -47,16 +46,16 @@ export default async function VodHubPage({ params }: { params: Promise<{ tournam
     redAbbr: match.redTeam.abbr,
     redName: match.redTeam.name,
     reactionCount: match._count.reactions,
-    haystack: vodMatchHaystack([
-      match.tournament,
-      match.split,
-      match.blueTeam.abbr,
-      match.blueTeam.name,
-      match.redTeam.abbr,
-      match.redTeam.name,
-      ...match.blueTeam.aliases.map((row) => row.alias),
-      ...match.redTeam.aliases.map((row) => row.alias),
-    ]),
+    blue: {
+      abbr: match.blueTeam.abbr,
+      name: match.blueTeam.name,
+      aliases: match.blueTeam.aliases.map((row) => row.alias),
+    },
+    red: {
+      abbr: match.redTeam.abbr,
+      name: match.redTeam.name,
+      aliases: match.redTeam.aliases.map((row) => row.alias),
+    },
   }));
 
   return (
