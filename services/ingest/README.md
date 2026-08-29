@@ -11,6 +11,6 @@
 
 **프로토타입 범위:** 리그 **LCK · LEC**. LPL은 홈에 안 올림. 플랫폼 **치지직 · 숲 · Twitch 라이브**. 대회 중계를 자주 하는 채널만 수동 화이트리스트. 채널 ID는 `data/creators/channels.json`.
 
-홈 vs 카드는 **lolesports 공식 일정**(`getLeagues` slug 조회 후 `getSchedule`). 방송 제목은 공식 경기에 중계진을 붙이는 보조 매칭이다. 공개 사이트 키는 lolesports.com이 쓰는 값이며 비밀이 아니다. YouTube 수집 · Twitch 다시보기는 이후.
+홈 vs 카드는 **lolesports 공식 일정**(`getLeagues` slug 조회 후 `getSchedule`). 방송 제목은 공식 경기에 중계진을 붙이는 보조 매칭이다. 공개 사이트 키는 lolesports.com이 쓰는 값이며 비밀이 아니다. YouTube 다시보기는 이후. Twitch 원본 VOD는 가져오지 않는다.
 
 `npm run ingest:schedule` 로 일정만 맞출 수 있다.

@@ -20,7 +20,7 @@ Phase 1 UI의 홈 vs 카드는 시드 대신 **LCK·LEC 공식 일정**입니다
 
 - 화이트리스트: 대회 중계를 자주 하는 채널만 **수동** 등록. LCK 국내 + LEC 해외 Twitch
 - 홈에서 켜는 리그: **LCK · LEC**. LPL은 카드를 만들지 않음
-- 플랫폼: **치지직 · 숲 · Twitch 라이브**(원본 링크). YouTube 수집과 Twitch 다시보기는 이후
+- 플랫폼: **치지직 · 숲 · Twitch 라이브**(원본 링크). YouTube 다시보기는 이후. Twitch 원본 VOD는 가져오지 않음
 - **홈 vs 카드: lolesports 공식 일정.** `inProgress`와 시작 90분 전~시리즈 예상 시간 안의 `unstarted`. TBD 슬롯은 건너뜀. 리그 ID는 slug로 조회하고 하드코딩하지 않음
 - 제목 추론은 **보조**. 화이트리스트 라이브 제목의 리그·두 팀을 공식 경기에 매칭해 `LiveCandidate.matchId`만 붙인다. ingest 경기를 만들어 홈에 올리지 않음
 - 파이프라인: `getLeagues` → `getSchedule` → `Match(source=schedule)` → 채널 조회 → `LiveCandidate`
@@ -42,9 +42,9 @@ LCK     LPL   LEC
 
 | 이후 | 내용 |
 | --- | --- |
-| YouTube | 다시보기 수집. Phase 3 대회 카드에 실제 목록을 채움 |
+| YouTube | 다시보기 수집. Phase 3 대회 카드에 실제 목록을 채움. Twitch 중계 방송인도 YouTube만 |
 | LPL 라이브 | 홈 상단 탭·일정. 다시보기 LPL 카드는 이미 허브에 있음 |
-| Twitch VOD | 다시보기 (휘발 때문에 후순위) |
+| Twitch 원본 VOD | 하지 않음. 휘발. 그 방송인 다시보기는 YouTube |
 | 보정 | `apps/ops` 관리 화면 |
 | 그래픽 | 리그 공식 vs 이미지 연동 |
 | 재생 | 치지직 인페이지 임베드(후순위), Twitch(후순위) |
