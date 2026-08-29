@@ -1,8 +1,11 @@
 import { formatKst } from "@/lib/format";
+import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
+import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import { prisma } from "@/lib/prisma";
 import { isVodHubId, vodHubCard, vodHubMatchWhere } from "@/lib/vod-hub";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +18,11 @@ export default async function VodHubPage({ params }: { params: Promise<{ tournam
   if (!card) {
     notFound();
   }
+
+  await syncOfficialScheduleIfStale();
+  after(() => {
+    void refreshVodsInBackground();
+  });
 
   const matches = await prisma.match.findMany({
     where: vodHubMatchWhere(tournament),

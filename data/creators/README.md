@@ -11,7 +11,8 @@
 
 - 치지직: 운타라, 울프, 강퀴, 탬탬버린, 베릴, 와디드
 - 숲: 김민교, 롱다리코치, 훈수킹, 아뚱, 클리드, 이상호, 김군, 안녕수야
-- Twitch: Caedrel, Jankos, YamatoCannon, Kameto, Ibai, Obsess
+- Twitch: Caedrel, Jankos, YamatoCannon, Kameto, Ibai, Obsess. 라이브는 Twitch, 다시보기는 각 채널 YouTube. Twitch 원본 VOD는 안 가져온다. Kameto는 대회 YouTube 채널을 아직 안 넣었다.
+- YouTube: 울프, Caedrel, IbaiExtra, YamatoCannon, Jankos, Obsess3. RSS로 최근 업로드만 본다.
 
 팀 코스트리머 기본 응원: 운타라 → T1, 안녕수야 → GEN, 와디드·Jankos → G2, Kameto → KC, Ibai → KOI, Obsess → FNC, YamatoCannon → SK.
 Caedrel은 Los Ratones가 있어도 LEC 풀 슬레이트라 기본 응원 팀을 비운다.

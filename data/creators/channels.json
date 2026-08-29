@@ -154,5 +154,41 @@
     "platform": "twitch",
     "channelId": "obsess3",
     "url": "https://www.twitch.tv/obsess3"
+  },
+  {
+    "creatorId": "wolf",
+    "platform": "youtube",
+    "channelId": "UCYJ0Ucu9jPX5kn6SeDcNaIQ",
+    "url": "https://www.youtube.com/@WolfYoutube_Official"
+  },
+  {
+    "creatorId": "caedrel",
+    "platform": "youtube",
+    "channelId": "UCOFiUtKui6-x4T-J7_DgCag",
+    "url": "https://www.youtube.com/@Caedrel"
+  },
+  {
+    "creatorId": "ibai",
+    "platform": "youtube",
+    "channelId": "UCCJM7yZCchfal6rjkdLYymw",
+    "url": "https://www.youtube.com/@IbaiExtra"
+  },
+  {
+    "creatorId": "yamatocannon",
+    "platform": "youtube",
+    "channelId": "UCRRfSRlDq2ma7xp_8HYvYeA",
+    "url": "https://www.youtube.com/@YamatoCannon"
+  },
+  {
+    "creatorId": "jankos",
+    "platform": "youtube",
+    "channelId": "UCuIBqCNr-kQwalr5BjsFT6Q",
+    "url": "https://www.youtube.com/channel/UCuIBqCNr-kQwalr5BjsFT6Q"
+  },
+  {
+    "creatorId": "obsess",
+    "platform": "youtube",
+    "channelId": "UC2nC3DnkGdTYdgF6Z5NGB-Q",
+    "url": "https://www.youtube.com/@Obsess3"
   }
 ]

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
 import { isPrototypeLiveLeague } from "@/lib/leagues";
 import { pickPrototypeLiveMatch, type TitleMatchInput } from "@/lib/ingest/match-title";
+import { isLiveIngestPlatform } from "@/lib/ingest/platforms";
 import { attachInferredToOfficial, SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 
@@ -157,7 +158,7 @@ async function runLivePoll(): Promise<PollRow[]> {
 
   const drafts: Draft[] = await Promise.all(
     creators.flatMap((creator) =>
-      creator.channels.map(async (channel) => {
+      creator.channels.filter((channel) => isLiveIngestPlatform(channel.platform)).map(async (channel) => {
         let probe: LiveProbe | null = null;
         let error: string | null = null;
         try {

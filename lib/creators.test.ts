@@ -37,8 +37,10 @@ describe("prototype ingest whitelist", () => {
 
   it("stores one live channel id per enabled prototype caster", () => {
     const channels = prototypeIngestChannels();
-    const byCreator = Object.fromEntries(channels.map((channel) => [channel.creatorId, channel]));
-    assert.equal(channels.length, INGEST_IDS.length);
+    const live = channels.filter((channel) => channel.platform !== "youtube");
+    const youtube = channels.filter((channel) => channel.platform === "youtube");
+    const byCreator = Object.fromEntries(live.map((channel) => [channel.creatorId, channel]));
+    assert.equal(live.length, INGEST_IDS.length);
     assert.equal(byCreator.minkyo.platform, "soop");
     assert.equal(byCreator.minkyo.channelId, "phonics1");
     assert.equal(byCreator.clid.channelId, "xoals137");
@@ -58,6 +60,13 @@ describe("prototype ingest whitelist", () => {
     assert.equal(byCreator.caedrel.channelId, "caedrel");
     assert.equal(byCreator.kameto.channelId, "kamet0");
     assert.equal(byCreator.obsess.channelId, "obsess3");
+    assert.ok(youtube.every((channel) => channel.platform === "youtube"));
+    assert.ok(youtube.some((channel) => channel.creatorId === "caedrel" && channel.channelId.startsWith("UC")));
+    assert.ok(youtube.some((channel) => channel.creatorId === "wolf"));
+    assert.equal(
+      youtube.some((channel) => channel.creatorId === "kameto"),
+      false,
+    );
   });
 
   it("defaults team co-streamers to their LCK/LEC team and leaves slate casters unassigned", () => {

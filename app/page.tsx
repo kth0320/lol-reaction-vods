@@ -4,6 +4,7 @@ import type { LiveSlide } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { backgroundForEvent } from "@/lib/ingest/official-stream";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
+import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import { PROTOTYPE_LIVE_LEAGUES, isLeague, isPrototypeLiveLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
@@ -17,6 +18,7 @@ export default async function HomePage() {
   await syncOfficialScheduleIfStale();
   after(() => {
     void refreshLiveCandidatesInBackground();
+    void refreshVodsInBackground();
   });
 
   const [scheduleLive, vodRows] = await Promise.all([
