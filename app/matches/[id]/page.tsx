@@ -155,8 +155,8 @@ export default async function MatchPage({
         <section className="vod-section">
           <h2 className="section-title">다시보기</h2>
           <p className="page-lead">
-            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {match.reactions.length}개. YouTube·숲은 공식
-            임베드, 치지직은 원본 링크입니다.
+            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {match.reactions.length}개. YouTube·숲·치지직은
+            공식 임베드입니다.
           </p>
           {match.reactions.length === 0 ? (
             <p className="empty">아직 연결된 리액션이 없습니다.</p>

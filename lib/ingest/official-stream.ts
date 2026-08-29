@@ -1,4 +1,5 @@
 import { fetchEventDetails, httpsAssetUrl } from "@/lib/ingest/lolesports";
+import { twitchEmbedSrc } from "@/lib/playback";
 
 export type EventStream = {
   provider: string;
@@ -66,12 +67,7 @@ export function mutedBroadcastSrc(broadcast: BackgroundBroadcast, parentHost: st
     return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0`;
   }
   if (broadcast.provider === "twitch") {
-    const channel = encodeURIComponent(broadcast.id);
-    const parents = [...new Set([parentHost, "localhost", "127.0.0.1"])]
-      .filter(Boolean)
-      .map((host) => `parent=${encodeURIComponent(host)}`)
-      .join("&");
-    return `https://player.twitch.tv/?channel=${channel}&${parents}&autoplay=true&muted=true`;
+    return twitchEmbedSrc(broadcast.id, parentHost, { live: true, autoplay: true, muted: true });
   }
   return `https://play.sooplive.com/${encodeURIComponent(broadcast.id)}/embed`;
 }

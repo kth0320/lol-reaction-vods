@@ -8,6 +8,6 @@
 - **Creator** — 화이트리스트 방송인 (스트리머 · BJ · 유튜버 · 버튜버)
 - **ReactionVod** — 그 경기에 대한 다시보기 1개
 - **Platform** — `youtube` | `soop` | `chzzk` (`twitch`는 후순위)
-- **Playback** — `youtube`/`soop` → 공식 iframe, `chzzk` → 원본 링크(인페이지 임베드는 후순위)
+- **Playback** — `youtube`/`soop`/`chzzk`/`twitch` → 공식 iframe. 숲 라이브만 원본 링크. Twitch 원본 VOD는 모으지 않음
 
 지금은 `lib/dto.ts`와 `lib/playback.ts`에 있습니다. 패키지로 빼는 것은 API 서버를 분리할 때입니다.
