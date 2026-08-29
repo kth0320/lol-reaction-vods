@@ -27,15 +27,15 @@ describe("getPlayback", () => {
     }
   });
 
-  it("embeds Chzzk VODs with the official embed player", () => {
+  it("embeds Chzzk VODs with the official watch page", () => {
     const playback = getPlayback("chzzk", "14594686", "https://chzzk.naver.com/video/14594686");
     assert.equal(playback.mode, "embed");
     if (playback.mode === "embed") {
-      assert.equal(playback.embedUrl, "https://chzzk.naver.com/embed/video/14594686");
+      assert.equal(playback.embedUrl, "https://chzzk.naver.com/video/14594686");
     }
   });
 
-  it("embeds Chzzk live with the official live embed player", () => {
+  it("embeds Chzzk live with the official live watch page", () => {
     const playback = getPlayback(
       "chzzk",
       "0b33823ac81de48d5b78a38cdbc0ab94",
@@ -46,7 +46,7 @@ describe("getPlayback", () => {
     if (playback.mode === "embed") {
       assert.equal(
         playback.embedUrl,
-        "https://chzzk.naver.com/embed/live/0b33823ac81de48d5b78a38cdbc0ab94",
+        "https://chzzk.naver.com/live/0b33823ac81de48d5b78a38cdbc0ab94",
       );
     }
   });

@@ -87,7 +87,8 @@ export function getPlayback(
     };
   }
 
-  const path = options.live ? "embed/live" : "embed/video";
+  // Official iframe share is clip-only (`/embed/clip`). VOD/live have no embed route.
+  const path = options.live ? "live" : "video";
   return {
     mode: "embed",
     platform: "chzzk",
