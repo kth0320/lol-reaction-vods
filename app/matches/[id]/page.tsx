@@ -23,7 +23,7 @@ export default async function MatchPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ hub?: string; year?: string; stage?: string }>;
+  searchParams: Promise<{ hub?: string; year?: string; stage?: string; q?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -80,7 +80,7 @@ export default async function MatchPage({
     viewerCount: "viewerCount" in cast ? cast.viewerCount : null,
   }));
   const hubId = query.hub && isVodHubId(query.hub) ? query.hub : matchTournamentToHub(match.tournament);
-  const back = vodMatchBack(live, hubId, query.year, query.stage);
+  const back = vodMatchBack(live, hubId, query.year, query.stage, query.q);
   const stageLabel = hubId ? stageLabelForMatch(hubId, match.split, match.startsAt) : match.split;
 
   return (

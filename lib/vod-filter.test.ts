@@ -7,6 +7,10 @@ describe("VOD filter URLs", () => {
     assert.equal(vodHubPath("lck", 2026, "all"), "/vods/lck?year=2026");
     assert.equal(vodHubPath("lck", 2026, "cup", "KT"), "/vods/lck?year=2026&stage=cup&q=KT");
     assert.equal(vodMatchPath("m1", "lpl", 2026, "split3"), "/matches/m1?hub=lpl&year=2026&stage=split3");
+    assert.equal(
+      vodMatchPath("m1", "lck", 2026, "lck", "KT"),
+      "/matches/m1?hub=lck&year=2026&stage=lck&q=KT",
+    );
   });
 
   it("falls back to the current year and 전체 when the query is junk", () => {
@@ -18,6 +22,7 @@ describe("VOD filter URLs", () => {
 
   it("returns to the hub with the same year and stage", () => {
     assert.equal(vodHubReturnPath("lec", "2026", "summer"), "/vods/lec?year=2026&stage=summer");
+    assert.equal(vodHubReturnPath("lck", "2026", "lck", "KT"), "/vods/lck?year=2026&stage=lck&q=KT");
     assert.equal(vodHubReturnPath(null, "2026", "all"), "/");
     assert.equal(vodHubReturnPath("lcs", "2026", "summer"), "/");
   });
@@ -26,6 +31,10 @@ describe("VOD filter URLs", () => {
     assert.deepEqual(vodMatchBack(true, "lck", "2026", "cup"), { href: "/", label: "← 메인" });
     assert.deepEqual(vodMatchBack(false, "lck", "2026", "cup"), {
       href: "/vods/lck?year=2026&stage=cup",
+      label: "← LCK",
+    });
+    assert.deepEqual(vodMatchBack(false, "lck", "2026", "lck", "KT"), {
+      href: "/vods/lck?year=2026&stage=lck&q=KT",
       label: "← LCK",
     });
     assert.deepEqual(vodMatchBack(false, null), { href: "/", label: "← 메인" });

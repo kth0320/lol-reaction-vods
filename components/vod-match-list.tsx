@@ -150,7 +150,7 @@ export function VodMatchList({
       ) : (
         <div className="match-list">
           {visible.map((match) => (
-            <Link key={match.id} href={vodMatchPath(match.id, hubId, year, stage)} className="match-card">
+            <Link key={match.id} href={vodMatchPath(match.id, hubId, year, stage, query)} className="match-card">
               <div className="match-meta">
                 <span>
                   {match.tournament} {match.split}
