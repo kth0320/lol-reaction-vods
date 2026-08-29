@@ -1,7 +1,7 @@
 import { kstYear } from "@/lib/format";
 import { hubUsesEventYears, hubUsesLeagueSeasons, type VodHubId } from "@/lib/vod-hub";
 
-/** Current year plus two previous years. Past years stay empty until archives are ingested. */
+/** Current year plus two previous years. CLI ingest fills those years from completed events + older VODs. */
 export const VOD_YEAR_LOOKBACK = 2;
 
 export type VodYearKind = "season" | "year";

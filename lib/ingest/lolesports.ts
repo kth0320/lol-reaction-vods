@@ -111,10 +111,18 @@ function parseTeams(value: unknown): LolesportsScheduleTeam[] {
   return teams;
 }
 
-export function parseScheduleEvents(payload: unknown): LolesportsScheduleEvent[] {
+export type LolesportsTournament = {
+  id: string;
+  slug: string;
+  startDate: string;
+  endDate: string;
+};
+
+export function parseScheduleEvents(payload: unknown, leagueSlugFallback = ""): LolesportsScheduleEvent[] {
   const events = asRecord(asRecord(asRecord(payload)?.data)?.schedule)?.events;
   if (!Array.isArray(events)) return [];
   const rows: LolesportsScheduleEvent[] = [];
+  const fallback = leagueSlugFallback.trim().toLowerCase();
   for (const item of events) {
     const event = asRecord(item);
     if (text(event?.type) && text(event?.type) !== "match") continue;
@@ -129,13 +137,44 @@ export function parseScheduleEvents(payload: unknown): LolesportsScheduleEvent[]
       state: text(event?.state),
       type: text(event?.type) || "match",
       blockName: text(event?.blockName) || "정규",
-      leagueSlug: text(league?.slug).toLowerCase(),
+      leagueSlug: text(league?.slug).toLowerCase() || fallback,
       matchId,
       bestOf,
       teams: parseTeams(match?.teams),
     });
   }
   return rows;
+}
+
+export function parseTournaments(payload: unknown): LolesportsTournament[] {
+  const leagues = asRecord(asRecord(payload)?.data)?.leagues;
+  if (!Array.isArray(leagues)) return [];
+  const rows: LolesportsTournament[] = [];
+  for (const item of leagues) {
+    const tournaments = asRecord(item)?.tournaments;
+    if (!Array.isArray(tournaments)) continue;
+    for (const tournament of tournaments) {
+      const row = asRecord(tournament);
+      const id = text(row?.id);
+      if (!id) continue;
+      rows.push({
+        id,
+        slug: text(row?.slug),
+        startDate: text(row?.startDate),
+        endDate: text(row?.endDate),
+      });
+    }
+  }
+  return rows;
+}
+
+export function tournamentOverlapsYears(tournament: LolesportsTournament, years: number[]): boolean {
+  if (years.length === 0) return false;
+  const start = Number(tournament.startDate.slice(0, 4));
+  if (!Number.isFinite(start)) return false;
+  const parsedEnd = Number(tournament.endDate.slice(0, 4));
+  const end = Number.isFinite(parsedEnd) ? parsedEnd : start;
+  return years.some((year) => start <= year && end >= year);
 }
 
 export async function fetchLeagues(fetchImpl: typeof fetch = fetch): Promise<LolesportsLeague[]> {
@@ -159,6 +198,58 @@ export async function fetchPrototypeSchedules(
       } catch {
         return [] as LolesportsScheduleEvent[];
       }
+    }),
+  );
+  return pages.flat();
+}
+
+export async function fetchTournamentsForLeague(
+  leagueId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<LolesportsTournament[]> {
+  const id = encodeURIComponent(leagueId);
+  return parseTournaments(await fetchGw(`/getTournamentsForLeague?hl=${LOLESPORTS_HL}&leagueId=${id}`, fetchImpl));
+}
+
+export async function fetchCompletedEvents(
+  tournamentId: string,
+  leagueSlug: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<LolesportsScheduleEvent[]> {
+  const id = encodeURIComponent(tournamentId);
+  return parseScheduleEvents(
+    await fetchGw(`/getCompletedEvents?hl=${LOLESPORTS_HL}&tournamentId=${id}`, fetchImpl),
+    leagueSlug,
+  );
+}
+
+/** Ended matches for hub archive years. Home live sync still uses the first getSchedule page only. */
+export async function fetchArchiveSchedules(
+  slugs: readonly string[],
+  years: number[],
+  fetchImpl: typeof fetch = fetch,
+): Promise<LolesportsScheduleEvent[]> {
+  if (years.length === 0) return [];
+  const ids = leagueIdsForSlugs(await fetchLeagues(fetchImpl), slugs);
+  const pages = await Promise.all(
+    [...ids.entries()].map(async ([slug, leagueId]) => {
+      let tournaments: LolesportsTournament[] = [];
+      try {
+        tournaments = await fetchTournamentsForLeague(leagueId, fetchImpl);
+      } catch {
+        return [] as LolesportsScheduleEvent[];
+      }
+      const wanted = tournaments.filter((tournament) => tournamentOverlapsYears(tournament, years));
+      const events = await Promise.all(
+        wanted.map(async (tournament) => {
+          try {
+            return await fetchCompletedEvents(tournament.id, slug, fetchImpl);
+          } catch {
+            return [] as LolesportsScheduleEvent[];
+          }
+        }),
+      );
+      return events.flat();
     }),
   );
   return pages.flat();
