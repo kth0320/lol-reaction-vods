@@ -115,6 +115,39 @@ a {
   gap: 14px;
 }
 
+.vod-search {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.vod-search-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vod-search-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+
+.vod-search-input::placeholder {
+  color: var(--muted);
+}
+
+.vod-search-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
 .match-card {
   display: grid;
   gap: 14px;
