@@ -4,7 +4,7 @@ import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import { prisma } from "@/lib/prisma";
 import { hubUsesLeagueSeasons, isVodHubId, vodHubCard, vodHubMatchWhere, vodHubSearchExample } from "@/lib/vod-hub";
-import { leagueVodSeasons } from "@/lib/vod-season";
+import { hubYearFilter } from "@/lib/vod-season";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
@@ -69,12 +69,12 @@ export default async function VodHubPage({ params }: { params: Promise<{ tournam
       <p className="page-lead">
         {hubUsesLeagueSeasons(card.id)
           ? "시즌을 고르면 그해 중계·리액션 다시보기가 나옵니다. 팀 이름·약자로 검색할 수 있습니다."
-          : "이 대회를 중계·리액션한 방송인 다시보기입니다. 경기를 고르면 플랫폼별 영상이 나옵니다. 팀 이름·약자로 검색할 수 있습니다."}
+          : "연도를 고르면 그해 중계·리액션 다시보기가 나옵니다. 팀 이름·약자로 검색할 수 있습니다."}
       </p>
       <VodMatchList
         matches={rows}
         searchExample={vodHubSearchExample(card.id)}
-        seasons={hubUsesLeagueSeasons(card.id) ? leagueVodSeasons() : undefined}
+        yearFilter={hubYearFilter(card.id)}
       />
     </main>
   );

@@ -36,9 +36,13 @@ export function vodHubCard(id: string) {
   return HUB_BY_ID.get(id as VodHubId) ?? null;
 }
 
-/** Regional league hubs group VODs by calendar season. Worlds/MSI/EWC stay one list until yearly archives land. */
+/** Regional league hubs: 2026 시즌. International hubs: 2026년. */
 export function hubUsesLeagueSeasons(id: VodHubId): boolean {
   return id === "lck" || id === "lpl" || id === "lec";
+}
+
+export function hubUsesEventYears(id: VodHubId): boolean {
+  return id === "worlds" || id === "msi" || id === "first-stand" || id === "ewc";
 }
 
 /** Same search box on every hub page. Keep this when Worlds/MSI/First Stand/EWC/LPL lists fill in. */

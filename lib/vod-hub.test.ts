@@ -10,6 +10,7 @@ import {
   vodHubSearchExample,
   vodAttachTournaments,
   hubUsesLeagueSeasons,
+  hubUsesEventYears,
 } from "./vod-hub";
 
 describe("vod hub", () => {
@@ -69,8 +70,10 @@ describe("vod hub", () => {
     assert.ok(vodAttachTournaments().includes("EWC"));
   });
 
-  it("puts season selects on LCK LPL LEC and not on international hubs", () => {
+  it("puts season selects on LCK LPL LEC and year selects on international hubs", () => {
     assert.equal(hubUsesLeagueSeasons("lck"), true);
     assert.equal(hubUsesLeagueSeasons("worlds"), false);
+    assert.equal(hubUsesEventYears("worlds"), true);
+    assert.equal(hubUsesEventYears("lck"), false);
   });
 });
