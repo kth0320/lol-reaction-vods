@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   VOD_HUB_CARDS,
+  countHubStats,
   countReactionsByHub,
   hubMatchTournaments,
   isVodHubId,
@@ -10,6 +11,7 @@ import {
   vodHubSearchExample,
   vodAttachTournaments,
   hubUsesLeagueSeasons,
+  hubUsesEventYears,
 } from "./vod-hub";
 
 describe("vod hub", () => {
@@ -63,14 +65,28 @@ describe("vod hub", () => {
     assert.equal(counts.lpl, 0);
   });
 
+  it("counts ended matches that already have reactions, plus the reaction total", () => {
+    const stats = countHubStats([
+      { tournament: "LCK", reactionCount: 3 },
+      { tournament: "LCK", reactionCount: 2 },
+      { tournament: "LCK", reactionCount: 0 },
+      { tournament: "LEC", reactionCount: 1 },
+    ]);
+    assert.deepEqual(stats.lck, { matchCount: 2, reactionCount: 5 });
+    assert.deepEqual(stats.lec, { matchCount: 1, reactionCount: 1 });
+    assert.deepEqual(stats.worlds, { matchCount: 0, reactionCount: 0 });
+  });
+
   it("lists every hub tournament so VOD attach is not limited to LCK/LEC", () => {
     assert.ok(vodAttachTournaments().includes("LPL"));
     assert.ok(vodAttachTournaments().includes("Worlds"));
     assert.ok(vodAttachTournaments().includes("EWC"));
   });
 
-  it("puts season selects on LCK LPL LEC and not on international hubs", () => {
+  it("puts season selects on LCK LPL LEC and year selects on international hubs", () => {
     assert.equal(hubUsesLeagueSeasons("lck"), true);
     assert.equal(hubUsesLeagueSeasons("worlds"), false);
+    assert.equal(hubUsesEventYears("worlds"), true);
+    assert.equal(hubUsesEventYears("lck"), false);
   });
 });

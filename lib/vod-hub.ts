@@ -36,9 +36,13 @@ export function vodHubCard(id: string) {
   return HUB_BY_ID.get(id as VodHubId) ?? null;
 }
 
-/** Regional league hubs group VODs by calendar season. Worlds/MSI/EWC stay one list until yearly archives land. */
+/** Regional league hubs: 2026 시즌. International hubs: 2026년. */
 export function hubUsesLeagueSeasons(id: VodHubId): boolean {
   return id === "lck" || id === "lpl" || id === "lec";
+}
+
+export function hubUsesEventYears(id: VodHubId): boolean {
+  return id === "worlds" || id === "msi" || id === "first-stand" || id === "ewc";
 }
 
 /** Same search box on every hub page. Keep this when Worlds/MSI/First Stand/EWC/LPL lists fill in. */
@@ -78,14 +82,32 @@ export function vodHubMatchWhere(hubId: VodHubId) {
   };
 }
 
+export type VodHubStat = {
+  matchCount: number;
+  reactionCount: number;
+};
+
+export function countHubStats(
+  rows: { tournament: string; reactionCount: number }[],
+): Record<VodHubId, VodHubStat> {
+  const stats = Object.fromEntries(
+    VOD_HUB_CARDS.map((card) => [card.id, { matchCount: 0, reactionCount: 0 }]),
+  ) as Record<VodHubId, VodHubStat>;
+  for (const row of rows) {
+    const hub = matchTournamentToHub(row.tournament);
+    if (!hub || row.reactionCount <= 0) continue;
+    stats[hub].matchCount += 1;
+    stats[hub].reactionCount += row.reactionCount;
+  }
+  return stats;
+}
+
 export function countReactionsByHub(
   rows: { tournament: string; reactionCount: number }[],
 ): Record<VodHubId, number> {
-  const counts = Object.fromEntries(VOD_HUB_CARDS.map((card) => [card.id, 0])) as Record<VodHubId, number>;
-  for (const row of rows) {
-    const hub = matchTournamentToHub(row.tournament);
-    if (!hub) continue;
-    counts[hub] += row.reactionCount;
-  }
-  return counts;
+  const stats = countHubStats(rows);
+  return Object.fromEntries(VOD_HUB_CARDS.map((card) => [card.id, stats[card.id].reactionCount])) as Record<
+    VodHubId,
+    number
+  >;
 }

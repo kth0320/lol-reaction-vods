@@ -1,4 +1,5 @@
 import { LiveCasterBoard } from "@/components/live-caster-board";
+import { MatchTeams } from "@/components/match-teams";
 import { VodPlayer } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
@@ -8,14 +9,24 @@ import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
 import { isLeague } from "@/lib/leagues";
 import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
 import { prisma } from "@/lib/prisma";
+import { vodMatchBack } from "@/lib/vod-filter";
+import { isVodHubId, matchTournamentToHub } from "@/lib/vod-hub";
+import { stageLabelForMatch } from "@/lib/vod-split";
 import Link from "next/link";
 import { after } from "next/server";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function MatchPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MatchPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ hub?: string; year?: string; stage?: string; q?: string }>;
+}) {
   const { id } = await params;
+  const query = await searchParams;
   after(() => {
     void refreshLiveCandidatesInBackground();
   });
@@ -68,11 +79,14 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
     imageUrl: "imageUrl" in cast ? cast.imageUrl : "",
     viewerCount: "viewerCount" in cast ? cast.viewerCount : null,
   }));
+  const hubId = query.hub && isVodHubId(query.hub) ? query.hub : matchTournamentToHub(match.tournament);
+  const back = vodMatchBack(live, hubId, query.year, query.stage, query.q);
+  const stageLabel = hubId ? stageLabelForMatch(hubId, match.split, match.startsAt) : match.split;
 
   return (
     <main>
-      <Link href="/" className="back-link">
-        ← 메인
+      <Link href={back.href} className="back-link">
+        {back.label}
       </Link>
       {live && isLeague(match.tournament) ? (
         <VsCard
@@ -95,15 +109,21 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
         <>
           <div className="match-meta">
             <span>
-              {match.tournament} {match.split}
+              {match.tournament} · {stageLabel}
             </span>
             <span>BO{match.bestOf}</span>
             <span>{formatKst(match.startsAt)}</span>
           </div>
-          <div className="match-teams" style={{ margin: "16px 0 8px" }}>
-            <p className="team-name">{match.blueTeam.abbr}</p>
-            <span className="vs">VS</span>
-            <p className="team-name right">{match.redTeam.abbr}</p>
+          <div className="ended-match-head">
+            <MatchTeams
+              blueAbbr={match.blueTeam.abbr}
+              redAbbr={match.redTeam.abbr}
+              blueImageUrl={match.blueTeam.imageUrl}
+              redImageUrl={match.redTeam.imageUrl}
+            />
+            <p className="ended-match-names">
+              {match.blueTeam.name} vs {match.redTeam.name}
+            </p>
           </div>
         </>
       )}

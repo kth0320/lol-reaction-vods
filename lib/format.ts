@@ -13,6 +13,18 @@ export function kstYear(date: Date): number {
   return Number(parts.find((part) => part.type === "year")?.value);
 }
 
+/** MMDD in Seoul, e.g. March 1 → 301. */
+export function kstMonthDay(date: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Seoul",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(date);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+  return month * 100 + day;
+}
+
 export function formatViewers(count: number | null | undefined): string {
   if (count == null || count < 0) return "-";
   if (count >= 10_000) {
