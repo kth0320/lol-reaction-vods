@@ -39,7 +39,9 @@ export async function syncOfficialSchedule(options: { now?: Date; fetchImpl?: ty
   const events = await fetchPrototypeSchedules(prototypeLeagueSlugs(), options.fetchImpl ?? fetch);
   const mapped = mapScheduleEvents(events, teams, options.now ?? new Date());
 
-  const persist = mapped.filter((match) => match.status === "live" || match.status === "upcoming");
+  const persist = mapped.filter(
+    (match) => match.status === "live" || match.status === "upcoming" || match.status === "ended",
+  );
 
   for (const match of persist) {
     await prisma.match.upsert({
