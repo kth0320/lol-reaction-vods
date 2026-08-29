@@ -1,4 +1,4 @@
-import { LEAGUES, isLeague, isPrototypeLiveLeague, type League } from "@/lib/leagues";
+import { mentionedVodTournaments, titleMentionsTournament } from "@/lib/ingest/tournament-title";
 
 export type InferTeam = {
   id: string;
@@ -7,30 +7,24 @@ export type InferTeam = {
 };
 
 export type InferredLiveMatch = {
-  league: League;
+  league: string;
   blueTeamId: string;
   redTeamId: string;
   key: string;
 };
 
-const LEAGUE_PATTERNS: Record<League, RegExp> = {
-  LCK: /\blck\b|#lck/i,
-  LPL: /\blpl\b|#lpl/i,
-  LEC: /\blec\b|#lec|#watchlec/i,
-};
-
 export function ingestMatchId(league: string, teamA: string, teamB: string): string {
   const [left, right] = [teamA, teamB].sort();
-  return `ingest-${league.toLowerCase()}-${left}-${right}`;
+  const slug = league.trim().toLowerCase().replace(/\s+/g, "");
+  return `ingest-${slug}-${left}-${right}`;
 }
 
 export function titleMentionsLeague(title: string, league: string): boolean {
-  if (!isLeague(league)) return false;
-  return LEAGUE_PATTERNS[league].test(title);
+  return titleMentionsTournament(title, league);
 }
 
-export function mentionedLeagues(title: string): League[] {
-  return LEAGUES.filter((league) => isPrototypeLiveLeague(league) && titleMentionsLeague(title, league));
+export function mentionedLeagues(title: string): string[] {
+  return mentionedVodTournaments(title);
 }
 
 function escapeRegExp(value: string): string {
@@ -72,7 +66,8 @@ export function inferLiveMatchFromTitle(title: string, teams: InferTeam[]): Infe
   const inLeague = hits.filter((hit) => !hit.league || hit.league === league);
   const pair = (inLeague.length >= 2 ? inLeague : hits).slice(0, 2);
   if (pair.length < 2 || pair[0].id === pair[1].id) return null;
-  if (pair[0].league && pair[1].league && pair[0].league !== pair[1].league) return null;
+  const international = league === "Worlds" || league === "MSI" || league === "EWC" || league === "First Stand";
+  if (!international && pair[0].league && pair[1].league && pair[0].league !== pair[1].league) return null;
 
   return {
     league,

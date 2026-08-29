@@ -152,11 +152,15 @@ export async function fetchPrototypeSchedules(
   fetchImpl: typeof fetch = fetch,
 ): Promise<LolesportsScheduleEvent[]> {
   const ids = leagueIdsForSlugs(await fetchLeagues(fetchImpl), slugs);
-  const missing = slugs.filter((slug) => !ids.has(slug.toLowerCase()));
-  if (missing.length > 0) {
-    throw new Error(`lolesports leagues not found: ${missing.join(", ")}`);
-  }
-  const pages = await Promise.all([...ids.entries()].map(([, leagueId]) => fetchSchedule(leagueId, fetchImpl)));
+  const pages = await Promise.all(
+    [...ids.entries()].map(async ([, leagueId]) => {
+      try {
+        return await fetchSchedule(leagueId, fetchImpl);
+      } catch {
+        return [] as LolesportsScheduleEvent[];
+      }
+    }),
+  );
   return pages.flat();
 }
 

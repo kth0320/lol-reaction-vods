@@ -1,4 +1,4 @@
-import { LEAGUE_SLUG, leagueFromSlug, type League } from "@/lib/leagues";
+import { LEAGUE_SLUG } from "@/lib/leagues";
 import type { LolesportsScheduleEvent } from "@/lib/ingest/lolesports";
 
 export const SCHEDULE_MATCH_SOURCE = "schedule";
@@ -15,7 +15,7 @@ export type ScheduleTeam = {
 export type OfficialScheduleMatch = {
   id: string;
   externalEventId: string;
-  league: League;
+  league: string;
   split: string;
   bestOf: number;
   apiState: string;
@@ -23,9 +23,34 @@ export type OfficialScheduleMatch = {
   startsAt: Date;
   blueTeamId: string;
   redTeamId: string;
+  blueAbbr: string;
+  blueName: string;
+  redAbbr: string;
+  redName: string;
   blueImageUrl: string;
   redImageUrl: string;
 };
+
+/** lolesports slugs for VOD hub schedules. Live vs-cards still use prototypeLeagueSlugs() only. */
+export const VOD_HUB_SCHEDULE_SLUGS = ["lck", "lec", "lpl", "worlds", "msi", "first_stand", "ewc_lol"] as const;
+
+const SLUG_TO_TOURNAMENT: Record<string, string> = {
+  lck: "LCK",
+  lpl: "LPL",
+  lec: "LEC",
+  worlds: "Worlds",
+  msi: "MSI",
+  first_stand: "First Stand",
+  ewc_lol: "EWC",
+};
+
+export function tournamentFromSlug(slug: string): string | null {
+  return SLUG_TO_TOURNAMENT[slug.trim().toLowerCase()] ?? null;
+}
+
+export function vodHubScheduleSlugs(): string[] {
+  return [...VOD_HUB_SCHEDULE_SLUGS];
+}
 
 /** API codes that drifted from our stable team ids / abbreviations. */
 export const API_CODE_TO_TEAM_ID: Record<string, string> = {
@@ -81,7 +106,15 @@ export function resolveScheduleTeamId(teams: ScheduleTeam[], code: string, name:
     const haystack = [team.id, team.abbr, team.name, ...team.aliases].map((value) => value.toLowerCase());
     if (needles.some((needle) => haystack.includes(needle))) return team.id;
   }
-  return null;
+  return fallbackApiTeamId(codeNorm);
+}
+
+/** Catalog miss: persist Worlds/LPL/MSI teams as api-{code} so hub matches still store. */
+export function fallbackApiTeamId(code: string): string | null {
+  const remapped = API_CODE_TO_TEAM_ID[code.trim().toUpperCase()];
+  if (remapped) return remapped;
+  const slug = code.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return slug ? `api-${slug}` : null;
 }
 
 export function mapScheduleEvent(
@@ -90,7 +123,7 @@ export function mapScheduleEvent(
   now = new Date(),
 ): OfficialScheduleMatch | null {
   if (event.teams.length < 2) return null;
-  const league = leagueFromSlug(event.leagueSlug);
+  const league = tournamentFromSlug(event.leagueSlug);
   if (!league) return null;
   const blueTeamId = resolveScheduleTeamId(teams, event.teams[0].code, event.teams[0].name);
   const redTeamId = resolveScheduleTeamId(teams, event.teams[1].code, event.teams[1].name);
@@ -108,6 +141,10 @@ export function mapScheduleEvent(
     startsAt,
     blueTeamId,
     redTeamId,
+    blueAbbr: event.teams[0].code.trim() || event.teams[0].name.trim(),
+    blueName: event.teams[0].name.trim() || event.teams[0].code.trim(),
+    redAbbr: event.teams[1].code.trim() || event.teams[1].name.trim(),
+    redName: event.teams[1].name.trim() || event.teams[1].code.trim(),
     blueImageUrl: event.teams[0].imageUrl,
     redImageUrl: event.teams[1].imageUrl,
   };

@@ -36,6 +36,19 @@ export function vodHubCard(id: string) {
   return HUB_BY_ID.get(id as VodHubId) ?? null;
 }
 
+/** Regional league hubs group VODs by calendar season. Worlds/MSI/EWC stay one list until yearly archives land. */
+export function hubUsesLeagueSeasons(id: VodHubId): boolean {
+  return id === "lck" || id === "lpl" || id === "lec";
+}
+
+/** Same search box on every hub page. Keep this when Worlds/MSI/First Stand/EWC/LPL lists fill in. */
+export function vodHubSearchExample(id: VodHubId): string {
+  if (id === "lec") return "G2";
+  if (id === "lpl") return "JDG";
+  if (id === "lck") return "KT";
+  return "T1";
+}
+
 export function matchTournamentToHub(tournament: string): VodHubId | null {
   const key = tournament.trim().toUpperCase().replace(/[\s-]+/g, "");
   if (key === "롤드컵" || key === "WORLDS") return "worlds";
@@ -51,6 +64,10 @@ export function hubMatchTournaments(hubId: VodHubId): string[] {
   if (hubId === "msi") return ["MSI"];
   if (hubId === "ewc") return ["EWC"];
   return ["First Stand", "FIRST_STAND"];
+}
+
+export function vodAttachTournaments(): string[] {
+  return VOD_HUB_CARDS.flatMap((card) => hubMatchTournaments(card.id));
 }
 
 export function vodHubMatchWhere(hubId: VodHubId) {

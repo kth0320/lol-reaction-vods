@@ -8,6 +8,11 @@ export function formatKst(date: Date): string {
   return `${kst.format(date)} KST`;
 }
 
+export function kstYear(date: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Seoul", year: "numeric" }).formatToParts(date);
+  return Number(parts.find((part) => part.type === "year")?.value);
+}
+
 export function formatViewers(count: number | null | undefined): string {
   if (count == null || count < 0) return "-";
   if (count >= 10_000) {

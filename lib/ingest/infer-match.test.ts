@@ -22,15 +22,26 @@ describe("inferLiveMatchFromTitle", () => {
     assert.equal(fromObsess?.key, "ingest-lck-bro-kt");
   });
 
-  it("does not treat variety, LPL, or LEC-only noise as LCK KT vs BRO", () => {
+  it("does not treat variety or LEC-only noise as LCK KT vs BRO", () => {
     assert.equal(inferLiveMatchFromTitle("버츄얼 인간 가리지 않고 뎀프시롤 갈기기 (감컴/뚱딴지)", teams), null);
     const lec = inferLiveMatchFromTitle("Caedrel G2 vs FNC LEC", teams);
     assert.equal(lec?.key, "ingest-lec-fnc-g2");
-    assert.equal(inferLiveMatchFromTitle("울프 LPL JDG vs BLG", [
+    const lpl = inferLiveMatchFromTitle("울프 LPL JDG vs BLG", [
       ...teams,
       { id: "jdg", league: "LPL", aliases: ["JDG"] },
       { id: "blg", league: "LPL", aliases: ["BLG"] },
-    ]), null);
+    ]);
+    assert.equal(lpl?.league, "LPL");
+    assert.equal(lpl?.key, "ingest-lpl-blg-jdg");
+  });
+
+  it("allows cross-region Worlds pairs", () => {
+    const worlds = inferLiveMatchFromTitle("T1 vs G2 Worlds", [
+      { id: "t1", league: "LCK", aliases: ["T1"] },
+      { id: "g2", league: "LEC", aliases: ["G2"] },
+    ]);
+    assert.equal(worlds?.league, "Worlds");
+    assert.equal(worlds?.key, "ingest-worlds-g2-t1");
   });
 
   it("does not match SK inside LCK", () => {

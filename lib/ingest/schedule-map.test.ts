@@ -4,11 +4,15 @@ import { httpsAssetUrl, leagueIdsForSlugs, parseLeagues, parseScheduleEvents } f
 import {
   API_CODE_TO_TEAM_ID,
   attachInferredToOfficial,
+  fallbackApiTeamId,
   mapScheduleEvents,
+  prototypeLeagueSlugs,
   resolveScheduleTeamId,
   scheduleEventStatus,
   scheduleMatchId,
+  tournamentFromSlug,
   usesLiveCandidates,
+  vodHubScheduleSlugs,
 } from "./schedule-map";
 
 const teams = [
@@ -141,6 +145,64 @@ describe("schedule mapping", () => {
     assert.equal(mapped[0].league, "LCK");
     assert.equal(mapped[0].blueImageUrl, "https://static.lolesports.com/teams/NSFullonDark.png");
     assert.equal(mapped[0].redImageUrl, "https://static.lolesports.com/teams/bfx.png");
+  });
+
+  it("maps LPL and Worlds slugs and creates api-{code} teams when the catalog has no row", () => {
+    assert.equal(tournamentFromSlug("lpl"), "LPL");
+    assert.equal(tournamentFromSlug("worlds"), "Worlds");
+    assert.equal(tournamentFromSlug("msi"), "MSI");
+    assert.equal(tournamentFromSlug("first_stand"), "First Stand");
+    assert.equal(tournamentFromSlug("ewc_lol"), "EWC");
+    assert.equal(fallbackApiTeamId("TES"), "api-tes");
+    assert.equal(resolveScheduleTeamId(teams, "TES", "Top Esports"), "api-tes");
+    assert.deepEqual(prototypeLeagueSlugs(), ["lck", "lec"]);
+    assert.ok(vodHubScheduleSlugs().includes("lpl"));
+    assert.ok(vodHubScheduleSlugs().includes("worlds"));
+
+    const mapped = mapScheduleEvents(
+      [
+        {
+          startTime: "2026-10-15T10:00:00Z",
+          state: "completed",
+          type: "match",
+          blockName: "Swiss",
+          leagueSlug: "worlds",
+          matchId: "worlds-t1-g2",
+          bestOf: 1,
+          teams: [
+            { code: "T1", name: "T1", imageUrl: "" },
+            { code: "G2", name: "G2 Esports", imageUrl: "" },
+          ],
+        },
+        {
+          startTime: "2026-08-20T11:00:00Z",
+          state: "completed",
+          type: "match",
+          blockName: "정규",
+          leagueSlug: "lpl",
+          matchId: "lpl-tes-jdg",
+          bestOf: 3,
+          teams: [
+            { code: "TES", name: "Top Esports", imageUrl: "" },
+            { code: "JDG", name: "JD Gaming", imageUrl: "" },
+          ],
+        },
+      ],
+      [
+        ...teams,
+        { id: "g2", abbr: "G2", name: "G2 Esports", aliases: ["G2"] },
+        { id: "jdg", abbr: "JDG", name: "JD Gaming", aliases: ["JDG"] },
+      ],
+      new Date("2026-08-29T00:00:00Z"),
+    );
+    assert.equal(mapped.length, 2);
+    assert.equal(mapped[0].league, "Worlds");
+    assert.equal(mapped[0].blueTeamId, "t1");
+    assert.equal(mapped[0].redTeamId, "g2");
+    assert.equal(mapped[1].league, "LPL");
+    assert.equal(mapped[1].blueTeamId, "api-tes");
+    assert.equal(mapped[1].redTeamId, "jdg");
+    assert.equal(mapped[1].status, "ended");
   });
 
   it("attaches a streamer title to the official match, not an ingest key", () => {

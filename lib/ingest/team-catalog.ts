@@ -49,3 +49,35 @@ export async function ensureTeamCatalog(root = process.cwd()): Promise<InferTeam
     aliases: [team.name, team.abbr, ...team.aliases.map((row) => row.alias)],
   }));
 }
+
+/** Create missing API teams (Worlds/LPL/MSI codes) without overwriting catalog rows. */
+export async function ensureScheduleTeams(
+  teams: { id: string; abbr: string; name: string; league: string }[],
+): Promise<void> {
+  const unique = new Map<string, { id: string; abbr: string; name: string; league: string }>();
+  for (const team of teams) {
+    if (team.id) unique.set(team.id, team);
+  }
+  const ids = [...unique.keys()];
+  if (ids.length === 0) return;
+  const existing = new Set(
+    (await prisma.team.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((row) => row.id),
+  );
+  for (const team of unique.values()) {
+    const abbr = team.abbr.trim() || team.id;
+    const name = team.name.trim() || abbr;
+    if (!existing.has(team.id)) {
+      await prisma.team.create({
+        data: { id: team.id, abbr, name, league: team.league },
+      });
+    }
+    const aliases = [...new Set([abbr, name].filter((alias) => alias.length >= 2))];
+    for (const alias of aliases) {
+      await prisma.teamAlias.upsert({
+        where: { teamId_alias: { teamId: team.id, alias } },
+        create: { teamId: team.id, alias },
+        update: {},
+      });
+    }
+  }
+}

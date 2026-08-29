@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { pickPrototypeLiveMatch, scoreTitleForMatch } from "./match-title";
+import { aliasInTitle, pickPrototypeLiveMatch, scoreTitleForMatch } from "./match-title";
 
 const lec = {
   id: "lec-live-g2-fnc",
@@ -34,5 +34,28 @@ describe("pickPrototypeLiveMatch", () => {
 
   it("ignores unrelated live titles", () => {
     assert.equal(pickPrototypeLiveMatch("버츄얼 인간 가리지 않고 뎀프시롤 갈기기", [lec]), null);
+  });
+
+  it("does not treat KT as a substring of SKT in a title", () => {
+    assert.equal(aliasInTitle("SKT vs HLE", "KT"), false);
+    assert.equal(aliasInTitle("KT vs BRO", "KT"), true);
+  });
+
+  it("attaches Worlds and LPL titles to those hub matches", () => {
+    const worlds = {
+      id: "worlds-t1-g2",
+      tournament: "Worlds",
+      blueAliases: ["T1"],
+      redAliases: ["G2"],
+    };
+    const lpl = {
+      id: "lpl-jdg-blg",
+      tournament: "LPL",
+      blueAliases: ["JDG"],
+      redAliases: ["BLG"],
+    };
+    assert.equal(pickPrototypeLiveMatch("T1 vs G2 Worlds", [lec, lck, worlds])?.id, "worlds-t1-g2");
+    assert.equal(pickPrototypeLiveMatch("울프 LPL JDG vs BLG", [lec, lck, lpl])?.id, "lpl-jdg-blg");
+    assert.equal(scoreTitleForMatch("T1 vs G2 Worlds", lck), 0);
   });
 });

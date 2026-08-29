@@ -7,6 +7,9 @@ import {
   isVodHubId,
   matchTournamentToHub,
   vodHubMatchWhere,
+  vodHubSearchExample,
+  vodAttachTournaments,
+  hubUsesLeagueSeasons,
 } from "./vod-hub";
 
 describe("vod hub", () => {
@@ -40,6 +43,15 @@ describe("vod hub", () => {
     assert.deepEqual(where.reactions, { some: {} });
   });
 
+  it("uses one search box for every tournament hub, including LEC and later Worlds/LPL", () => {
+    assert.equal(vodHubSearchExample("lck"), "KT");
+    assert.equal(vodHubSearchExample("lec"), "G2");
+    assert.equal(vodHubSearchExample("lpl"), "JDG");
+    for (const card of VOD_HUB_CARDS) {
+      assert.ok(vodHubSearchExample(card.id).length > 0, card.id);
+    }
+  });
+
   it("counts seed LCK reactions on the LCK card only", () => {
     const counts = countReactionsByHub([
       { tournament: "LCK", reactionCount: 5 },
@@ -49,5 +61,16 @@ describe("vod hub", () => {
     assert.equal(counts.lec, 2);
     assert.equal(counts.worlds, 0);
     assert.equal(counts.lpl, 0);
+  });
+
+  it("lists every hub tournament so VOD attach is not limited to LCK/LEC", () => {
+    assert.ok(vodAttachTournaments().includes("LPL"));
+    assert.ok(vodAttachTournaments().includes("Worlds"));
+    assert.ok(vodAttachTournaments().includes("EWC"));
+  });
+
+  it("puts season selects on LCK LPL LEC and not on international hubs", () => {
+    assert.equal(hubUsesLeagueSeasons("lck"), true);
+    assert.equal(hubUsesLeagueSeasons("worlds"), false);
   });
 });

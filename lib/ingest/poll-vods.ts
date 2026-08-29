@@ -4,8 +4,8 @@ import { shouldFetchVods } from "@/lib/ingest/platforms";
 import { isLivePollFresh } from "@/lib/ingest/poll-fresh";
 import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
 import { fetchVodsForChannel, type VodListItem } from "@/lib/ingest/vod-list";
-import { isPrototypeLiveLeague } from "@/lib/leagues";
 import { prisma } from "@/lib/prisma";
+import { vodAttachTournaments } from "@/lib/vod-hub";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 
 export const VOD_POLL_FRESH_MS = 30 * 60 * 1000;
@@ -64,7 +64,7 @@ async function runVodPoll(): Promise<VodPollSummary> {
       include: { channels: true },
     }),
     prisma.match.findMany({
-      where: { status: { in: ["ended", "live"] }, tournament: { in: ["LCK", "LEC"] } },
+      where: { status: { in: ["ended", "live"] }, tournament: { in: vodAttachTournaments() } },
       include: {
         blueTeam: { include: { aliases: true } },
         redTeam: { include: { aliases: true } },
@@ -72,19 +72,17 @@ async function runVodPoll(): Promise<VodPollSummary> {
     }),
   ]);
 
-  const attachable: VodAttachMatch[] = matches
-    .filter((match) => isPrototypeLiveLeague(match.tournament))
-    .map((match) => ({
-      id: match.id,
-      tournament: match.tournament,
-      status: match.status,
-      startsAt: match.startsAt,
-      bestOf: match.bestOf,
-      blueTeamId: match.blueTeamId,
-      redTeamId: match.redTeamId,
-      blueAliases: aliases(match.blueTeam),
-      redAliases: aliases(match.redTeam),
-    }));
+  const attachable: VodAttachMatch[] = matches.map((match) => ({
+    id: match.id,
+    tournament: match.tournament,
+    status: match.status,
+    startsAt: match.startsAt,
+    bestOf: match.bestOf,
+    blueTeamId: match.blueTeamId,
+    redTeamId: match.redTeamId,
+    blueAliases: aliases(match.blueTeam),
+    redAliases: aliases(match.redTeam),
+  }));
 
   let scanned = 0;
   let attached = 0;
