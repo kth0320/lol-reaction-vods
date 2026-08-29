@@ -81,6 +81,26 @@ a {
   color: var(--gold);
 }
 
+.header-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.ops-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ops-form {
+  display: grid;
+  gap: 14px;
+  max-width: 640px;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

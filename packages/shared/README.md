@@ -10,4 +10,4 @@
 - **Platform** — `youtube` | `soop` | `chzzk` (`twitch`는 후순위)
 - **Playback** — `youtube`/`soop` → 공식 iframe, `chzzk` → 원본 링크(인페이지 임베드는 후순위)
 
-Phase 0에서는 이 README만 둔다. 타입, 상수, 패키지 엔트리, 비즈니스 로직을 추가하지 않는다.
+지금은 `lib/dto.ts`와 `lib/playback.ts`에 있습니다. 패키지로 빼는 것은 API 서버를 분리할 때입니다.

@@ -104,7 +104,7 @@ npm run dev -- -p 43123
 ```
 
 브라우저에서 `http://localhost:43123` → 상단 vs 카드(LCK / LEC 탭 / 5초 전환) → 경기 화면(응원 팀·플랫폼 필터) / 하단 다시보기.  
-수집 후보는 `http://localhost:43123/candidates`. 일정만: `npm run ingest:schedule` (최근 창 + 2026·2025·2024 끝난 대회). 화이트리스트 라이브: `npm run ingest:live`. 다시보기: `npm run ingest:vods` (치지직·숲은 지난 시즌까지 페이지).
+수집 후보는 `http://localhost:43123/candidates`. 수동 보정은 `http://localhost:43123/ops`. 일정만: `npm run ingest:schedule` (최근 창 + 2026·2025·2024 끝난 대회). 화이트리스트 라이브: `npm run ingest:live`. 다시보기: `npm run ingest:vods` (치지직·숲은 지난 시즌까지 페이지).
 
 시드 데이터는 `data/` JSON입니다. SQLite 파일(`prisma/dev.db`)은 커밋하지 않습니다.
 
