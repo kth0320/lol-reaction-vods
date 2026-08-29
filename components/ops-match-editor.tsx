@@ -77,7 +77,7 @@ export function OpsMatchEditor({ matchId }: { matchId: string }) {
 
   return (
     <div>
-      {error ? <p className="empty">{error}</p> : null}
+      {error && !match ? <p className="empty">{error}</p> : null}
       <div className="match-meta">
         <span>
           {match.tournament} · {match.split}
@@ -132,6 +132,7 @@ export function OpsMatchEditor({ matchId }: { matchId: string }) {
       </section>
       <section className="vod-section">
         <h2 className="section-title">빠진 링크 붙이기</h2>
+        {error ? <p className="ops-error">{error}</p> : null}
         <form className="ops-form" onSubmit={(event) => void onAttach(event)}>
           <label className="vod-season">
             <span className="vod-search-label">방송인</span>

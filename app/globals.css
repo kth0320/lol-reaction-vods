@@ -101,6 +101,12 @@ a {
   max-width: 640px;
 }
 
+.ops-error {
+  margin: 0;
+  color: #f0c27a;
+  font-size: 14px;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
