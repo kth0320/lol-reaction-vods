@@ -82,14 +82,32 @@ export function vodHubMatchWhere(hubId: VodHubId) {
   };
 }
 
+export type VodHubStat = {
+  matchCount: number;
+  reactionCount: number;
+};
+
+export function countHubStats(
+  rows: { tournament: string; reactionCount: number }[],
+): Record<VodHubId, VodHubStat> {
+  const stats = Object.fromEntries(
+    VOD_HUB_CARDS.map((card) => [card.id, { matchCount: 0, reactionCount: 0 }]),
+  ) as Record<VodHubId, VodHubStat>;
+  for (const row of rows) {
+    const hub = matchTournamentToHub(row.tournament);
+    if (!hub || row.reactionCount <= 0) continue;
+    stats[hub].matchCount += 1;
+    stats[hub].reactionCount += row.reactionCount;
+  }
+  return stats;
+}
+
 export function countReactionsByHub(
   rows: { tournament: string; reactionCount: number }[],
 ): Record<VodHubId, number> {
-  const counts = Object.fromEntries(VOD_HUB_CARDS.map((card) => [card.id, 0])) as Record<VodHubId, number>;
-  for (const row of rows) {
-    const hub = matchTournamentToHub(row.tournament);
-    if (!hub) continue;
-    counts[hub] += row.reactionCount;
-  }
-  return counts;
+  const stats = countHubStats(rows);
+  return Object.fromEntries(VOD_HUB_CARDS.map((card) => [card.id, stats[card.id].reactionCount])) as Record<
+    VodHubId,
+    number
+  >;
 }

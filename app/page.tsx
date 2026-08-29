@@ -9,7 +9,7 @@ import { SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import { PROTOTYPE_LIVE_LEAGUES, isLeague, isPrototypeLiveLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
 import { prisma } from "@/lib/prisma";
-import { countReactionsByHub } from "@/lib/vod-hub";
+import { countHubStats } from "@/lib/vod-hub";
 import { after } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export default async function HomePage() {
       orderBy: { startsAt: "asc" },
     }),
     prisma.match.findMany({
-      where: { status: "ended" },
+      where: { status: "ended", reactions: { some: {} } },
       select: { tournament: true, _count: { select: { reactions: true } } },
     }),
   ]);
@@ -55,7 +55,7 @@ export default async function HomePage() {
     redImageUrl: match.redTeam.imageUrl,
     broadcast: broadcasts[index],
   }));
-  const vodCounts = countReactionsByHub(
+  const vodStats = countHubStats(
     vodRows.map((row) => ({ tournament: row.tournament, reactionCount: row._count.reactions })),
   );
 
@@ -73,7 +73,7 @@ export default async function HomePage() {
       <section className="vod-section">
         <h2 className="section-title">다시보기</h2>
         <p className="section-note">대회를 고르면 그 경기를 중계한 스트리머·BJ 다시보기가 나옵니다.</p>
-        <VodHubGrid counts={vodCounts} />
+        <VodHubGrid stats={vodStats} />
       </section>
     </main>
   );

@@ -2,6 +2,7 @@ import { VodMatchList, type VodMatchRow } from "@/components/vod-match-list";
 import { formatKst, kstYear } from "@/lib/format";
 import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
+import { parseVodFilter } from "@/lib/vod-filter";
 import { prisma } from "@/lib/prisma";
 import { hubUsesLeagueSeasons, isVodHubId, vodHubCard, vodHubMatchWhere, vodHubSearchExample } from "@/lib/vod-hub";
 import { hubYearFilter } from "@/lib/vod-season";
@@ -11,7 +12,13 @@ import { after } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function VodHubPage({ params }: { params: Promise<{ tournament: string }> }) {
+export default async function VodHubPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tournament: string }>;
+  searchParams: Promise<{ year?: string; stage?: string; q?: string }>;
+}) {
   const { tournament } = await params;
   if (!isVodHubId(tournament)) {
     notFound();
@@ -36,6 +43,9 @@ export default async function VodHubPage({ params }: { params: Promise<{ tournam
     orderBy: { startsAt: "desc" },
   });
 
+  const yearFilter = hubYearFilter(card.id);
+  const filter = parseVodFilter(await searchParams, yearFilter?.years ?? [], card.id);
+
   const rows: VodMatchRow[] = matches.map((match) => ({
     id: match.id,
     tournament: match.tournament,
@@ -46,8 +56,10 @@ export default async function VodHubPage({ params }: { params: Promise<{ tournam
     seasonYear: kstYear(match.startsAt),
     blueAbbr: match.blueTeam.abbr,
     blueName: match.blueTeam.name,
+    blueImageUrl: match.blueTeam.imageUrl,
     redAbbr: match.redTeam.abbr,
     redName: match.redTeam.name,
+    redImageUrl: match.redTeam.imageUrl,
     reactionCount: match._count.reactions,
     blue: {
       abbr: match.blueTeam.abbr,
@@ -76,7 +88,10 @@ export default async function VodHubPage({ params }: { params: Promise<{ tournam
         matches={rows}
         hubId={card.id}
         searchExample={vodHubSearchExample(card.id)}
-        yearFilter={hubYearFilter(card.id)}
+        yearFilter={yearFilter}
+        initialYear={filter.year}
+        initialStage={filter.stage}
+        initialQuery={filter.q}
       />
     </main>
   );

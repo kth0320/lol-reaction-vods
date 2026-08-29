@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   VOD_HUB_CARDS,
+  countHubStats,
   countReactionsByHub,
   hubMatchTournaments,
   isVodHubId,
@@ -62,6 +63,18 @@ describe("vod hub", () => {
     assert.equal(counts.lec, 2);
     assert.equal(counts.worlds, 0);
     assert.equal(counts.lpl, 0);
+  });
+
+  it("counts ended matches that already have reactions, plus the reaction total", () => {
+    const stats = countHubStats([
+      { tournament: "LCK", reactionCount: 3 },
+      { tournament: "LCK", reactionCount: 2 },
+      { tournament: "LCK", reactionCount: 0 },
+      { tournament: "LEC", reactionCount: 1 },
+    ]);
+    assert.deepEqual(stats.lck, { matchCount: 2, reactionCount: 5 });
+    assert.deepEqual(stats.lec, { matchCount: 1, reactionCount: 1 });
+    assert.deepEqual(stats.worlds, { matchCount: 0, reactionCount: 0 });
   });
 
   it("lists every hub tournament so VOD attach is not limited to LCK/LEC", () => {

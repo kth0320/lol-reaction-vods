@@ -118,6 +118,11 @@ export function matchStageId(
   return ALL_STAGE_ID;
 }
 
+export function stageLabelForMatch(hubId: VodHubId, split: string, startsAt: Date): string {
+  const stageId = matchStageId(hubId, split, startsAt);
+  return hubStageOptions(hubId, kstYear(startsAt)).find((option) => option.id === stageId)?.label ?? split;
+}
+
 export function filterMatchesByStage<T extends { split: string; startsAt: Date }>(
   rows: T[],
   hubId: VodHubId,

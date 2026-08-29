@@ -1,11 +1,13 @@
 "use client";
 
+import { MatchTeams } from "@/components/match-teams";
+import { parseVodFilter, vodHubPath, vodMatchPath } from "@/lib/vod-filter";
 import type { VodHubId } from "@/lib/vod-hub";
 import { ALL_STAGE_ID, filterMatchesByStage, hubStageHeading, hubStageOptions } from "@/lib/vod-split";
 import { filterMatchesBySeason, pastYearEmptyMessage, vodYearOptionLabel, type VodYearFilter } from "@/lib/vod-season";
 import { filterVodMatches } from "@/lib/vod-search";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type VodMatchRow = {
   id: string;
@@ -17,8 +19,10 @@ export type VodMatchRow = {
   seasonYear: number;
   blueAbbr: string;
   blueName: string;
+  blueImageUrl: string;
   redAbbr: string;
   redName: string;
+  redImageUrl: string;
   reactionCount: number;
   blue: { abbr: string; name: string; aliases: string[] };
   red: { abbr: string; name: string; aliases: string[] };
@@ -30,20 +34,46 @@ export function VodMatchList({
   searchExample = "KT",
   emptyMessage = "아직 이 대회 다시보기가 없습니다. YouTube 수집이 붙으면 여기에 쌓입니다.",
   yearFilter,
+  initialYear,
+  initialStage,
+  initialQuery,
 }: {
   matches: VodMatchRow[];
   hubId: VodHubId;
   searchExample?: string;
   emptyMessage?: string;
   yearFilter?: VodYearFilter;
+  initialYear?: number;
+  initialStage?: string;
+  initialQuery?: string;
 }) {
   const years = yearFilter?.years ?? [];
   const showYears = years.length > 0;
-  const [query, setQuery] = useState("");
-  const [year, setYear] = useState(years[0] ?? 0);
-  const [stage, setStage] = useState(ALL_STAGE_ID);
+  const parsed = parseVodFilter(
+    {
+      year: initialYear ? String(initialYear) : undefined,
+      stage: initialStage,
+      q: initialQuery,
+    },
+    years,
+    hubId,
+  );
+  const [query, setQuery] = useState(parsed.q);
+  const [year, setYear] = useState(parsed.year || years[0] || 0);
+  const [stage, setStage] = useState(parsed.stage);
   const stages = hubStageOptions(hubId, year);
   const kind = yearFilter?.kind ?? "season";
+
+  useEffect(() => {
+    const options = hubStageOptions(hubId, year);
+    if (!options.some((option) => option.id === stage)) {
+      setStage(ALL_STAGE_ID);
+    }
+  }, [hubId, year, stage]);
+
+  useEffect(() => {
+    window.history.replaceState(null, "", vodHubPath(hubId, year, stage, query));
+  }, [hubId, year, stage, query]);
 
   const inYear = useMemo(
     () => (showYears ? filterMatchesBySeason(matches, year) : matches),
@@ -120,7 +150,7 @@ export function VodMatchList({
       ) : (
         <div className="match-list">
           {visible.map((match) => (
-            <Link key={match.id} href={`/matches/${match.id}`} className="match-card">
+            <Link key={match.id} href={vodMatchPath(match.id, hubId, year, stage)} className="match-card">
               <div className="match-meta">
                 <span>
                   {match.tournament} {match.split}
@@ -128,11 +158,12 @@ export function VodMatchList({
                 <span>BO{match.bestOf}</span>
                 <span>{match.startsAtLabel}</span>
               </div>
-              <div className="match-teams">
-                <p className="team-name">{match.blueAbbr}</p>
-                <span className="vs">VS</span>
-                <p className="team-name right">{match.redAbbr}</p>
-              </div>
+              <MatchTeams
+                blueAbbr={match.blueAbbr}
+                redAbbr={match.redAbbr}
+                blueImageUrl={match.blueImageUrl}
+                redImageUrl={match.redImageUrl}
+              />
               <div className="match-meta">
                 <span>
                   {match.blueName} vs {match.redName}

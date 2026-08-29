@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { hubStageOptions, matchStageId } from "./vod-split";
+import { hubStageOptions, matchStageId, stageLabelForMatch } from "./vod-split";
 
 describe("VOD split filters", () => {
   it("splits 2026 LCK into Cup and regular LCK", () => {
@@ -42,5 +42,11 @@ describe("VOD split filters", () => {
     assert.equal(matchStageId("msi", "Play-Ins", new Date("2024-05-01T08:00:00Z")), "playin");
     assert.equal(matchStageId("first-stand", "Groups", new Date("2026-03-16T13:00:00Z")), "groups");
     assert.equal(matchStageId("ewc", "Finals", new Date("2026-07-19T10:00:00Z")), "knockout");
+  });
+
+  it("labels a match with the hub stage, not the API week name", () => {
+    assert.equal(stageLabelForMatch("lck", "Week 1", new Date("2026-01-20T08:00:00Z")), "LCK컵");
+    assert.equal(stageLabelForMatch("lpl", "Play In Knockouts", new Date("2026-08-28T06:00:00Z")), "Split 3");
+    assert.equal(stageLabelForMatch("worlds", "Swiss", new Date("2024-10-03T13:00:00Z")), "스위스");
   });
 });

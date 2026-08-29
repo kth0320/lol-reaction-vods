@@ -215,6 +215,32 @@ a {
   align-items: center;
 }
 
+.match-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.match-team.right {
+  flex-direction: row-reverse;
+  justify-self: end;
+  text-align: right;
+}
+
+.match-logo {
+  display: block;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  object-fit: contain;
+}
+
+.match-logo-empty {
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .team-name {
   margin: 0;
   font-size: 22px;
@@ -223,6 +249,17 @@ a {
 
 .team-name.right {
   text-align: right;
+}
+
+.ended-match-head {
+  margin: 16px 0 8px;
+}
+
+.ended-match-names {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
 }
 
 .vs {
