@@ -42,4 +42,15 @@ describe("vod match search", () => {
       ["t1-hle"],
     );
   });
+
+  it("filters LEC teams the same way as LCK", () => {
+    const lec = [
+      { id: "g2-fnc", haystack: vodMatchHaystack(["LEC", "G2", "G2 Esports", "FNC", "Fnatic"]) },
+      { id: "kc-vit", haystack: vodMatchHaystack(["LEC", "KC", "Karmine Corp", "VIT", "Team Vitality"]) },
+    ];
+    assert.deepEqual(
+      filterVodMatches(lec, "G2").map((row) => row.id),
+      ["g2-fnc"],
+    );
+  });
 });

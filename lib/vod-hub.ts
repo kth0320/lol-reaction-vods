@@ -36,6 +36,14 @@ export function vodHubCard(id: string) {
   return HUB_BY_ID.get(id as VodHubId) ?? null;
 }
 
+/** Same search box on every hub page. Keep this when Worlds/MSI/First Stand/EWC/LPL lists fill in. */
+export function vodHubSearchExample(id: VodHubId): string {
+  if (id === "lec") return "G2";
+  if (id === "lpl") return "JDG";
+  if (id === "lck") return "KT";
+  return "T1";
+}
+
 export function matchTournamentToHub(tournament: string): VodHubId | null {
   const key = tournament.trim().toUpperCase().replace(/[\s-]+/g, "");
   if (key === "롤드컵" || key === "WORLDS") return "worlds";

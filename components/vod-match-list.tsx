@@ -18,7 +18,15 @@ export type VodMatchRow = {
   haystack: string;
 };
 
-export function VodMatchList({ matches }: { matches: VodMatchRow[] }) {
+export function VodMatchList({
+  matches,
+  searchExample = "KT",
+  emptyMessage = "아직 이 대회 다시보기가 없습니다. YouTube 수집이 붙으면 여기에 쌓입니다.",
+}: {
+  matches: VodMatchRow[];
+  searchExample?: string;
+  emptyMessage?: string;
+}) {
   const [query, setQuery] = useState("");
   const visible = useMemo(() => filterVodMatches(matches, query), [matches, query]);
   const searching = query.trim().length > 0;
@@ -32,13 +40,13 @@ export function VodMatchList({ matches }: { matches: VodMatchRow[] }) {
           className="vod-search-input"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="팀 이름 · 약자  예: KT"
+          placeholder={`팀 이름 · 약자  예: ${searchExample}`}
           autoComplete="off"
         />
       </label>
       {visible.length === 0 ? (
         <p className="empty">
-          {searching ? `"${query.trim()}"와 맞는 경기가 없습니다.` : "아직 이 대회 다시보기가 없습니다."}
+          {searching ? `"${query.trim()}"와 맞는 경기가 없습니다.` : emptyMessage}
         </p>
       ) : (
         <div className="match-list">

@@ -7,6 +7,7 @@ import {
   isVodHubId,
   matchTournamentToHub,
   vodHubMatchWhere,
+  vodHubSearchExample,
 } from "./vod-hub";
 
 describe("vod hub", () => {
@@ -38,6 +39,15 @@ describe("vod hub", () => {
     assert.equal(where.status, "ended");
     assert.deepEqual(where.tournament, { in: ["LCK"] });
     assert.deepEqual(where.reactions, { some: {} });
+  });
+
+  it("uses one search box for every tournament hub, including LEC and later Worlds/LPL", () => {
+    assert.equal(vodHubSearchExample("lck"), "KT");
+    assert.equal(vodHubSearchExample("lec"), "G2");
+    assert.equal(vodHubSearchExample("lpl"), "JDG");
+    for (const card of VOD_HUB_CARDS) {
+      assert.ok(vodHubSearchExample(card.id).length > 0, card.id);
+    }
   });
 
   it("counts seed LCK reactions on the LCK card only", () => {
