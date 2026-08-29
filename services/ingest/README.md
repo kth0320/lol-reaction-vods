@@ -11,6 +11,6 @@
 
 **프로토타입 범위:** 리그 **LCK · LEC**. LPL은 홈에 안 올림. 라이브는 **치지직 · 숲 · Twitch**. 다시보기는 **YouTube · 치지직 · 숲**. 채널 ID는 `data/creators/channels.json`.
 
-홈 vs 카드는 **lolesports 공식 일정**(`getLeagues` slug 조회 후 `getSchedule`). 방송 제목은 공식 경기에 중계진을 붙이는 보조 매칭이다. 공개 사이트 키는 lolesports.com이 쓰는 값이며 비밀이 아니다.
+홈 vs 카드는 **lolesports 공식 일정**(`getLeagues` slug 조회 후 `getSchedule`). 지난 시즌 칸은 `getTournamentsForLeague` + `getCompletedEvents`. 방송 제목은 공식 경기에 중계진을 붙이는 보조 매칭이다. 공개 사이트 키는 lolesports.com이 쓰는 값이며 비밀이 아니다.
 
-`npm run ingest:schedule` 일정. `npm run ingest:live` 라이브. `npm run ingest:vods` 다시보기.
+`npm run ingest:schedule` 일정(아카이브 포함). `npm run ingest:live` 라이브. `npm run ingest:vods` 다시보기(치지직·숲 지난 시즌 페이지).

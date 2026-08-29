@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { httpsAssetUrl, leagueIdsForSlugs, parseLeagues, parseScheduleEvents } from "./lolesports";
+import {
+  httpsAssetUrl,
+  leagueIdsForSlugs,
+  parseLeagues,
+  parseScheduleEvents,
+  parseTournaments,
+  tournamentOverlapsYears,
+} from "./lolesports";
 import {
   API_CODE_TO_TEAM_ID,
   attachInferredToOfficial,
@@ -84,6 +91,56 @@ describe("lolesports schedule parse", () => {
     );
     assert.equal(events[0].teams[0].imageUrl, "https://static.lolesports.com/teams/NSFullonDark.png");
     assert.equal(httpsAssetUrl("http://static.lolesports.com/teams/a.png"), "https://static.lolesports.com/teams/a.png");
+  });
+
+  it("reads completed-event pages that omit type, state, and league slug", () => {
+    const events = parseScheduleEvents(
+      {
+        data: {
+          schedule: {
+            events: [
+              {
+                startTime: "2025-01-15T08:00:00Z",
+                blockName: "Week 1",
+                league: { name: "LCK" },
+                match: {
+                  id: "113780832792144603",
+                  teams: [
+                    { name: "KIWOOM DRX", code: "KRX", image: "http://static.lolesports.com/teams/krx.png" },
+                    { name: "HANJIN BRION", code: "BRO", image: "http://static.lolesports.com/teams/bro.png" },
+                  ],
+                  strategy: { type: "bestOf", count: 3 },
+                },
+              },
+            ],
+          },
+        },
+      },
+      "lck",
+    );
+    assert.equal(events.length, 1);
+    assert.equal(events[0].leagueSlug, "lck");
+    assert.equal(events[0].matchId, "113780832792144603");
+    assert.equal(events[0].state, "");
+    assert.equal(events[0].bestOf, 3);
+  });
+
+  it("keeps league tournaments that overlap the hub archive years", () => {
+    const tournaments = parseTournaments({
+      data: {
+        leagues: [
+          {
+            tournaments: [
+              { id: "cup-2025", slug: "lck_cup_2025", startDate: "2025-01-15", endDate: "2025-02-23" },
+              { id: "summer-2023", slug: "lck_summer_2023", startDate: "2023-06-06", endDate: "2023-08-22" },
+            ],
+          },
+        ],
+      },
+    });
+    assert.equal(tournaments.length, 2);
+    assert.equal(tournamentOverlapsYears(tournaments[0], [2026, 2025, 2024]), true);
+    assert.equal(tournamentOverlapsYears(tournaments[1], [2026, 2025, 2024]), false);
   });
 });
 

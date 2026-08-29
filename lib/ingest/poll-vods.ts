@@ -3,7 +3,7 @@ import { pickMatchForVod, type VodAttachMatch } from "@/lib/ingest/attach-vod";
 import { shouldFetchVods } from "@/lib/ingest/platforms";
 import { isLivePollFresh } from "@/lib/ingest/poll-fresh";
 import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
-import { fetchVodsForChannel, type VodListItem } from "@/lib/ingest/vod-list";
+import { fetchVodsForChannel, type VodFetchOptions, type VodListItem } from "@/lib/ingest/vod-list";
 import { prisma } from "@/lib/prisma";
 import { vodAttachTournaments } from "@/lib/vod-hub";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
@@ -34,14 +34,16 @@ export async function refreshVodsInBackground(maxAgeMs = VOD_POLL_FRESH_MS): Pro
   }
 }
 
-export async function pollReactionVods(options: { maxAgeMs?: number | null } = {}): Promise<VodPollSummary> {
+export async function pollReactionVods(
+  options: { maxAgeMs?: number | null; vods?: VodFetchOptions } = {},
+): Promise<VodPollSummary> {
   const maxAgeMs = options.maxAgeMs;
   if (pollState.vodPollInflight) return pollState.vodPollInflight;
   if (maxAgeMs != null && maxAgeMs >= 0 && isLivePollFresh(pollState.vodPollAt, Date.now(), maxAgeMs)) {
     return { scanned: 0, attached: 0, skippedTwitch: 0 };
   }
 
-  const work = runVodPoll()
+  const work = runVodPoll(options.vods)
     .then((summary) => {
       pollState.vodPollAt = Date.now();
       return summary;
@@ -53,7 +55,7 @@ export async function pollReactionVods(options: { maxAgeMs?: number | null } = {
   return work;
 }
 
-async function runVodPoll(): Promise<VodPollSummary> {
+async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
   await syncOfficialScheduleIfStale();
   await ensureCreatorCatalog();
   await ensureTeamCatalog();
@@ -96,7 +98,7 @@ async function runVodPoll(): Promise<VodPollSummary> {
       if (!shouldFetchVods(channel.platform)) return [] as { creatorId: string; item: VodListItem; matchId: string }[];
       let items: VodListItem[] = [];
       try {
-        items = await fetchVodsForChannel(channel.platform, channel.channelId);
+        items = await fetchVodsForChannel(channel.platform, channel.channelId, fetch, vods);
       } catch {
         return [];
       }

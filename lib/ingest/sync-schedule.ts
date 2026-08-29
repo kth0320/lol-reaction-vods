@@ -1,4 +1,4 @@
-import { fetchPrototypeSchedules } from "@/lib/ingest/lolesports";
+import { fetchArchiveSchedules, fetchPrototypeSchedules } from "@/lib/ingest/lolesports";
 import {
   SCHEDULE_MATCH_SOURCE,
   mapScheduleEvents,
@@ -32,12 +32,19 @@ function catalogToScheduleTeams(
   });
 }
 
-export async function syncOfficialSchedule(options: { now?: Date; fetchImpl?: typeof fetch } = {}): Promise<OfficialScheduleMatch[]> {
+export async function syncOfficialSchedule(
+  options: { now?: Date; fetchImpl?: typeof fetch; archiveYears?: number[] } = {},
+): Promise<OfficialScheduleMatch[]> {
   const inferTeams = await ensureTeamCatalog();
   const stored = await prisma.team.findMany({ select: { id: true, abbr: true, name: true } });
   const teams = catalogToScheduleTeams(inferTeams, stored);
-  const events = await fetchPrototypeSchedules(vodHubScheduleSlugs(), options.fetchImpl ?? fetch);
-  const mapped = mapScheduleEvents(events, teams, options.now ?? new Date());
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const recent = await fetchPrototypeSchedules(vodHubScheduleSlugs(), fetchImpl);
+  const archive =
+    options.archiveYears && options.archiveYears.length > 0
+      ? await fetchArchiveSchedules(vodHubScheduleSlugs(), options.archiveYears, fetchImpl)
+      : [];
+  const mapped = mapScheduleEvents([...recent, ...archive], teams, options.now ?? new Date());
 
   const persist = mapped.filter(
     (match) => match.status === "live" || match.status === "upcoming" || match.status === "ended",

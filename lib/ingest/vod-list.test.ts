@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseChzzkVideos, parseSoopVods, parseYouTubeAtom, fetchVodsForChannel } from "./vod-list";
+import { parseChzzkVideos, parseSoopVods, parseYouTubeAtom, fetchChzzkReplays, fetchSoopVods, fetchVodsForChannel } from "./vod-list";
 import { shouldFetchVods } from "./platforms";
 import { vodInMatchWindow } from "./vod-window";
 import { pickMatchForVod } from "./attach-vod";
@@ -62,6 +62,71 @@ describe("vod list parsers", () => {
       throw new Error("twitch vod fetch should not run");
     });
     assert.deepEqual(rows, []);
+  });
+
+  it("pages Chzzk replays until the archive year floor", async () => {
+    const calls: string[] = [];
+    const rows = await fetchChzzkReplays(
+      "ch1",
+      async (url) => {
+        calls.push(String(url));
+        const page = Number(new URL(String(url)).searchParams.get("page"));
+        const payload =
+          page === 0
+            ? {
+                content: {
+                  data: [
+                    {
+                      videoNo: 1,
+                      videoType: "REPLAY",
+                      videoTitle: "LCK 2025",
+                      publishDateAt: Date.parse("2025-08-01T00:00:00+09:00"),
+                    },
+                  ],
+                },
+              }
+            : {
+                content: {
+                  data: [
+                    {
+                      videoNo: 2,
+                      videoType: "REPLAY",
+                      videoTitle: "LCK 2023",
+                      publishDateAt: Date.parse("2023-08-01T00:00:00+09:00"),
+                    },
+                  ],
+                },
+              };
+        return new Response(JSON.stringify(payload), { status: 200 });
+      },
+      { maxPages: 5, untilYear: 2024 },
+    );
+    assert.equal(rows.length, 2);
+    assert.equal(calls.length, 2);
+    assert.match(calls[0], /page=0/);
+    assert.match(calls[1], /page=1/);
+  });
+
+  it("pages SOOP vods newest-first", async () => {
+    const calls: string[] = [];
+    const rows = await fetchSoopVods(
+      "phonics1",
+      async (url) => {
+        calls.push(String(url));
+        const page = new URL(String(url)).searchParams.get("page");
+        const payload =
+          page === "1"
+            ? { data: [{ title_no: 1, title_name: "김민교 LCK", reg_date: "2026-08-08 20:30:00" }] }
+            : { data: [] };
+        return new Response(JSON.stringify(payload), { status: 200 });
+      },
+      { maxPages: 3 },
+    );
+    assert.equal(rows.length, 1);
+    assert.deepEqual(calls, [
+      "https://chapi.sooplive.co.kr/api/phonics1/vods?page=1",
+      "https://chapi.sooplive.co.kr/api/phonics1/vods?page=2",
+    ]);
   });
 });
 

@@ -1,4 +1,13 @@
+import { kstYear } from "@/lib/format";
 import { shouldFetchVods, type VodIngestPlatform } from "@/lib/ingest/platforms";
+
+export type VodFetchOptions = {
+  maxPages?: number;
+  untilYear?: number;
+};
+
+export const VOD_LIVE_PAGES = 1;
+export const VOD_ARCHIVE_MAX_PAGES = 40;
 
 export type VodListItem = {
   platform: VodIngestPlatform;
@@ -127,6 +136,17 @@ async function fetchOk(fetchImpl: typeof fetch, url: string): Promise<Response> 
   }
 }
 
+function pageReachedArchiveFloor(rows: VodListItem[], untilYear?: number): boolean {
+  if (untilYear == null || rows.length === 0) return false;
+  const dated = rows.filter((row) => row.publishedAt);
+  if (dated.length === 0) return false;
+  const oldest = dated.reduce(
+    (min, row) => ((row.publishedAt as Date).getTime() < min.getTime() ? (row.publishedAt as Date) : min),
+    dated[0].publishedAt as Date,
+  );
+  return kstYear(oldest) < untilYear;
+}
+
 export async function fetchYouTubeUploads(channelId: string, fetchImpl: typeof fetch = fetch): Promise<VodListItem[]> {
   const id = encodeURIComponent(channelId);
   const body = await readBody(
@@ -135,31 +155,58 @@ export async function fetchYouTubeUploads(channelId: string, fetchImpl: typeof f
   return parseYouTubeAtom(body);
 }
 
-export async function fetchChzzkReplays(channelId: string, fetchImpl: typeof fetch = fetch): Promise<VodListItem[]> {
+export async function fetchChzzkReplays(
+  channelId: string,
+  fetchImpl: typeof fetch = fetch,
+  options: VodFetchOptions = {},
+): Promise<VodListItem[]> {
   const id = encodeURIComponent(channelId);
-  const body = await readBody(
-    await fetchOk(
-      fetchImpl,
-      `https://api.chzzk.naver.com/service/v1/channels/${id}/videos?sortType=LATEST&pagingType=PAGE&page=0&size=20`,
-    ),
-  );
-  return parseChzzkVideos(JSON.parse(body) as unknown);
+  const maxPages = Math.max(1, options.maxPages ?? VOD_LIVE_PAGES);
+  const collected: VodListItem[] = [];
+  for (let page = 0; page < maxPages; page += 1) {
+    const body = await readBody(
+      await fetchOk(
+        fetchImpl,
+        `https://api.chzzk.naver.com/service/v1/channels/${id}/videos?sortType=LATEST&pagingType=PAGE&page=${page}&size=50`,
+      ),
+    );
+    const rows = parseChzzkVideos(JSON.parse(body) as unknown);
+    if (rows.length === 0) break;
+    collected.push(...rows);
+    if (pageReachedArchiveFloor(rows, options.untilYear)) break;
+  }
+  return collected;
 }
 
-export async function fetchSoopVods(channelId: string, fetchImpl: typeof fetch = fetch): Promise<VodListItem[]> {
+export async function fetchSoopVods(
+  channelId: string,
+  fetchImpl: typeof fetch = fetch,
+  options: VodFetchOptions = {},
+): Promise<VodListItem[]> {
   const id = encodeURIComponent(channelId);
-  const body = await readBody(await fetchOk(fetchImpl, `https://chapi.sooplive.co.kr/api/${id}/vods`));
-  return parseSoopVods(JSON.parse(body) as unknown);
+  const maxPages = Math.max(1, options.maxPages ?? VOD_LIVE_PAGES);
+  const collected: VodListItem[] = [];
+  for (let page = 1; page <= maxPages; page += 1) {
+    const body = await readBody(
+      await fetchOk(fetchImpl, `https://chapi.sooplive.co.kr/api/${id}/vods?page=${page}`),
+    );
+    const rows = parseSoopVods(JSON.parse(body) as unknown);
+    if (rows.length === 0) break;
+    collected.push(...rows);
+    if (pageReachedArchiveFloor(rows, options.untilYear)) break;
+  }
+  return collected;
 }
 
 export async function fetchVodsForChannel(
   platform: string,
   channelId: string,
   fetchImpl: typeof fetch = fetch,
+  options: VodFetchOptions = {},
 ): Promise<VodListItem[]> {
   if (!shouldFetchVods(platform)) return [];
   if (platform === "youtube") return fetchYouTubeUploads(channelId, fetchImpl);
-  if (platform === "chzzk") return fetchChzzkReplays(channelId, fetchImpl);
-  if (platform === "soop") return fetchSoopVods(channelId, fetchImpl);
+  if (platform === "chzzk") return fetchChzzkReplays(channelId, fetchImpl, options);
+  if (platform === "soop") return fetchSoopVods(channelId, fetchImpl, options);
   return [];
 }
