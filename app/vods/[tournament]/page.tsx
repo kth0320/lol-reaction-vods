@@ -66,8 +66,7 @@ export default async function VodHubPage({ params }: { params: Promise<{ tournam
       </Link>
       <h1 className="section-title">{card.label} 다시보기</h1>
       <p className="page-lead">
-        이 대회를 중계·리액션한 방송인 다시보기입니다. 경기를 고르면 플랫폼별 영상이 나옵니다. LCK·LEC·LPL·롤드컵·MSI·퍼스트스탠드·EWC
-        모두 같은 팀 검색입니다.
+        이 대회를 중계·리액션한 방송인 다시보기입니다. 경기를 고르면 플랫폼별 영상이 나옵니다. 팀 이름·약자로 검색할 수 있습니다.
       </p>
       <VodMatchList matches={rows} searchExample={vodHubSearchExample(card.id)} />
     </main>
