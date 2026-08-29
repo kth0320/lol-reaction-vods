@@ -1,10 +1,21 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { mutedBroadcastSrc, parseEventStreams, pickMutedBackground } from "./official-stream";
+import { mutedBroadcastSrc, parseEventLook, parseEventStreams, pickMutedBackground } from "./official-stream";
 
 const lckDetails = {
   data: {
     event: {
+      league: {
+        slug: "lck",
+        name: "LCK",
+        image: "http://static.lolesports.com/leagues/lck-color-on-black.png",
+      },
+      match: {
+        teams: [
+          { code: "T1", name: "T1", image: "http://static.lolesports.com/teams/t1.png" },
+          { code: "KT", name: "kt Rolster", image: "http://static.lolesports.com/teams/kt.png" },
+        ],
+      },
       streams: [
         { provider: "twitch", parameter: "lck", locale: "en-US" },
         { provider: "afreecatv", parameter: "aflol", locale: "ko-KR" },
@@ -40,5 +51,13 @@ describe("official muted background", () => {
       mutedBroadcastSrc({ provider: "twitch", id: "lck" }, "127.0.0.1"),
       "https://player.twitch.tv/?channel=lck&parent=127.0.0.1&parent=localhost&autoplay=true&muted=true",
     );
+  });
+
+  it("reads official league mark and team logos from event details", () => {
+    const look = parseEventLook(lckDetails);
+    assert.equal(look.leagueImageUrl, "https://static.lolesports.com/leagues/lck-color-on-black.png");
+    assert.equal(look.blueImageUrl, "https://static.lolesports.com/teams/t1.png");
+    assert.equal(look.redImageUrl, "https://static.lolesports.com/teams/kt.png");
+    assert.deepEqual(look.broadcast, { provider: "twitch", id: "lck" });
   });
 });

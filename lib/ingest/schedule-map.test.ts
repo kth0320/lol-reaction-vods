@@ -38,7 +38,12 @@ describe("lolesports schedule parse", () => {
     const leagues = parseLeagues({
       data: {
         leagues: [
-          { id: "lck-id-1", slug: "lck", name: "LCK" },
+          {
+            id: "lck-id-1",
+            slug: "lck",
+            name: "LCK",
+            image: "http://static.lolesports.com/leagues/lck-color-on-black.png",
+          },
           { id: "lec-id-9", slug: "lec", name: "LEC" },
           { id: "lpl-id-3", slug: "lpl", name: "LPL" },
         ],
@@ -48,6 +53,7 @@ describe("lolesports schedule parse", () => {
     assert.equal(ids.get("lck"), "lck-id-1");
     assert.equal(ids.get("lec"), "lec-id-9");
     assert.equal(ids.has("lpl"), false);
+    assert.equal(leagues[0].imageUrl, "https://static.lolesports.com/leagues/lck-color-on-black.png");
   });
 
   it("reads match id, teams, and best-of from a schedule event", () => {

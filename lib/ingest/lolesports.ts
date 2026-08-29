@@ -20,6 +20,7 @@ export type LolesportsLeague = {
   id: string;
   slug: string;
   name: string;
+  imageUrl: string;
 };
 
 export type LolesportsScheduleTeam = {
@@ -83,7 +84,12 @@ export function parseLeagues(payload: unknown): LolesportsLeague[] {
     const id = text(row?.id);
     const slug = text(row?.slug).toLowerCase();
     if (!id || !slug) continue;
-    rows.push({ id, slug, name: text(row?.name) || slug });
+    rows.push({
+      id,
+      slug,
+      name: text(row?.name) || slug,
+      imageUrl: httpsAssetUrl(text(row?.image)),
+    });
   }
   return rows;
 }

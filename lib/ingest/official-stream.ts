@@ -1,4 +1,4 @@
-import { fetchEventDetails } from "@/lib/ingest/lolesports";
+import { fetchEventDetails, httpsAssetUrl } from "@/lib/ingest/lolesports";
 
 export type EventStream = {
   provider: string;
@@ -76,13 +76,42 @@ export function mutedBroadcastSrc(broadcast: BackgroundBroadcast, parentHost: st
   return `https://play.sooplive.com/${encodeURIComponent(broadcast.id)}/embed`;
 }
 
+export type EventLook = {
+  broadcast: BackgroundBroadcast | null;
+  leagueImageUrl: string;
+  blueImageUrl: string;
+  redImageUrl: string;
+};
+
+export function parseEventLook(payload: unknown): EventLook {
+  const event = asRecord(asRecord(payload)?.data)?.event ?? asRecord(payload)?.event;
+  const league = asRecord(asRecord(event)?.league);
+  const match = asRecord(asRecord(event)?.match);
+  const teams = Array.isArray(match?.teams) ? match.teams : [];
+  const blue = asRecord(teams[0]);
+  const red = asRecord(teams[1]);
+  return {
+    broadcast: pickMutedBackground(parseEventStreams(payload)),
+    leagueImageUrl: httpsAssetUrl(text(league?.image)),
+    blueImageUrl: httpsAssetUrl(text(blue?.image)),
+    redImageUrl: httpsAssetUrl(text(red?.image)),
+  };
+}
+
+export async function lookForEvent(
+  eventId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<EventLook> {
+  try {
+    return parseEventLook(await fetchEventDetails(eventId, fetchImpl));
+  } catch {
+    return { broadcast: null, leagueImageUrl: "", blueImageUrl: "", redImageUrl: "" };
+  }
+}
+
 export async function backgroundForEvent(
   eventId: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<BackgroundBroadcast | null> {
-  try {
-    return pickMutedBackground(parseEventStreams(await fetchEventDetails(eventId, fetchImpl)));
-  } catch {
-    return null;
-  }
+  return (await lookForEvent(eventId, fetchImpl)).broadcast;
 }

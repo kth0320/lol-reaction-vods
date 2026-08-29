@@ -48,11 +48,11 @@ LCK     LPL   LEC
 - 대회 화면 팀 검색은 약자 단어 단위다. `KT`가 T1의 옛 별칭 `SKT`에 부분 일치하지 않는다
 - LCK·LPL·LEC는 **시즌 + 스플릿** 셀렉트(LCK컵/LCK, Split 1–3/선발전, 버서스/스프링/서머). 국제전은 **연도 + 구간**. 필터는 URL(`?year=&stage=&q=`)에 남고, 끝난 경기에서 같은 허브로 돌아온다. 홈 대회 카드는 `경기 N · 리액션 M`
 - 지난 시즌 아카이브: `getTournamentsForLeague` + `getCompletedEvents`로 2026·2025·2024 끝난 경기를 저장한다. 치지직·숲은 방송국 페이지를 더 넘긴다. YouTube는 채널 RSS(최근 업로드)만. 홈 라이브 동기화는 최근 `getSchedule` 페이지만
+- 홈·라이브 경기 vs 카드는 **공식 매치업 플레이트**(리그 마크 + 양 팀 로고). `getLeagues`·`getEventDetails` 이미지를 https로 쓰고, 마크·로고가 없을 때만 공식 중계 음소거. 합성된 T1-vs-KT JPG는 API에 없다
 
 ## 이후
 
 | 이후 | 내용 |
 | --- | --- |
 | 보정 | `apps/ops` 관리 화면 |
-| 그래픽 | 리그 공식 vs 이미지 연동 |
 | 재생 | 치지직 인페이지 임베드(후순위), Twitch(후순위) |
