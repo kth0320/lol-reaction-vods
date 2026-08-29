@@ -36,6 +36,11 @@ export function vodHubCard(id: string) {
   return HUB_BY_ID.get(id as VodHubId) ?? null;
 }
 
+/** Regional league hubs group VODs by calendar season. Worlds/MSI/EWC stay one list until yearly archives land. */
+export function hubUsesLeagueSeasons(id: VodHubId): boolean {
+  return id === "lck" || id === "lpl" || id === "lec";
+}
+
 /** Same search box on every hub page. Keep this when Worlds/MSI/First Stand/EWC/LPL lists fill in. */
 export function vodHubSearchExample(id: VodHubId): string {
   if (id === "lec") return "G2";
