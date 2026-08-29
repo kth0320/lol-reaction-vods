@@ -4,7 +4,8 @@ import { VodPlayer } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
-import { backgroundForEvent } from "@/lib/ingest/official-stream";
+import { lookForEvent } from "@/lib/ingest/official-stream";
+import { fetchLeagueArt, resolveMatchArt } from "@/lib/league-art";
 import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
 import { isLeague } from "@/lib/leagues";
 import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
@@ -64,8 +65,20 @@ export default async function MatchPage({
   }
 
   const live = match.status === "live";
-  const broadcast =
-    live && match.externalEventId ? await backgroundForEvent(match.externalEventId) : null;
+  const [look, leagueArt] = await Promise.all([
+    live && match.externalEventId ? lookForEvent(match.externalEventId) : Promise.resolve(null),
+    fetchLeagueArt(),
+  ]);
+  const art = resolveMatchArt({
+    tournament: match.tournament,
+    leagueArt,
+    eventLeagueImageUrl: look?.leagueImageUrl,
+    eventBlueImageUrl: look?.blueImageUrl,
+    eventRedImageUrl: look?.redImageUrl,
+    storedBlueImageUrl: match.blueTeam.imageUrl,
+    storedRedImageUrl: match.redTeam.imageUrl,
+    broadcast: look?.broadcast,
+  });
   const liveCastViews = (usesLiveCandidates(match.source) ? match.liveCandidates : match.liveCasts).map((cast) => ({
     id: cast.id,
     creatorName: cast.creator.name,
@@ -98,11 +111,12 @@ export default async function MatchPage({
             startsAtLabel: formatKst(match.startsAt),
             blueAbbr: match.blueTeam.abbr,
             blueName: match.blueTeam.name,
-            blueImageUrl: match.blueTeam.imageUrl,
+            blueImageUrl: art.blueImageUrl,
             redAbbr: match.redTeam.abbr,
             redName: match.redTeam.name,
-            redImageUrl: match.redTeam.imageUrl,
-            broadcast,
+            redImageUrl: art.redImageUrl,
+            leagueImageUrl: art.leagueImageUrl,
+            broadcast: art.broadcast,
           }}
         />
       ) : (
@@ -115,11 +129,14 @@ export default async function MatchPage({
             <span>{formatKst(match.startsAt)}</span>
           </div>
           <div className="ended-match-head">
+            {art.leagueImageUrl ? (
+              <img className="ended-league-mark" src={art.leagueImageUrl} alt="" />
+            ) : null}
             <MatchTeams
               blueAbbr={match.blueTeam.abbr}
               redAbbr={match.redTeam.abbr}
-              blueImageUrl={match.blueTeam.imageUrl}
-              redImageUrl={match.redTeam.imageUrl}
+              blueImageUrl={art.blueImageUrl}
+              redImageUrl={art.redImageUrl}
             />
             <p className="ended-match-names">
               {match.blueTeam.name} vs {match.redTeam.name}
