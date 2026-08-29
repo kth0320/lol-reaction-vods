@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getPlayback, isPlatform } from "@/lib/playback";
 
 export function VodPlayer({
@@ -11,6 +14,12 @@ export function VodPlayer({
   url: string;
   live?: boolean;
 }) {
+  const [parent, setParent] = useState("");
+
+  useEffect(() => {
+    setParent(window.location.hostname);
+  }, []);
+
   if (!isPlatform(platform)) {
     return (
       <a className="button ghost" href={url} target="_blank" rel="noreferrer">
@@ -19,7 +28,7 @@ export function VodPlayer({
     );
   }
 
-  const playback = getPlayback(platform, externalId, url, { live });
+  const playback = getPlayback(platform, externalId, url, { live, parentHost: parent || "localhost" });
   const action = live ? "같이 보기" : "원본 열기";
 
   if (playback.mode === "link-out") {
@@ -28,7 +37,7 @@ export function VodPlayer({
         <p>
           {live
             ? `${playback.label} 라이브는 사이트 안에서 재생하지 않습니다. 원본 방송으로 이동합니다.`
-            : `${playback.label} 다시보기는 사이트 안에서 재생하지 않습니다. 원본으로 이동합니다. 인페이지 임베드는 후순위입니다.`}
+            : `${playback.label} 다시보기는 사이트 안에서 재생하지 않습니다. 원본으로 이동합니다.`}
         </p>
         <div className="button-row">
           <a className="button primary" href={playback.originalUrl} target="_blank" rel="noreferrer">
@@ -37,6 +46,10 @@ export function VodPlayer({
         </div>
       </div>
     );
+  }
+
+  if (playback.needsParent && !parent) {
+    return <div className="player-frame" aria-hidden="true" />;
   }
 
   return (

@@ -1,21 +1,48 @@
 export const PLATFORMS = ["youtube", "soop", "chzzk", "twitch"] as const;
 
 export type Platform = (typeof PLATFORMS)[number];
-export type EmbedPlatform = "youtube" | "soop";
+export type EmbedPlatform = Platform;
 
 export type Playback =
-  | { mode: "embed"; platform: EmbedPlatform; embedUrl: string; originalUrl: string; label: string }
+  | {
+      mode: "embed";
+      platform: EmbedPlatform;
+      embedUrl: string;
+      originalUrl: string;
+      label: string;
+      needsParent?: boolean;
+    }
   | { mode: "link-out"; platform: Platform; originalUrl: string; label: string };
 
 export function isPlatform(value: string): value is Platform {
   return (PLATFORMS as readonly string[]).includes(value);
 }
 
+export function twitchPlayerParents(parentHost: string): string {
+  return [...new Set([parentHost, "localhost", "127.0.0.1"])]
+    .filter(Boolean)
+    .map((host) => `parent=${encodeURIComponent(host)}`)
+    .join("&");
+}
+
+export function twitchEmbedSrc(
+  id: string,
+  parentHost: string,
+  options: { live?: boolean; autoplay?: boolean; muted?: boolean } = {},
+): string {
+  const parents = twitchPlayerParents(parentHost);
+  const autoplay = options.autoplay === false ? "false" : "true";
+  const muted = options.muted ? "&muted=true" : "";
+  const useChannel = Boolean(options.live) || !/^\d+$/.test(id);
+  const key = useChannel ? "channel" : "video";
+  return `https://player.twitch.tv/?${key}=${encodeURIComponent(id)}&${parents}&autoplay=${autoplay}${muted}`;
+}
+
 export function getPlayback(
   platform: Platform,
   externalId: string,
   url: string,
-  options: { live?: boolean } = {},
+  options: { live?: boolean; parentHost?: string } = {},
 ): Playback {
   if (platform === "youtube") {
     return {
@@ -48,16 +75,23 @@ export function getPlayback(
 
   if (platform === "twitch") {
     return {
-      mode: "link-out",
+      mode: "embed",
       platform,
+      embedUrl: twitchEmbedSrc(externalId, options.parentHost || "localhost", {
+        live: options.live,
+        autoplay: false,
+      }),
       originalUrl: url,
       label: "Twitch",
+      needsParent: true,
     };
   }
 
+  const path = options.live ? "embed/live" : "embed/video";
   return {
-    mode: "link-out",
+    mode: "embed",
     platform: "chzzk",
+    embedUrl: `https://chzzk.naver.com/${path}/${encodeURIComponent(externalId)}`,
     originalUrl: url,
     label: "치지직",
   };

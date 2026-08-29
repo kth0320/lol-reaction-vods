@@ -826,20 +826,38 @@ a {
   gap: 10px;
 }
 
+.caster-player {
+  margin-bottom: 16px;
+}
+
+.caster-now {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .caster-row {
   display: grid;
   grid-template-columns: 56px 1fr auto;
   gap: 14px;
   align-items: center;
+  width: 100%;
   padding: 12px 16px;
   background: var(--bg-elevated);
   border: 1px solid var(--line);
   border-radius: 14px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
 .caster-row:hover {
   border-color: var(--gold-dim);
+}
+
+.caster-row.selected {
+  border-color: var(--gold);
 }
 
 .caster-avatar {

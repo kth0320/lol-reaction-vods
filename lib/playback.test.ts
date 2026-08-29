@@ -27,20 +27,42 @@ describe("getPlayback", () => {
     }
   });
 
-  it("sends Chzzk to the original link instead of an iframe", () => {
+  it("embeds Chzzk VODs with the official embed player", () => {
     const playback = getPlayback("chzzk", "14594686", "https://chzzk.naver.com/video/14594686");
-    assert.equal(playback.mode, "link-out");
-    if (playback.mode === "link-out") {
-      assert.equal(playback.originalUrl, "https://chzzk.naver.com/video/14594686");
+    assert.equal(playback.mode, "embed");
+    if (playback.mode === "embed") {
+      assert.equal(playback.embedUrl, "https://chzzk.naver.com/embed/video/14594686");
     }
   });
 
-  it("sends Twitch to the original link instead of an iframe", () => {
-    const playback = getPlayback("twitch", "caedrel", "https://www.twitch.tv/caedrel");
-    assert.equal(playback.mode, "link-out");
-    if (playback.mode === "link-out") {
+  it("embeds Chzzk live with the official live embed player", () => {
+    const playback = getPlayback(
+      "chzzk",
+      "0b33823ac81de48d5b78a38cdbc0ab94",
+      "https://chzzk.naver.com/live/0b33823ac81de48d5b78a38cdbc0ab94",
+      { live: true },
+    );
+    assert.equal(playback.mode, "embed");
+    if (playback.mode === "embed") {
+      assert.equal(
+        playback.embedUrl,
+        "https://chzzk.naver.com/embed/live/0b33823ac81de48d5b78a38cdbc0ab94",
+      );
+    }
+  });
+
+  it("embeds Twitch live with the official player and page parent", () => {
+    const playback = getPlayback("twitch", "caedrel", "https://www.twitch.tv/caedrel", {
+      live: true,
+      parentHost: "127.0.0.1",
+    });
+    assert.equal(playback.mode, "embed");
+    if (playback.mode === "embed") {
       assert.equal(playback.platform, "twitch");
-      assert.equal(playback.originalUrl, "https://www.twitch.tv/caedrel");
+      assert.equal(
+        playback.embedUrl,
+        "https://player.twitch.tv/?channel=caedrel&parent=127.0.0.1&parent=localhost&autoplay=false",
+      );
     }
   });
 
