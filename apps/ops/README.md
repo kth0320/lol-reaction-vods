@@ -1,12 +1,9 @@
 # apps/ops
 
-수동 보정용 운영 도구 placeholder.
-
-이후 페이즈에서 들어갈 것:
+수동 보정 화면은 지금 루트 Next 앱의 `/ops`입니다. 인증 없음.
 
 - 자동 매칭 결과 확인
-- 오매칭 제거
-- 누락 리액션 추가
-- 경기 ↔ VOD 연결 수정
+- 오매칭 연결 해제 (`DELETE /api/ops/reactions/:id`)
+- 빠진 YouTube·치지직·숲 주소 연결 (`POST /api/ops/reactions`)
 
-Phase 0에서는 이 README만 둔다. 어드민 UI·인증·API 호출을 추가하지 않는다.
+공개 사이트와 같은 TypeScript 프로세스입니다. `apps/ops`로 분리하거나 `services/api`를 빼는 것은 클라이언트가 둘일 때입니다.
