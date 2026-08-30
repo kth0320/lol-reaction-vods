@@ -47,7 +47,7 @@ LCK     LPL   LEC
 - 일정 API는 LCK·LEC뿐 아니라 **LPL · 롤드컵 · MSI · 퍼스트스탠드 · EWC** 끝난 경기도 저장한다. 홈 상단 라이브 탭은 **LCK · LPL · LEC**
 - 대회 화면 팀 검색은 약자 단어 단위다. `KT`가 T1의 옛 별칭 `SKT`에 부분 일치하지 않는다
 - LCK·LPL·LEC는 **시즌 + 스플릿** 셀렉트(LCK컵/LCK, Split 1–3/선발전, 버서스/스프링/서머). 국제전은 **연도 + 구간**. 필터는 URL(`?year=&stage=&q=`)에 남고, 끝난 경기에서 같은 허브로 돌아온다. 홈 대회 카드는 `경기 N · 리액션 M`
-- 지난 시즌 아카이브: `getTournamentsForLeague` + `getCompletedEvents`로 2026·2025·2024 끝난 경기를 저장한다. 치지직·숲은 방송국 페이지를 더 넘긴다. YouTube는 채널 RSS(최근 업로드)만. 홈 라이브 동기화는 최근 `getSchedule` 페이지만
+- 지난 시즌 아카이브: `getTournamentsForLeague` + `getCompletedEvents`로 2026·2025·2024 끝난 경기를 저장한다. 치지직·숲은 방송국 페이지를 더 넘긴다(최대 50). 숲은 한 페이지가 실패해도 다음 페이지를 이어 가져온다. YouTube는 채널 RSS(최근 업로드)만. 홈 라이브 동기화는 최근 `getSchedule` 페이지만
 - 보정: `/ops`에서 자동 매칭을 보고 끊거나 YouTube·치지직·숲 주소를 붙인다. 조회는 TypeScript DTO + `/api/ops/*`. 인증 없음(로컬)
 - 홈·라이브 경기 vs 카드는 **공식 매치업 플레이트**(리그 마크 + 양 팀 로고). `getLeagues`·`getEventDetails` 이미지를 https로 쓰고, 마크·로고가 없을 때만 공식 중계 음소거. 합성된 T1-vs-KT JPG는 API에 없다
 - 치지직 다시보기·라이브는 공식 시청 페이지(`chzzk.naver.com/video` · `/live`)를 iframe. 퍼가기 주소는 클립만 있다. Twitch 라이브는 `player.twitch.tv` (parent=페이지 호스트). Twitch 원본 VOD는 모으지 않음. 숲 라이브는 원본 링크

@@ -88,7 +88,7 @@
     "name": "Bilibili Gaming",
     "abbr": "BLG",
     "league": "LPL",
-    "aliases": ["BLG", "哔哩哔哩"]
+    "aliases": ["BLG", "哔哩哔哩", "비리비리"]
   },
   {
     "id": "g2",
@@ -102,7 +102,7 @@
     "name": "Fnatic",
     "abbr": "FNC",
     "league": "LEC",
-    "aliases": ["FNC", "Fnatic"]
+    "aliases": ["FNC", "Fnatic", "프나틱"]
   },
   {
     "id": "kc",
@@ -123,21 +123,21 @@
     "name": "SK Gaming",
     "abbr": "SK",
     "league": "LEC",
-    "aliases": ["SK Gaming"]
+    "aliases": ["SK", "SK Gaming"]
   },
   {
     "id": "th",
     "name": "Team Heretics",
     "abbr": "TH",
     "league": "LEC",
-    "aliases": ["TH", "Heretics"]
+    "aliases": ["TH", "Heretics", "헤레틱스"]
   },
   {
     "id": "vit",
     "name": "Team Vitality",
     "abbr": "VIT",
     "league": "LEC",
-    "aliases": ["VIT", "Vitality"]
+    "aliases": ["VIT", "Vitality", "바이탈리티"]
   },
   {
     "id": "gx",
@@ -151,13 +151,41 @@
     "name": "Natus Vincere",
     "abbr": "NAVI",
     "league": "LEC",
-    "aliases": ["NAVI", "NaVi"]
+    "aliases": ["NAVI", "NaVi", "나비"]
   },
   {
     "id": "shft",
     "name": "Shifters",
     "abbr": "SHFT",
     "league": "LEC",
-    "aliases": ["SHFT", "Shifters"]
+    "aliases": ["SHFT", "Shifters", "쉬프트"]
+  },
+  {
+    "id": "tes",
+    "name": "Top Esports",
+    "abbr": "TES",
+    "league": "LPL",
+    "aliases": ["TES", "Top Esports"]
+  },
+  {
+    "id": "al",
+    "name": "Anyone's Legend",
+    "abbr": "AL",
+    "league": "LPL",
+    "aliases": ["AL"]
+  },
+  {
+    "id": "lgd",
+    "name": "LGD Gaming",
+    "abbr": "LGD",
+    "league": "LPL",
+    "aliases": ["LGD"]
+  },
+  {
+    "id": "wbg",
+    "name": "Weibo Gaming",
+    "abbr": "WBG",
+    "league": "LPL",
+    "aliases": ["WBG", "Weibo", "웨이보"]
   }
 ]

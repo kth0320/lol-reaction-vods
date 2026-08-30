@@ -7,7 +7,7 @@ export type VodFetchOptions = {
 };
 
 export const VOD_LIVE_PAGES = 1;
-export const VOD_ARCHIVE_MAX_PAGES = 40;
+export const VOD_ARCHIVE_MAX_PAGES = 50;
 
 export type VodListItem = {
   platform: VodIngestPlatform;
@@ -18,7 +18,7 @@ export type VodListItem = {
 };
 
 const USER_AGENT = "Mozilla/5.0 (compatible; lol-reaction-vods-prototype/0.1)";
-const FETCH_TIMEOUT_MS = 8000;
+const FETCH_TIMEOUT_MS = 15_000;
 
 type Json = Record<string, unknown>;
 
@@ -187,10 +187,16 @@ export async function fetchSoopVods(
   const maxPages = Math.max(1, options.maxPages ?? VOD_LIVE_PAGES);
   const collected: VodListItem[] = [];
   for (let page = 1; page <= maxPages; page += 1) {
-    const body = await readBody(
-      await fetchOk(fetchImpl, `https://chapi.sooplive.co.kr/api/${id}/vods?page=${page}`),
-    );
-    const rows = parseSoopVods(JSON.parse(body) as unknown);
+    let rows: VodListItem[] = [];
+    try {
+      const body = await readBody(
+        await fetchOk(fetchImpl, `https://chapi.sooplive.co.kr/api/${id}/vods?page=${page}`),
+      );
+      rows = parseSoopVods(JSON.parse(body) as unknown);
+    } catch {
+      // Keep paging; one slow/failed page used to drop the whole SOOP channel.
+      continue;
+    }
     if (rows.length === 0) break;
     collected.push(...rows);
     if (pageReachedArchiveFloor(rows, options.untilYear)) break;
