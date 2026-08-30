@@ -18,7 +18,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/" className="brand-title">
                 누렁카세
               </Link>
-              <p className="brand-note">지금 누가 중계하는지, 끝난 경기는 누가 리액션했는지. 음식 사이트가 아닙니다.</p>
             </div>
             <div className="header-nav">
               <Link href="/ops" className="nav-link">
