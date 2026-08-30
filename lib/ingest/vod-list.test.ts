@@ -128,6 +128,31 @@ describe("vod list parsers", () => {
       "https://chapi.sooplive.co.kr/api/phonics1/vods?page=2",
     ]);
   });
+
+  it("keeps later SOOP pages when one page fails", async () => {
+    const rows = await fetchSoopVods(
+      "ehdrb866",
+      async (url) => {
+        const page = new URL(String(url)).searchParams.get("page");
+        if (page === "2") return new Response("timeout", { status: 504 });
+        if (page === "1") {
+          return new Response(
+            JSON.stringify({ data: [{ title_no: 1, title_name: "[LEC] KC vs 쉬프트", reg_date: "2026-08-08 20:30:00" }] }),
+            { status: 200 },
+          );
+        }
+        return new Response(
+          JSON.stringify({ data: [{ title_no: 3, title_name: "[LEC] GX vs VIT", reg_date: "2026-08-01 20:30:00" }] }),
+          { status: 200 },
+        );
+      },
+      { maxPages: 3 },
+    );
+    assert.deepEqual(
+      rows.map((row) => row.externalId),
+      ["1", "3"],
+    );
+  });
 });
 
 describe("vod match window and attach", () => {
@@ -160,5 +185,46 @@ describe("vod match window and attach", () => {
   it("does not attach a title outside the match window", () => {
     const hit = pickMatchForVod("T1 VS HLE LCK", new Date("2026-07-01T12:00:00+09:00"), [t1hle]);
     assert.equal(hit, null);
+  });
+
+  it("attaches 훈수킹 and 롱다리코치 SOOP titles to LEC matches", () => {
+    const fncTh = {
+      id: "lec-fnc-th",
+      tournament: "LEC",
+      status: "ended",
+      startsAt: new Date("2026-08-08T04:00:00Z"),
+      bestOf: 1,
+      blueTeamId: "fnc",
+      redTeamId: "th",
+      blueAliases: ["FNC", "Fnatic", "프나틱"],
+      redAliases: ["TH", "Heretics", "헤레틱스"],
+    };
+    const gxVit = {
+      id: "lec-gx-vit",
+      tournament: "LEC",
+      status: "ended",
+      startsAt: new Date("2026-08-15T03:00:00+09:00"),
+      bestOf: 1,
+      blueTeamId: "gx",
+      redTeamId: "vit",
+      blueAliases: ["GX", "GIANTX"],
+      redAliases: ["VIT", "Vitality", "바이탈리티"],
+    };
+    assert.equal(
+      pickMatchForVod(
+        "[LEC] 프나틱 vs 헤레틱스 소보로 업셋 라족 vs 하이프 왜이 #LCKWatchparty#LPLCOstream",
+        new Date("2026-08-08T05:17:36Z"),
+        [fncTh, gxVit],
+      )?.id,
+      "lec-fnc-th",
+    );
+    assert.equal(
+      pickMatchForVod(
+        "[ GX vs VIT ] \"진짜들의 시간\" | 프로 코치 LEC 예측 및 분석#LECCostream",
+        new Date("2026-08-15T04:25:07+09:00"),
+        [fncTh, gxVit],
+      )?.id,
+      "lec-gx-vit",
+    );
   });
 });
