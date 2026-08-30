@@ -1,5 +1,5 @@
 import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
-import { pickMatchForVod, type VodAttachMatch } from "@/lib/ingest/attach-vod";
+import { pickMatchesForVod, type VodAttachMatch } from "@/lib/ingest/attach-vod";
 import { shouldFetchVods } from "@/lib/ingest/platforms";
 import { isLivePollFresh } from "@/lib/ingest/poll-fresh";
 import { collapseReactionsBySlot, pickPreferredReaction } from "@/lib/ingest/reaction-slot";
@@ -106,9 +106,9 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
       scanned += items.length;
       const hits: { creatorId: string; item: VodListItem; matchId: string }[] = [];
       for (const item of items) {
-        const match = pickMatchForVod(item.title, item.publishedAt, attachable);
-        if (!match) continue;
-        hits.push({ creatorId: creator.id, item, matchId: match.id });
+        for (const match of pickMatchesForVod(item.title, item.publishedAt, attachable)) {
+          hits.push({ creatorId: creator.id, item, matchId: match.id });
+        }
       }
       return hits;
     }),
@@ -156,49 +156,15 @@ async function saveReactionSlot(hit: SlotHit, match: VodAttachMatch): Promise<bo
     publishedAt: hit.item.publishedAt,
     externalId: hit.item.externalId,
   };
-  const slot = await prisma.reactionVod.findFirst({
-    where: { matchId: hit.matchId, creatorId: hit.creatorId, platform: hit.item.platform },
-  });
-  const byUrl = await prisma.reactionVod.findUnique({
-    where: { platform_externalId: { platform: hit.item.platform, externalId: hit.item.externalId } },
-  });
-
-  if (slot && byUrl && slot.id !== byUrl.id) {
-    const winner = pickPreferredReaction(
-      [
-        { title: slot.title, publishedAt: slot.publishedAt, externalId: slot.externalId },
-        incoming,
-      ],
-      match,
-    );
-    if (winner.externalId !== incoming.externalId) return false;
-    await prisma.reactionVod.delete({ where: { id: slot.id } });
-    await prisma.reactionVod.update({
-      where: { id: byUrl.id },
-      data: {
+  const slot = await prisma.reactionVod.findUnique({
+    where: {
+      matchId_creatorId_platform: {
         matchId: hit.matchId,
         creatorId: hit.creatorId,
-        title: hit.item.title,
-        url: hit.item.url,
-        publishedAt: hit.item.publishedAt,
+        platform: hit.item.platform,
       },
-    });
-    return true;
-  }
-
-  if (byUrl) {
-    await prisma.reactionVod.update({
-      where: { id: byUrl.id },
-      data: {
-        matchId: hit.matchId,
-        creatorId: hit.creatorId,
-        title: hit.item.title,
-        url: hit.item.url,
-        publishedAt: hit.item.publishedAt,
-      },
-    });
-    return true;
-  }
+    },
+  });
 
   if (slot) {
     const winner = pickPreferredReaction(

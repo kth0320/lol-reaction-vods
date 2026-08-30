@@ -7,7 +7,9 @@ const teams: InferTeam[] = [
   { id: "bro", league: "LCK", aliases: ["BRO", "BRION", "브리온"] },
   { id: "g2", league: "LEC", aliases: ["G2"] },
   { id: "fnc", league: "LEC", aliases: ["FNC", "Fnatic"] },
-  { id: "sk", league: "LEC", aliases: ["SK Gaming"] },
+  { id: "sk", league: "LEC", aliases: ["SK", "SK Gaming"] },
+  { id: "koi", league: "LEC", aliases: ["KOI", "MKOI"] },
+  { id: "blg", league: "LPL", aliases: ["BLG"] },
 ];
 
 describe("inferLiveMatchFromTitle", () => {
@@ -72,5 +74,21 @@ describe("inferLiveMatchFromTitle", () => {
   it("does not match SK inside LCK", () => {
     assert.equal(aliasIndexInTitle("2026 LCK Playoffs", "SK"), -1);
     assert.ok(aliasIndexInTitle("KT vs BRO", "KT") >= 0);
+  });
+
+  it("treats glued vs as a team boundary", () => {
+    assert.ok(aliasIndexInTitle("SKvsG2, FNCvsMKOI", "SK") >= 0);
+    assert.ok(aliasIndexInTitle("SKvsG2, FNCvsMKOI", "G2") >= 0);
+    assert.ok(aliasIndexInTitle("SKvsG2, FNCvsMKOI", "FNC") >= 0);
+    assert.ok(aliasIndexInTitle("SKvsG2, FNCvsMKOI", "MKOI") >= 0);
+    const glued = inferLiveMatchFromTitle("주말예능LEC!!! - SKvsG2, FNCvsMKOI", teams);
+    assert.equal(glued?.league, "LEC");
+    assert.ok(glued?.key === "ingest-lec-g2-sk" || glued?.key === "ingest-lec-fnc-koi");
+  });
+
+  it("reads First Stand from #FST2026", () => {
+    const fst = inferLiveMatchFromTitle("G2 vs BLG #FST2026", teams);
+    assert.equal(fst?.league, "First Stand");
+    assert.equal(fst?.key, "ingest-firststand-blg-g2");
   });
 });

@@ -53,6 +53,12 @@ describe("vod match search", () => {
     );
   });
 
+  it("treats glued vs as a team boundary on short codes", () => {
+    assert.equal(teamFieldMatchesQuery("SKvsG2", "SK"), true);
+    assert.equal(teamFieldMatchesQuery("SKvsG2", "G2"), true);
+    assert.equal(teamFieldMatchesQuery("LCK", "SK"), false);
+  });
+
   it("filters LEC teams the same way as LCK", () => {
     const lec = [
       {
