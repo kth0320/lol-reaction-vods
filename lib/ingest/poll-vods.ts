@@ -2,6 +2,7 @@ import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
 import { pickMatchForVod, type VodAttachMatch } from "@/lib/ingest/attach-vod";
 import { shouldFetchVods } from "@/lib/ingest/platforms";
 import { isLivePollFresh } from "@/lib/ingest/poll-fresh";
+import { collapseReactionsBySlot, pickPreferredReaction } from "@/lib/ingest/reaction-slot";
 import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
 import { fetchVodsForChannel, type VodFetchOptions, type VodListItem } from "@/lib/ingest/vod-list";
 import { prisma } from "@/lib/prisma";
@@ -114,19 +115,67 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
   );
 
   const hits = (await Promise.all(jobs)).flat();
-  for (const hit of hits) {
-    await prisma.reactionVod.upsert({
-      where: { platform_externalId: { platform: hit.item.platform, externalId: hit.item.externalId } },
-      create: {
-        matchId: hit.matchId,
-        creatorId: hit.creatorId,
-        platform: hit.item.platform,
-        title: hit.item.title,
-        url: hit.item.url,
-        externalId: hit.item.externalId,
-        publishedAt: hit.item.publishedAt,
-      },
-      update: {
+  const matchById = new Map(attachable.map((match) => [match.id, match]));
+  const collapsed = collapseReactionsBySlot(
+    hits.map((hit) => ({
+      matchId: hit.matchId,
+      creatorId: hit.creatorId,
+      platform: hit.item.platform,
+      title: hit.item.title,
+      publishedAt: hit.item.publishedAt,
+      externalId: hit.item.externalId,
+      item: hit.item,
+    })),
+    (row) => matchById.get(row.matchId) ?? { startsAt: new Date(0), blueAliases: [], redAliases: [] },
+  );
+
+  for (const hit of collapsed) {
+    const match = matchById.get(hit.matchId);
+    if (!match) continue;
+    if (await saveReactionSlot(hit, match)) attached += 1;
+  }
+
+  await dedupeExistingSlots(matchById);
+
+  return { scanned, attached, skippedTwitch };
+}
+
+type SlotHit = {
+  matchId: string;
+  creatorId: string;
+  platform: string;
+  title: string;
+  publishedAt: Date | null;
+  externalId: string;
+  item: VodListItem;
+};
+
+async function saveReactionSlot(hit: SlotHit, match: VodAttachMatch): Promise<boolean> {
+  const incoming = {
+    title: hit.item.title,
+    publishedAt: hit.item.publishedAt,
+    externalId: hit.item.externalId,
+  };
+  const slot = await prisma.reactionVod.findFirst({
+    where: { matchId: hit.matchId, creatorId: hit.creatorId, platform: hit.item.platform },
+  });
+  const byUrl = await prisma.reactionVod.findUnique({
+    where: { platform_externalId: { platform: hit.item.platform, externalId: hit.item.externalId } },
+  });
+
+  if (slot && byUrl && slot.id !== byUrl.id) {
+    const winner = pickPreferredReaction(
+      [
+        { title: slot.title, publishedAt: slot.publishedAt, externalId: slot.externalId },
+        incoming,
+      ],
+      match,
+    );
+    if (winner.externalId !== incoming.externalId) return false;
+    await prisma.reactionVod.delete({ where: { id: slot.id } });
+    await prisma.reactionVod.update({
+      where: { id: byUrl.id },
+      data: {
         matchId: hit.matchId,
         creatorId: hit.creatorId,
         title: hit.item.title,
@@ -134,8 +183,68 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
         publishedAt: hit.item.publishedAt,
       },
     });
-    attached += 1;
+    return true;
   }
 
-  return { scanned, attached, skippedTwitch };
+  if (byUrl) {
+    await prisma.reactionVod.update({
+      where: { id: byUrl.id },
+      data: {
+        matchId: hit.matchId,
+        creatorId: hit.creatorId,
+        title: hit.item.title,
+        url: hit.item.url,
+        publishedAt: hit.item.publishedAt,
+      },
+    });
+    return true;
+  }
+
+  if (slot) {
+    const winner = pickPreferredReaction(
+      [
+        { title: slot.title, publishedAt: slot.publishedAt, externalId: slot.externalId },
+        incoming,
+      ],
+      match,
+    );
+    if (winner.externalId !== incoming.externalId) return false;
+    await prisma.reactionVod.update({
+      where: { id: slot.id },
+      data: {
+        title: hit.item.title,
+        url: hit.item.url,
+        externalId: hit.item.externalId,
+        publishedAt: hit.item.publishedAt,
+      },
+    });
+    return true;
+  }
+
+  await prisma.reactionVod.create({
+    data: {
+      matchId: hit.matchId,
+      creatorId: hit.creatorId,
+      platform: hit.item.platform,
+      title: hit.item.title,
+      url: hit.item.url,
+      externalId: hit.item.externalId,
+      publishedAt: hit.item.publishedAt,
+    },
+  });
+  return true;
+}
+
+async function dedupeExistingSlots(matchById: Map<string, VodAttachMatch>): Promise<void> {
+  const rows = await prisma.reactionVod.findMany();
+  const kept = new Set(
+    collapseReactionsBySlot(rows, (row) => {
+      const match = matchById.get(row.matchId);
+      if (match) return match;
+      return { startsAt: row.publishedAt ?? new Date(0), blueAliases: [], redAliases: [] };
+    }).map((row) => row.id),
+  );
+  const extra = rows.filter((row) => !kept.has(row.id)).map((row) => row.id);
+  if (extra.length === 0) return;
+  await prisma.reactionVod.deleteMany({ where: { id: { in: extra } } });
 }

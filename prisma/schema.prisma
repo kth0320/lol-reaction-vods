@@ -110,6 +110,7 @@ model ReactionVod {
   publishedAt DateTime?
 
   @@unique([platform, externalId])
+  @@unique([matchId, creatorId, platform])
   @@index([matchId])
 }
 

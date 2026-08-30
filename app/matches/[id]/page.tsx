@@ -10,7 +10,7 @@ import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
 import { isLeague } from "@/lib/leagues";
 import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
 import { prisma } from "@/lib/prisma";
-import { vodMatchBack } from "@/lib/vod-filter";
+import { collapseReactionsBySlot } from "@/lib/ingest/reaction-slot";
 import { isVodHubId, matchTournamentToHub } from "@/lib/vod-hub";
 import { stageLabelForMatch } from "@/lib/vod-split";
 import Link from "next/link";
@@ -42,8 +42,8 @@ export default async function MatchPage({
   const match = await prisma.match.findUnique({
     where: { id },
     include: {
-      blueTeam: true,
-      redTeam: true,
+      blueTeam: { include: { aliases: true } },
+      redTeam: { include: { aliases: true } },
       liveCasts: {
         include: { creator: true, supportingTeam: true },
         orderBy: { creator: { name: "asc" } },
@@ -95,6 +95,13 @@ export default async function MatchPage({
   const hubId = query.hub && isVodHubId(query.hub) ? query.hub : matchTournamentToHub(match.tournament);
   const back = vodMatchBack(live, hubId, query.year, query.stage, query.q);
   const stageLabel = hubId ? stageLabelForMatch(hubId, match.split, match.startsAt) : match.split;
+  const reactions = collapseReactionsBySlot(match.reactions, () => ({
+    startsAt: match.startsAt,
+    blueAliases: [match.blueTeam.abbr, match.blueTeam.name, ...match.blueTeam.aliases.map((row) => row.alias)],
+    redAliases: [match.redTeam.abbr, match.redTeam.name, ...match.redTeam.aliases.map((row) => row.alias)],
+  })).sort(
+    (left, right) => (left.publishedAt?.getTime() ?? 0) - (right.publishedAt?.getTime() ?? 0),
+  );
 
   return (
     <main>
@@ -151,18 +158,18 @@ export default async function MatchPage({
           casts={liveCastViews}
         />
       ) : null}
-      {match.reactions.length > 0 || !live ? (
+      {reactions.length > 0 || !live ? (
         <section className="vod-section">
           <h2 className="section-title">다시보기</h2>
           <p className="page-lead">
-            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {match.reactions.length}개. YouTube·숲·치지직은
+            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {reactions.length}개. YouTube·숲·치지직은
             공식 임베드입니다.
           </p>
-          {match.reactions.length === 0 ? (
+          {reactions.length === 0 ? (
             <p className="empty">아직 연결된 리액션이 없습니다.</p>
           ) : (
             <div className="reaction-list">
-              {match.reactions.map((reaction) => (
+              {reactions.map((reaction) => (
                 <article key={reaction.id} className="reaction-card">
                   <div className="reaction-head">
                     <div>
