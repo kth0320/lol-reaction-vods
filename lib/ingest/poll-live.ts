@@ -1,14 +1,15 @@
+import { attachTitleToOfficial, type OfficialLiveMatch } from "@/lib/ingest/attach-live";
 import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
-import { inferLiveMatchFromTitle, type InferTeam } from "@/lib/ingest/infer-match";
 import { isLivePollFresh, LIVE_POLL_FRESH_MS } from "@/lib/ingest/poll-fresh";
 import { probeLive, type LiveProbe } from "@/lib/ingest/live-status";
 import { prisma } from "@/lib/prisma";
 import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
-import { isPrototypeLiveLeague } from "@/lib/leagues";
-import { pickPrototypeLiveMatch, type TitleMatchInput } from "@/lib/ingest/match-title";
+import { PROTOTYPE_LIVE_LEAGUES, isPrototypeLiveLeague } from "@/lib/leagues";
 import { isLiveIngestPlatform } from "@/lib/ingest/platforms";
-import { attachInferredToOfficial, SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
+import { SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
+
+export { attachTitleToOfficial, type OfficialLiveMatch };
 
 export { LIVE_POLL_FRESH_MS };
 
@@ -31,55 +32,9 @@ export type PollRow = {
   error: string | null;
 };
 
-type OfficialLiveMatch = {
-  id: string;
-  tournament: string;
-  blueTeamId: string;
-  redTeamId: string;
-  status: string;
-  startsAt: Date;
-  blueTeam: { abbr: string; name: string; aliases: { alias: string }[] };
-  redTeam: { abbr: string; name: string; aliases: { alias: string }[] };
-};
-
 function matchLabel(match: { tournament: string; blueTeam: { abbr: string }; redTeam: { abbr: string } } | null): string | null {
   if (!match) return null;
   return `${match.tournament} ${match.blueTeam.abbr} vs ${match.redTeam.abbr}`;
-}
-
-function teamAliases(team: OfficialLiveMatch["blueTeam"]): string[] {
-  return [team.abbr, team.name, ...team.aliases.map((row) => row.alias)];
-}
-
-function titleInputs(matches: OfficialLiveMatch[]): TitleMatchInput[] {
-  return matches.map((match) => ({
-    id: match.id,
-    tournament: match.tournament,
-    blueAliases: teamAliases(match.blueTeam),
-    redAliases: teamAliases(match.redTeam),
-  }));
-}
-
-function officialInferTeams(official: OfficialLiveMatch[]): InferTeam[] {
-  const byId = new Map<string, InferTeam>();
-  for (const match of official) {
-    if (!byId.has(match.blueTeamId)) {
-      byId.set(match.blueTeamId, { id: match.blueTeamId, league: match.tournament, aliases: teamAliases(match.blueTeam) });
-    }
-    if (!byId.has(match.redTeamId)) {
-      byId.set(match.redTeamId, { id: match.redTeamId, league: match.tournament, aliases: teamAliases(match.redTeam) });
-    }
-  }
-  return [...byId.values()];
-}
-
-function attachTitleToOfficial(title: string, official: OfficialLiveMatch[]): OfficialLiveMatch | null {
-  const inferred = inferLiveMatchFromTitle(title, officialInferTeams(official));
-  const attachedId = inferred ? attachInferredToOfficial(inferred, official) : null;
-  const byInfer = attachedId ? official.find((match) => match.id === attachedId) ?? null : null;
-  if (byInfer) return byInfer;
-  const picked = pickPrototypeLiveMatch(title, titleInputs(official));
-  return picked ? official.find((match) => match.id === picked.id) ?? null : null;
 }
 
 async function lastPollMs(): Promise<number | null> {
@@ -139,7 +94,7 @@ async function runLivePoll(): Promise<PollRow[]> {
     where: {
       source: SCHEDULE_MATCH_SOURCE,
       status: { in: ["live", "upcoming"] },
-      tournament: { in: ["LCK", "LEC"] },
+      tournament: { in: [...PROTOTYPE_LIVE_LEAGUES] },
     },
     include: {
       blueTeam: { include: { aliases: true } },

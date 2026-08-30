@@ -315,14 +315,18 @@ describe("schedule mapping", () => {
           ],
         },
       ],
-      [...teams, { id: "jdg", abbr: "JDG", name: "JD Gaming", aliases: ["JDG"] }],
+      [
+        ...teams,
+        { id: "jdg", abbr: "JDG", name: "JD Gaming", aliases: ["JDG", "징동"] },
+        { id: "we", abbr: "WE", name: "Team WE", aliases: ["WE", "웨이"] },
+      ],
       new Date("2026-08-30T11:30:00Z"),
     );
     assert.equal(mapped.length, 1);
     assert.equal(mapped[0].league, "LPL");
     assert.equal(mapped[0].status, "live");
     assert.equal(mapped[0].blueTeamId, "jdg");
-    assert.equal(mapped[0].redTeamId, "api-we");
+    assert.equal(mapped[0].redTeamId, "we");
   });
 
   it("attaches a streamer title to the official match, not an ingest key", () => {

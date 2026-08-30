@@ -35,6 +35,31 @@ describe("inferLiveMatchFromTitle", () => {
     assert.equal(lpl?.key, "ingest-lpl-blg-jdg");
   });
 
+  it("attaches LPL costream titles even when they also say #LCKWatchparty", () => {
+    const lplTeams: InferTeam[] = [
+      ...teams,
+      { id: "jdg", league: "LPL", aliases: ["JDG", "징동"] },
+      { id: "we", league: "LPL", aliases: ["WE", "Team WE", "웨이"] },
+    ];
+    const hunsu = inferLiveMatchFromTitle(
+      "[LPL] WE vs 징동 카리스 어바웃 멍키 vs 갈라 홍큐 #LCKWatchparty#LPLCOstream",
+      lplTeams,
+    );
+    assert.equal(hunsu?.league, "LPL");
+    assert.equal(hunsu?.blueTeamId, "we");
+    assert.equal(hunsu?.redTeamId, "jdg");
+    const longdari = inferLiveMatchFromTitle(
+      "[ WE vs JDG ] 치킨 시켜!! | 프로 코치 LCK/LPL/LEC 예측 및 분석#LPLCostream",
+      lplTeams,
+    );
+    assert.equal(longdari?.league, "LPL");
+    assert.equal(longdari?.blueTeamId, "we");
+    assert.equal(longdari?.redTeamId, "jdg");
+    const caedrel = inferLiveMatchFromTitle("🔴LPL PLAYOFFS WE VS JDG🔴", lplTeams);
+    assert.equal(caedrel?.league, "LPL");
+    assert.equal(caedrel?.key, "ingest-lpl-jdg-we");
+  });
+
   it("allows cross-region Worlds pairs", () => {
     const worlds = inferLiveMatchFromTitle("T1 vs G2 Worlds", [
       { id: "t1", league: "LCK", aliases: ["T1"] },

@@ -56,23 +56,40 @@ function teamHits(title: string, teams: InferTeam[]): { id: string; league: stri
   return hits;
 }
 
+function isInternationalLeague(league: string): boolean {
+  return league === "Worlds" || league === "MSI" || league === "EWC" || league === "First Stand";
+}
+
+function pairForLeague(
+  league: string,
+  hits: { id: string; league: string; index: number }[],
+): { id: string; league: string }[] | null {
+  const inLeague = hits.filter((hit) => !hit.league || hit.league === league);
+  const pair = (inLeague.length >= 2 ? inLeague : hits).slice(0, 2);
+  if (pair.length < 2 || pair[0].id === pair[1].id) return null;
+  if (!isInternationalLeague(league) && pair[0].league && pair[1].league) {
+    if (pair[0].league !== pair[1].league) return null;
+    if (pair[0].league !== league) return null;
+  }
+  return pair;
+}
+
 export function inferLiveMatchFromTitle(title: string, teams: InferTeam[]): InferredLiveMatch | null {
   const leagues = mentionedLeagues(title);
   if (leagues.length === 0) return null;
   const hits = teamHits(title, teams);
   if (hits.length < 2) return null;
 
-  const league = leagues[0];
-  const inLeague = hits.filter((hit) => !hit.league || hit.league === league);
-  const pair = (inLeague.length >= 2 ? inLeague : hits).slice(0, 2);
-  if (pair.length < 2 || pair[0].id === pair[1].id) return null;
-  const international = league === "Worlds" || league === "MSI" || league === "EWC" || league === "First Stand";
-  if (!international && pair[0].league && pair[1].league && pair[0].league !== pair[1].league) return null;
-
-  return {
-    league,
-    blueTeamId: pair[0].id,
-    redTeamId: pair[1].id,
-    key: ingestMatchId(league, pair[0].id, pair[1].id),
-  };
+  // Costream titles often include #LCKWatchparty even on LPL/LEC. Prefer the league the two teams belong to.
+  for (const league of leagues) {
+    const pair = pairForLeague(league, hits);
+    if (!pair) continue;
+    return {
+      league,
+      blueTeamId: pair[0].id,
+      redTeamId: pair[1].id,
+      key: ingestMatchId(league, pair[0].id, pair[1].id),
+    };
+  }
+  return null;
 }
