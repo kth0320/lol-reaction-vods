@@ -61,12 +61,11 @@ describe("prototype ingest whitelist", () => {
     assert.equal(byCreator.kameto.channelId, "kamet0");
     assert.equal(byCreator.obsess.channelId, "obsess3");
     assert.ok(youtube.every((channel) => channel.platform === "youtube"));
-    assert.ok(youtube.some((channel) => channel.creatorId === "caedrel" && channel.channelId.startsWith("UC")));
+    assert.ok(youtube.some((channel) => channel.creatorId === "caedrel" && channel.channelId === "UCOFiUtKui6-x4T-J7_DgCag"));
     assert.ok(youtube.some((channel) => channel.creatorId === "wolf"));
-    assert.equal(
-      youtube.some((channel) => channel.creatorId === "kameto"),
-      false,
-    );
+    assert.ok(youtube.some((channel) => channel.creatorId === "jankos" && channel.channelId === "UCtp4K_YqcrbzjNH-tGi6gjQ"));
+    assert.ok(youtube.some((channel) => channel.creatorId === "kameto" && channel.channelId === "UCApmTE4So9oX7sPkDGgSpFQ"));
+    assert.ok(youtube.some((channel) => channel.creatorId === "obsess" && channel.channelId === "UC2nC3DnkGdTYdgF6Z5NGB-Q"));
   });
 
   it("defaults team co-streamers to their LCK/LEC team and leaves slate casters unassigned", () => {

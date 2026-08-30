@@ -227,4 +227,45 @@ describe("vod match window and attach", () => {
       "lec-gx-vit",
     );
   });
+
+  it("attaches Jankos live and Karmine Corp Replay YouTube titles", () => {
+    const g2Gx = {
+      id: "lec-g2-gx",
+      tournament: "LEC",
+      status: "ended",
+      startsAt: new Date("2026-08-15T16:00:00Z"),
+      bestOf: 1,
+      blueTeamId: "g2",
+      redTeamId: "gx",
+      blueAliases: ["G2"],
+      redAliases: ["GX", "GIANTX"],
+    };
+    const kcSk = {
+      id: "lec-kc-sk",
+      tournament: "LEC",
+      status: "ended",
+      startsAt: new Date("2026-08-15T17:00:00Z"),
+      bestOf: 1,
+      blueTeamId: "kc",
+      redTeamId: "sk",
+      blueAliases: ["KC", "Karmine", "Karmine Corp"],
+      redAliases: ["SK", "SK Gaming"],
+    };
+    assert.equal(
+      pickMatchForVod(
+        "G2'S LAST TEST BEFORE PLAYOFFS | G2 VS GX | JANKOS LEC SUMMER 2026",
+        new Date("2026-08-15T18:00:00Z"),
+        [g2Gx, kcSk],
+      )?.id,
+      "lec-g2-gx",
+    );
+    assert.equal(
+      pickMatchForVod(
+        "LEC 2026 Summer - Karmine Corp vs SK - Day 9",
+        new Date("2026-08-15T19:00:00Z"),
+        [g2Gx, kcSk],
+      )?.id,
+      "lec-kc-sk",
+    );
+  });
 });

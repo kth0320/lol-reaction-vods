@@ -95,7 +95,7 @@
     "kind": "streamer",
     "ingestEnabled": true,
     "defaultSupportingTeamId": "g2",
-    "note": "2026 LEC 공식 G2 팀 코스트리머."
+    "note": "2026 LEC 공식 G2 팀 코스트리머. 다시보기는 Jankos live YouTube."
   },
   {
     "id": "yamatocannon",
@@ -111,7 +111,7 @@
     "kind": "streamer",
     "ingestEnabled": true,
     "defaultSupportingTeamId": "kc",
-    "note": "2026 LEC 공식 KC 팀 코스트리머."
+    "note": "2026 LEC 공식 KC 팀 코스트리머. 다시보기는 Karmine Corp Replay YouTube."
   },
   {
     "id": "ibai",
