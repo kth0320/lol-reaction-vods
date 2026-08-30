@@ -1,4 +1,5 @@
 import { fetchEventDetails, httpsAssetUrl } from "@/lib/ingest/lolesports";
+import { seriesIsDecided } from "@/lib/ingest/schedule-map";
 import { twitchEmbedSrc } from "@/lib/playback";
 
 export type EventStream = {
@@ -70,6 +71,48 @@ export function mutedBroadcastSrc(broadcast: BackgroundBroadcast, parentHost: st
     return twitchEmbedSrc(broadcast.id, parentHost, { live: true, autoplay: true, muted: true });
   }
   return `https://play.sooplive.com/${encodeURIComponent(broadcast.id)}/embed`;
+}
+
+export type EventGame = {
+  number: number;
+  state: string;
+};
+
+export function parseEventGames(payload: unknown): EventGame[] {
+  const event = asRecord(asRecord(payload)?.data)?.event ?? asRecord(payload)?.event;
+  const match = asRecord(asRecord(event)?.match);
+  const list = match?.games;
+  if (!Array.isArray(list)) return [];
+  const rows: EventGame[] = [];
+  for (const item of list) {
+    const row = asRecord(item);
+    const number = typeof row?.number === "number" && Number.isFinite(row.number) ? Math.floor(row.number) : 0;
+    const state = text(row?.state);
+    if (!state) continue;
+    rows.push({ number, state });
+  }
+  return rows;
+}
+
+export function parseEventGameWins(payload: unknown): [number | null, number | null] {
+  const event = asRecord(asRecord(payload)?.data)?.event ?? asRecord(payload)?.event;
+  const match = asRecord(asRecord(event)?.match);
+  const teams = Array.isArray(match?.teams) ? match.teams : [];
+  const wins = (index: number): number | null => {
+    const raw = asRecord(asRecord(teams[index])?.result)?.gameWins;
+    if (typeof raw === "number" && Number.isFinite(raw) && raw >= 0) return Math.floor(raw);
+    return null;
+  };
+  return [wins(0), wins(1)];
+}
+
+/** getSchedule `completed` can be stale; a game still inProgress (or an unfinished series) is live. */
+export function eventSeriesIsLive(payload: unknown, bestOf: number): boolean {
+  const games = parseEventGames(payload);
+  if (games.some((game) => game.state === "inProgress")) return true;
+  const [blueWins, redWins] = parseEventGameWins(payload);
+  if (seriesIsDecided(bestOf, blueWins, redWins)) return false;
+  return games.some((game) => game.state === "unstarted" || game.state === "inProgress");
 }
 
 export type EventLook = {

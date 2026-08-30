@@ -27,6 +27,7 @@ export type LolesportsScheduleTeam = {
   code: string;
   name: string;
   imageUrl: string;
+  gameWins: number | null;
 };
 
 export function httpsAssetUrl(value: string): string {
@@ -103,6 +104,11 @@ export function leagueIdsForSlugs(leagues: LolesportsLeague[], slugs: readonly s
   return ids;
 }
 
+function parseGameWins(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) return Math.floor(value);
+  return null;
+}
+
 function parseTeams(value: unknown): LolesportsScheduleTeam[] {
   if (!Array.isArray(value)) return [];
   const teams: LolesportsScheduleTeam[] = [];
@@ -112,6 +118,7 @@ function parseTeams(value: unknown): LolesportsScheduleTeam[] {
       code: text(row?.code),
       name: text(row?.name),
       imageUrl: httpsAssetUrl(text(row?.image)),
+      gameWins: parseGameWins(asRecord(row?.result)?.gameWins),
     });
   }
   return teams;

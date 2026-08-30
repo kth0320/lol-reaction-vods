@@ -1,4 +1,4 @@
-import { LEAGUE_SLUG } from "@/lib/leagues";
+import { LEAGUE_SLUG, isPrototypeLiveLeague } from "@/lib/leagues";
 import type { LolesportsScheduleEvent } from "@/lib/ingest/lolesports";
 
 export const SCHEDULE_MATCH_SOURCE = "schedule";
@@ -69,20 +69,58 @@ export function estimatedSeriesMs(bestOf: number): number {
   return 3.5 * 60 * 60 * 1000;
 }
 
+export function seriesWinTarget(bestOf: number): number {
+  return Math.floor(bestOf / 2) + 1;
+}
+
+export function seriesIsDecided(
+  bestOf: number,
+  blueWins: number | null | undefined,
+  redWins: number | null | undefined,
+): boolean {
+  if (blueWins == null || redWins == null) return false;
+  if (!Number.isFinite(blueWins) || !Number.isFinite(redWins)) return false;
+  const need = seriesWinTarget(bestOf);
+  return blueWins >= need || redWins >= need;
+}
+
+export function inScheduleLiveWindow(startsAt: Date, bestOf: number, now = new Date()): boolean {
+  const start = startsAt.getTime();
+  const nowMs = now.getTime();
+  if (nowMs < start - PREGAME_MS) return false;
+  return nowMs <= start + Math.max(estimatedSeriesMs(bestOf), DELAYED_SERIES_MS);
+}
+
 export function scheduleEventStatus(
   state: string,
   startsAt: Date,
   bestOf: number,
   now = new Date(),
+  blueWins?: number | null,
+  redWins?: number | null,
 ): "live" | "upcoming" | "ended" {
-  if (state === "completed") return "ended";
   if (state === "inProgress") return "live";
+  if (state === "completed") {
+    // getSchedule often marks a BO5 "completed" mid-series. Trust the score, not the flag.
+    if (inScheduleLiveWindow(startsAt, bestOf, now) && !seriesIsDecided(bestOf, blueWins, redWins)) {
+      return "live";
+    }
+    return "ended";
+  }
   if (state !== "unstarted") return "ended";
-  const start = startsAt.getTime();
-  const nowMs = now.getTime();
-  if (nowMs < start - PREGAME_MS) return "upcoming";
-  if (nowMs <= start + Math.max(estimatedSeriesMs(bestOf), DELAYED_SERIES_MS)) return "live";
+  if (now.getTime() < startsAt.getTime() - PREGAME_MS) return "upcoming";
+  if (inScheduleLiveWindow(startsAt, bestOf, now)) return "live";
   return "ended";
+}
+
+/** Ended live-hub matches still inside the series window — re-check getEventDetails games. */
+export function shouldRecheckCompletedSeries(
+  match: { league: string; status: string; startsAt: Date; bestOf: number },
+  now = new Date(),
+): boolean {
+  if (!isPrototypeLiveLeague(match.league)) return false;
+  if (match.status !== "ended") return false;
+  return inScheduleLiveWindow(match.startsAt, match.bestOf, now);
 }
 
 export function usesLiveCandidates(source: string): boolean {
@@ -137,7 +175,14 @@ export function mapScheduleEvent(
     split: event.blockName || "정규",
     bestOf: event.bestOf,
     apiState: event.state,
-    status: scheduleEventStatus(event.state, startsAt, event.bestOf, now),
+    status: scheduleEventStatus(
+      event.state,
+      startsAt,
+      event.bestOf,
+      now,
+      event.teams[0].gameWins,
+      event.teams[1].gameWins,
+    ),
     startsAt,
     blueTeamId,
     redTeamId,

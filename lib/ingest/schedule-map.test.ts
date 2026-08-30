@@ -17,6 +17,8 @@ import {
   resolveScheduleTeamId,
   scheduleEventStatus,
   scheduleMatchId,
+  seriesIsDecided,
+  shouldRecheckCompletedSeries,
   tournamentFromSlug,
   usesLiveCandidates,
   vodHubScheduleSlugs,
@@ -74,11 +76,13 @@ describe("lolesports schedule parse", () => {
                     name: "NONGSHIM RED FORCE",
                     code: "NS",
                     image: "http://static.lolesports.com/teams/NSFullonDark.png",
+                    result: { gameWins: 0 },
                   },
                   {
                     name: "BNK FEARX",
                     code: "BFX",
                     image: "http://static.lolesports.com/teams/bfx.png",
+                    result: { gameWins: 0 },
                   },
                 ],
                 strategy: { type: "bestOf", count: 5 },
@@ -96,6 +100,8 @@ describe("lolesports schedule parse", () => {
       ["NS", "BFX"],
     );
     assert.equal(events[0].teams[0].imageUrl, "https://static.lolesports.com/teams/NSFullonDark.png");
+    assert.equal(events[0].teams[0].gameWins, 0);
+    assert.equal(events[0].teams[1].gameWins, 0);
     assert.equal(httpsAssetUrl("http://static.lolesports.com/teams/a.png"), "https://static.lolesports.com/teams/a.png");
   });
 
@@ -164,7 +170,31 @@ describe("schedule mapping", () => {
     assert.equal(scheduleEventStatus("inProgress", start, 5, new Date("2026-08-27T10:00:00Z")), "live");
     assert.equal(scheduleEventStatus("unstarted", start, 5, new Date("2026-08-27T07:00:00Z")), "live");
     assert.equal(scheduleEventStatus("unstarted", start, 5, new Date("2026-08-27T05:00:00Z")), "upcoming");
-    assert.equal(scheduleEventStatus("completed", start, 5, new Date("2026-08-27T14:00:00Z")), "ended");
+    assert.equal(scheduleEventStatus("completed", start, 5, new Date("2026-08-27T14:00:00Z"), 3, 1), "ended");
+  });
+
+  it("keeps a completed schedule row live when the BO5 score is not finished", () => {
+    const start = new Date("2026-08-30T09:00:00Z");
+    const during = new Date("2026-08-30T11:30:00Z");
+    assert.equal(seriesIsDecided(5, 0, 2), false);
+    assert.equal(seriesIsDecided(5, 3, 1), true);
+    assert.equal(scheduleEventStatus("completed", start, 5, during, 0, 2), "live");
+    assert.equal(scheduleEventStatus("completed", start, 5, during, 3, 2), "ended");
+    assert.equal(scheduleEventStatus("completed", start, 5, new Date("2026-08-31T09:00:00Z"), 0, 2), "ended");
+    assert.equal(
+      shouldRecheckCompletedSeries(
+        { league: "LPL", status: "ended", startsAt: start, bestOf: 5 },
+        during,
+      ),
+      true,
+    );
+    assert.equal(
+      shouldRecheckCompletedSeries(
+        { league: "Worlds", status: "ended", startsAt: start, bestOf: 5 },
+        during,
+      ),
+      false,
+    );
   });
 
   it("does not create vs-cards for TBD playoff slots", () => {
@@ -179,8 +209,8 @@ describe("schedule mapping", () => {
           matchId: "tbd-1",
           bestOf: 5,
           teams: [
-            { code: "TBD", name: "TBD", imageUrl: "" },
-            { code: "TBD", name: "TBD", imageUrl: "" },
+            { code: "TBD", name: "TBD", imageUrl: "", gameWins: null },
+            { code: "TBD", name: "TBD", imageUrl: "", gameWins: null },
           ],
         },
         {
@@ -192,8 +222,8 @@ describe("schedule mapping", () => {
           matchId: "117030752644841577",
           bestOf: 5,
           teams: [
-            { code: "NS", name: "NONGSHIM RED FORCE", imageUrl: "https://static.lolesports.com/teams/NSFullonDark.png" },
-            { code: "BFX", name: "BNK FEARX", imageUrl: "https://static.lolesports.com/teams/bfx.png" },
+            { code: "NS", name: "NONGSHIM RED FORCE", imageUrl: "https://static.lolesports.com/teams/NSFullonDark.png", gameWins: 0 },
+            { code: "BFX", name: "BNK FEARX", imageUrl: "https://static.lolesports.com/teams/bfx.png", gameWins: 0 },
           ],
         },
       ],
@@ -233,8 +263,8 @@ describe("schedule mapping", () => {
           matchId: "worlds-t1-g2",
           bestOf: 1,
           teams: [
-            { code: "T1", name: "T1", imageUrl: "" },
-            { code: "G2", name: "G2 Esports", imageUrl: "" },
+            { code: "T1", name: "T1", imageUrl: "", gameWins: 1 },
+            { code: "G2", name: "G2 Esports", imageUrl: "", gameWins: 0 },
           ],
         },
         {
@@ -246,8 +276,8 @@ describe("schedule mapping", () => {
           matchId: "lpl-tes-jdg",
           bestOf: 3,
           teams: [
-            { code: "TES", name: "Top Esports", imageUrl: "" },
-            { code: "JDG", name: "JD Gaming", imageUrl: "" },
+            { code: "TES", name: "Top Esports", imageUrl: "", gameWins: 2 },
+            { code: "JDG", name: "JD Gaming", imageUrl: "", gameWins: 1 },
           ],
         },
       ],
@@ -266,6 +296,33 @@ describe("schedule mapping", () => {
     assert.equal(mapped[1].blueTeamId, "api-tes");
     assert.equal(mapped[1].redTeamId, "jdg");
     assert.equal(mapped[1].status, "ended");
+  });
+
+  it("maps a stale completed LPL playoff row as live while the series is 0-2", () => {
+    const mapped = mapScheduleEvents(
+      [
+        {
+          startTime: "2026-08-30T09:00:00Z",
+          state: "completed",
+          type: "match",
+          blockName: "Playoffs",
+          leagueSlug: "lpl",
+          matchId: "117155436343202142",
+          bestOf: 5,
+          teams: [
+            { code: "JDG", name: "Beijing JDG Esports", imageUrl: "", gameWins: 0 },
+            { code: "WE", name: "Xi'an Team WE", imageUrl: "", gameWins: 2 },
+          ],
+        },
+      ],
+      [...teams, { id: "jdg", abbr: "JDG", name: "JD Gaming", aliases: ["JDG"] }],
+      new Date("2026-08-30T11:30:00Z"),
+    );
+    assert.equal(mapped.length, 1);
+    assert.equal(mapped[0].league, "LPL");
+    assert.equal(mapped[0].status, "live");
+    assert.equal(mapped[0].blueTeamId, "jdg");
+    assert.equal(mapped[0].redTeamId, "api-we");
   });
 
   it("attaches a streamer title to the official match, not an ingest key", () => {

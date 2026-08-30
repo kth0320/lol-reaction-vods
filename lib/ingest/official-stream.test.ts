@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { mutedBroadcastSrc, parseEventLook, parseEventStreams, pickMutedBackground } from "./official-stream";
+import {
+  eventSeriesIsLive,
+  mutedBroadcastSrc,
+  parseEventGameWins,
+  parseEventGames,
+  parseEventLook,
+  parseEventStreams,
+  pickMutedBackground,
+} from "./official-stream";
 
 const lckDetails = {
   data: {
@@ -59,5 +67,56 @@ describe("official muted background", () => {
     assert.equal(look.blueImageUrl, "https://static.lolesports.com/teams/t1.png");
     assert.equal(look.redImageUrl, "https://static.lolesports.com/teams/kt.png");
     assert.deepEqual(look.broadcast, { provider: "twitch", id: "lck" });
+  });
+
+  it("treats a completed schedule event as live when a game is still inProgress", () => {
+    const details = {
+      data: {
+        event: {
+          match: {
+            strategy: { count: 5 },
+            teams: [
+              { code: "JDG", result: { gameWins: 0 } },
+              { code: "WE", result: { gameWins: 2 } },
+            ],
+            games: [
+              { number: 1, state: "completed" },
+              { number: 2, state: "completed" },
+              { number: 3, state: "inProgress" },
+              { number: 4, state: "unstarted" },
+              { number: 5, state: "unstarted" },
+            ],
+          },
+        },
+      },
+    };
+    assert.deepEqual(parseEventGameWins(details), [0, 2]);
+    assert.equal(parseEventGames(details)[2]?.state, "inProgress");
+    assert.equal(eventSeriesIsLive(details, 5), true);
+    assert.equal(
+      eventSeriesIsLive(
+        {
+          data: {
+            event: {
+              match: {
+                teams: [
+                  { result: { gameWins: 3 } },
+                  { result: { gameWins: 1 } },
+                ],
+                games: [
+                  { number: 1, state: "completed" },
+                  { number: 2, state: "completed" },
+                  { number: 3, state: "completed" },
+                  { number: 4, state: "completed" },
+                  { number: 5, state: "unstarted" },
+                ],
+              },
+            },
+          },
+        },
+        5,
+      ),
+      false,
+    );
   });
 });
