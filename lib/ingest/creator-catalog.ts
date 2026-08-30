@@ -39,4 +39,12 @@ export async function ensureCreatorCatalog(root = process.cwd()): Promise<void> 
       },
     });
   }
+
+  const wanted = new Set(channels.map((channel) => `${channel.platform}\0${channel.channelId}`));
+  const stale = (await prisma.creatorChannel.findMany()).filter(
+    (row) => !wanted.has(`${row.platform}\0${row.channelId}`),
+  );
+  if (stale.length > 0) {
+    await prisma.creatorChannel.deleteMany({ where: { id: { in: stale.map((row) => row.id) } } });
+  }
 }
