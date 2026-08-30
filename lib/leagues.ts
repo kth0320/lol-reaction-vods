@@ -1,5 +1,5 @@
 export const LEAGUES = ["LCK", "LPL", "LEC"] as const;
-export const PROTOTYPE_LIVE_LEAGUES = ["LCK", "LEC"] as const;
+export const PROTOTYPE_LIVE_LEAGUES = ["LCK", "LPL", "LEC"] as const;
 
 export type League = (typeof LEAGUES)[number];
 export type PrototypeLiveLeague = (typeof PROTOTYPE_LIVE_LEAGUES)[number];

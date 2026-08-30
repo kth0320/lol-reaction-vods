@@ -218,7 +218,7 @@ describe("schedule mapping", () => {
     assert.equal(tournamentFromSlug("ewc_lol"), "EWC");
     assert.equal(fallbackApiTeamId("TES"), "api-tes");
     assert.equal(resolveScheduleTeamId(teams, "TES", "Top Esports"), "api-tes");
-    assert.deepEqual(prototypeLeagueSlugs(), ["lck", "lec"]);
+    assert.deepEqual(prototypeLeagueSlugs(), ["lck", "lpl", "lec"]);
     assert.ok(vodHubScheduleSlugs().includes("lpl"));
     assert.ok(vodHubScheduleSlugs().includes("worlds"));
 

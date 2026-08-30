@@ -14,10 +14,11 @@ describe("sortLiveMatchesByLeague", () => {
     );
   });
 
-  it("treats only LCK and LEC as prototype live leagues", () => {
+  it("treats LCK, LPL, and LEC as live leagues", () => {
     assert.equal(isPrototypeLiveLeague("LCK"), true);
     assert.equal(isPrototypeLiveLeague("LEC"), true);
-    assert.equal(isPrototypeLiveLeague("LPL"), false);
+    assert.equal(isPrototypeLiveLeague("LPL"), true);
+    assert.equal(isPrototypeLiveLeague("Worlds"), false);
   });
 
   it("uses a 5 second carousel interval", () => {

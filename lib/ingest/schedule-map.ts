@@ -31,7 +31,7 @@ export type OfficialScheduleMatch = {
   redImageUrl: string;
 };
 
-/** lolesports slugs for VOD hub schedules. Live vs-cards still use prototypeLeagueSlugs() only. */
+/** lolesports slugs for VOD hub schedules. Live vs-cards use prototypeLeagueSlugs() (LCK · LPL · LEC). */
 export const VOD_HUB_SCHEDULE_SLUGS = ["lck", "lec", "lpl", "worlds", "msi", "first_stand", "ewc_lol"] as const;
 
 const SLUG_TO_TOURNAMENT: Record<string, string> = {
@@ -167,7 +167,7 @@ export function mapScheduleEvents(
 }
 
 export function prototypeLeagueSlugs(): string[] {
-  return [LEAGUE_SLUG.LCK, LEAGUE_SLUG.LEC];
+  return [LEAGUE_SLUG.LCK, LEAGUE_SLUG.LPL, LEAGUE_SLUG.LEC];
 }
 
 export function attachInferredToOfficial(

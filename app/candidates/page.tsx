@@ -22,7 +22,7 @@ export default async function CandidatesPage() {
       </Link>
       <h1 className="section-title">수집 후보</h1>
       <p className="page-lead">
-        프로토타입 화이트리스트 {prototypeIngestCreators().length}명을 지금 조회한 결과입니다. 홈 vs 카드는 LCK·LEC
+        프로토타입 화이트리스트 {prototypeIngestCreators().length}명을 지금 조회한 결과입니다. 홈 vs 카드는 LCK·LPL·LEC
         공식 일정입니다. 제목에서 리그·두 팀을 읽으면 그 공식 경기에 중계진만 붙입니다.
       </p>
       <p className="section-note">
