@@ -1,7 +1,9 @@
-import { fetchArchiveSchedules, fetchPrototypeSchedules } from "@/lib/ingest/lolesports";
+import { fetchArchiveSchedules, fetchEventDetails, fetchPrototypeSchedules } from "@/lib/ingest/lolesports";
+import { eventSeriesIsLive } from "@/lib/ingest/official-stream";
 import {
   SCHEDULE_MATCH_SOURCE,
   mapScheduleEvents,
+  shouldRecheckCompletedSeries,
   vodHubScheduleSlugs,
   type OfficialScheduleMatch,
   type ScheduleTeam,
@@ -32,6 +34,25 @@ function catalogToScheduleTeams(
   });
 }
 
+async function reviveStaleCompletedSeries(
+  mapped: OfficialScheduleMatch[],
+  fetchImpl: typeof fetch,
+  now: Date,
+): Promise<void> {
+  const stale = mapped.filter((match) => shouldRecheckCompletedSeries(match, now));
+  if (stale.length === 0) return;
+  await Promise.all(
+    stale.map(async (match) => {
+      try {
+        const details = await fetchEventDetails(match.externalEventId, fetchImpl);
+        if (eventSeriesIsLive(details, match.bestOf)) match.status = "live";
+      } catch {
+        // Keep the schedule mapping if event details fail.
+      }
+    }),
+  );
+}
+
 export async function syncOfficialSchedule(
   options: { now?: Date; fetchImpl?: typeof fetch; archiveYears?: number[] } = {},
 ): Promise<OfficialScheduleMatch[]> {
@@ -44,7 +65,9 @@ export async function syncOfficialSchedule(
     options.archiveYears && options.archiveYears.length > 0
       ? await fetchArchiveSchedules(vodHubScheduleSlugs(), options.archiveYears, fetchImpl)
       : [];
-  const mapped = mapScheduleEvents([...recent, ...archive], teams, options.now ?? new Date());
+  const now = options.now ?? new Date();
+  const mapped = mapScheduleEvents([...recent, ...archive], teams, now);
+  await reviveStaleCompletedSeries(mapped, fetchImpl, now);
 
   const persist = mapped.filter(
     (match) => match.status === "live" || match.status === "upcoming" || match.status === "ended",

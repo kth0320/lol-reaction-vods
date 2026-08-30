@@ -58,4 +58,25 @@ describe("pickPrototypeLiveMatch", () => {
     assert.equal(pickPrototypeLiveMatch("울프 LPL JDG vs BLG", [lec, lck, lpl])?.id, "lpl-jdg-blg");
     assert.equal(scoreTitleForMatch("T1 vs G2 Worlds", lck), 0);
   });
+
+  it("attaches today's LPL costream titles to JDG vs WE", () => {
+    const lpl = {
+      id: "schedule-117155436343202142",
+      tournament: "LPL",
+      blueAliases: ["JDG", "징동"],
+      redAliases: ["WE", "Team WE", "웨이"],
+    };
+    assert.equal(
+      pickPrototypeLiveMatch("[LPL] WE vs 징동 #LCKWatchparty#LPLCOstream", [lec, lck, lpl])?.id,
+      "schedule-117155436343202142",
+    );
+    assert.equal(
+      pickPrototypeLiveMatch("[ WE vs JDG ] 프로 코치 LCK/LPL/LEC #LPLCostream", [lec, lck, lpl])?.id,
+      "schedule-117155436343202142",
+    );
+    assert.equal(
+      pickPrototypeLiveMatch("🔴LPL PLAYOFFS WE VS JDG🔴", [lec, lck, lpl])?.id,
+      "schedule-117155436343202142",
+    );
+  });
 });

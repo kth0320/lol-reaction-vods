@@ -74,7 +74,14 @@
     "name": "JD Gaming",
     "abbr": "JDG",
     "league": "LPL",
-    "aliases": ["JDG", "京东"]
+    "aliases": ["JDG", "京东", "징동"]
+  },
+  {
+    "id": "we",
+    "name": "Team WE",
+    "abbr": "WE",
+    "league": "LPL",
+    "aliases": ["WE", "Team WE", "웨이", "Xi'an Team WE"]
   },
   {
     "id": "blg",
