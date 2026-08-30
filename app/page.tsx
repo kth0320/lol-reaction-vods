@@ -81,11 +81,6 @@ export default async function HomePage() {
 
   return (
     <main>
-      <p className="page-lead">
-        위 카드는 LCK·LPL·LEC 공식 일정입니다. 카드 면은 공식 리그 마크와 팀 로고이고, 그 이미지가 없을 때만 공식
-        중계 음소거를 씁니다. 카드를 누르면 그 경기를 중계 중인 방송인이 나옵니다. 아래 대회 카드를 누르면 그 대회
-        다시보기입니다.
-      </p>
       {slides.length === 0 ? (
         <p className="empty">지금은 생중계 중인 LCK · LPL · LEC 경기가 없습니다.</p>
       ) : (
@@ -93,7 +88,6 @@ export default async function HomePage() {
       )}
       <section className="vod-section">
         <h2 className="section-title">다시보기</h2>
-        <p className="section-note">대회를 고르면 그 경기를 중계한 스트리머·BJ 다시보기가 나옵니다.</p>
         <VodHubGrid stats={vodStats} />
       </section>
     </main>

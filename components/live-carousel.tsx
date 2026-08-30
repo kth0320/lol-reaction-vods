@@ -58,7 +58,6 @@ export function LiveCarousel({ slides }: { slides: LiveSlide[] }) {
     <section className="live-hub">
       <div className="live-hub-head">
         <h2 className="section-title">지금 생중계</h2>
-        <p className="section-note">카드는 공식 리그 마크와 팀 로고입니다. 이미지가 없으면 공식 중계 음소거를 씁니다.</p>
       </div>
       <div className="league-tabs" role="tablist" aria-label="리그">
         {PROTOTYPE_LIVE_LEAGUES.map((league) => {
