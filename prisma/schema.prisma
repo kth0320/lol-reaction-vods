@@ -109,9 +109,9 @@ model ReactionVod {
   externalId  String
   publishedAt DateTime?
 
-  @@unique([platform, externalId])
   @@unique([matchId, creatorId, platform])
   @@index([matchId])
+  @@index([platform, externalId])
 }
 
 model LiveCast {

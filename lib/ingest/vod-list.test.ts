@@ -107,6 +107,45 @@ describe("vod list parsers", () => {
     assert.match(calls[1], /page=1/);
   });
 
+  it("keeps paging Chzzk when a page is only clips", async () => {
+    const calls: string[] = [];
+    const rows = await fetchChzzkReplays(
+      "ch1",
+      async (url) => {
+        calls.push(String(url));
+        const page = Number(new URL(String(url)).searchParams.get("page"));
+        const payload =
+          page === 0
+            ? {
+                content: {
+                  data: [{ videoNo: 1, videoType: "CLIP", videoTitle: "clip", publishDateAt: 1754640000000 }],
+                },
+              }
+            : page === 1
+              ? {
+                  content: {
+                    data: [
+                      {
+                        videoNo: 2,
+                        videoType: "REPLAY",
+                        videoTitle: "LEC SK vs G2",
+                        publishDateAt: 1754640000000,
+                      },
+                    ],
+                  },
+                }
+              : { content: { data: [] } };
+        return new Response(JSON.stringify(payload), { status: 200 });
+      },
+      { maxPages: 3 },
+    );
+    assert.deepEqual(
+      rows.map((row) => row.externalId),
+      ["2"],
+    );
+    assert.equal(calls.length, 3);
+  });
+
   it("pages SOOP vods newest-first", async () => {
     const calls: string[] = [];
     const rows = await fetchSoopVods(

@@ -59,6 +59,12 @@ export function parseYouTubeAtom(xml: string): VodListItem[] {
   return rows;
 }
 
+export function chzzkVideoPageRawCount(payload: unknown): number {
+  const content = asRecord(asRecord(payload)?.content);
+  const data = content?.data;
+  return Array.isArray(data) ? data.length : 0;
+}
+
 export function parseChzzkVideos(payload: unknown): VodListItem[] {
   const content = asRecord(asRecord(payload)?.content);
   const data = content?.data;
@@ -170,8 +176,9 @@ export async function fetchChzzkReplays(
         `https://api.chzzk.naver.com/service/v1/channels/${id}/videos?sortType=LATEST&pagingType=PAGE&page=${page}&size=50`,
       ),
     );
-    const rows = parseChzzkVideos(JSON.parse(body) as unknown);
-    if (rows.length === 0) break;
+    const payload = JSON.parse(body) as unknown;
+    const rows = parseChzzkVideos(payload);
+    if (chzzkVideoPageRawCount(payload) === 0) break;
     collected.push(...rows);
     if (pageReachedArchiveFloor(rows, options.untilYear)) break;
   }

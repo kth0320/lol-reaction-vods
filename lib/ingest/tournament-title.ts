@@ -8,7 +8,7 @@ export const TOURNAMENT_TITLE_PATTERNS: Record<string, RegExp> = {
   Worlds: /\bworlds\b|#worlds|롤드컵/i,
   MSI: /\bmsi\b|#msi/i,
   EWC: /\bewc\b|#ewc|esports world cup/i,
-  "First Stand": /\bfirst\s*stand\b|#firststand|퍼스트스탠드/i,
+  "First Stand": /\bfirst\s*stand\b|#firststand|#fst|퍼스트스탠드/i,
 };
 
 export function titleMentionsTournament(title: string, tournament: string): boolean {
