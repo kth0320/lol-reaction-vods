@@ -135,6 +135,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
     if (await saveReactionSlot(hit, match)) attached += 1;
   }
 
+  await dropStaleUrlCopies(collapsed);
   await dedupeExistingSlots(matchById);
 
   return { scanned, attached, skippedTwitch };
@@ -199,6 +200,34 @@ async function saveReactionSlot(hit: SlotHit, match: VodAttachMatch): Promise<bo
     },
   });
   return true;
+}
+
+/** Drop leftover rows from when one URL could only sit on one match. */
+async function dropStaleUrlCopies(hits: SlotHit[]): Promise<void> {
+  const groups = new Map<string, { platform: string; externalId: string; creatorId: string; matchIds: string[] }>();
+  for (const hit of hits) {
+    const key = `${hit.item.platform}\0${hit.item.externalId}\0${hit.creatorId}`;
+    const group = groups.get(key);
+    if (group) group.matchIds.push(hit.matchId);
+    else {
+      groups.set(key, {
+        platform: hit.item.platform,
+        externalId: hit.item.externalId,
+        creatorId: hit.creatorId,
+        matchIds: [hit.matchId],
+      });
+    }
+  }
+  for (const group of groups.values()) {
+    await prisma.reactionVod.deleteMany({
+      where: {
+        platform: group.platform,
+        externalId: group.externalId,
+        creatorId: group.creatorId,
+        matchId: { notIn: group.matchIds },
+      },
+    });
+  }
 }
 
 async function dedupeExistingSlots(matchById: Map<string, VodAttachMatch>): Promise<void> {
