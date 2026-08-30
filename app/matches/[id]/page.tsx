@@ -11,6 +11,7 @@ import { isLeague } from "@/lib/leagues";
 import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
 import { prisma } from "@/lib/prisma";
 import { collapseReactionsBySlot } from "@/lib/ingest/reaction-slot";
+import { vodMatchBack } from "@/lib/vod-filter";
 import { isVodHubId, matchTournamentToHub } from "@/lib/vod-hub";
 import { stageLabelForMatch } from "@/lib/vod-split";
 import Link from "next/link";
