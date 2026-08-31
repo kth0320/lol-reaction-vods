@@ -203,6 +203,48 @@ describe("pickMatchesForVod", () => {
     );
   });
 
+  it("keeps one EU Swiss day together when it crosses Seoul midnight", () => {
+    const early = match({
+      id: "w24-early",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "t1",
+      redTeamId: "tes",
+      blueAliases: ["T1"],
+      redAliases: ["TES"],
+      startsAt: new Date("2024-10-03T12:00:00Z"),
+    });
+    const late = match({
+      id: "w24-late",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "dk",
+      redTeamId: "fnc",
+      blueAliases: ["DK"],
+      redAliases: ["FNC"],
+      startsAt: new Date("2024-10-03T16:00:00Z"),
+    });
+    const next = match({
+      id: "w24-next",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "lng",
+      redTeamId: "blg",
+      blueAliases: ["LNG"],
+      redAliases: ["BLG"],
+      startsAt: new Date("2024-10-04T12:00:00Z"),
+    });
+    const hits = pickMatchesForVod(
+      "울챔스 / 스위스 스테이지 1일차 #worlds2024",
+      new Date("2024-10-03T18:00:00Z"),
+      [early, late, next],
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id).sort(),
+      ["w24-early", "w24-late"],
+    );
+  });
+
   it("attaches a 월즈 cheer-room title to that team's matches that day", () => {
     const t1Gen = match({
       id: "w-t1-gen",
