@@ -1,3 +1,4 @@
+import { kstYear } from "@/lib/format";
 import { aliasIndexInTitle, inferLiveMatchFromTitle, mentionedLeagues, type InferTeam } from "@/lib/ingest/infer-match";
 import { pickPrototypeLiveMatch, type TitleMatchInput } from "@/lib/ingest/match-title";
 import { attachInferredToOfficial, sameTeamPair } from "@/lib/ingest/schedule-map";
@@ -192,20 +193,21 @@ function matchesOnSlateDay(
 export function pickDaySlateMatches(
   title: string,
   publishedAt: Date | null,
-  windowed: VodAttachMatch[],
-  all: VodAttachMatch[] = windowed,
+  _windowed: VodAttachMatch[],
+  all: VodAttachMatch[] = _windowed,
 ): VodAttachMatch[] {
   if (!publishedAt || DAY_SLATE_SKIP.test(title) || !DAY_SLATE_CUE.test(title)) return [];
   const intl = mentionedLeagues(title).filter((tournament) => INTERNATIONAL_TOURNAMENTS.has(tournament));
   if (intl.length === 0) return [];
 
   const stagePool = all.filter(
-    (match) => intl.includes(match.tournament) && splitMatchesStage(title, match.split),
+    (match) =>
+      intl.includes(match.tournament) &&
+      splitMatchesStage(title, match.split) &&
+      kstYear(match.startsAt) === kstYear(publishedAt),
   );
   const teams = teamIdsInTitle(title, all);
-  const windowIds = new Set(windowed.map((match) => match.id));
   return matchesOnSlateDay(title, publishedAt, stagePool).filter((match) => {
-    if (!windowIds.has(match.id)) return false;
     if (teams.length === 0) return true;
     return teams.includes(match.blueTeamId) || teams.includes(match.redTeamId);
   });
