@@ -492,13 +492,14 @@ a {
 
 .vod-hub-mark {
   position: absolute;
-  right: -6px;
-  bottom: -10px;
+  left: 50%;
+  top: 50%;
   z-index: 0;
-  width: 96px;
-  height: 96px;
+  width: min(70%, 128px);
+  height: min(70%, 128px);
+  transform: translate(-50%, -50%);
   object-fit: contain;
-  opacity: 0.18;
+  opacity: 0.16;
   filter: blur(0.4px);
   pointer-events: none;
   user-select: none;
@@ -548,12 +549,12 @@ a {
 
 .upcoming-mark {
   position: absolute;
-  right: -8px;
+  left: 50%;
   top: 50%;
   z-index: 0;
-  width: 88px;
-  height: 88px;
-  transform: translateY(-50%);
+  width: min(58%, 120px);
+  height: min(58%, 120px);
+  transform: translate(-50%, -50%);
   object-fit: contain;
   opacity: 0.14;
   pointer-events: none;
