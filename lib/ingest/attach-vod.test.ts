@@ -236,12 +236,44 @@ describe("pickMatchesForVod", () => {
     });
     const hits = pickMatchesForVod(
       "울챔스 / 스위스 스테이지 1일차 #worlds2024",
-      new Date("2024-10-03T18:00:00Z"),
+      new Date("2024-10-03T11:00:00Z"),
       [early, late, next],
     );
     assert.deepEqual(
       hits.map((row) => row.id).sort(),
       ["w24-early", "w24-late"],
+    );
+  });
+
+  it("does not attach a 2025 Worlds Day 1 stream to 2024 Swiss", () => {
+    const worlds2024 = match({
+      id: "w24",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "t1",
+      redTeamId: "tes",
+      blueAliases: ["T1"],
+      redAliases: ["TES"],
+      startsAt: new Date("2024-10-03T12:00:00Z"),
+    });
+    const worlds2025 = match({
+      id: "w25",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "vks",
+      redTeamId: "tsw",
+      blueAliases: ["VKS"],
+      redAliases: ["TSW"],
+      startsAt: new Date("2025-10-15T05:00:00Z"),
+    });
+    const hits = pickMatchesForVod(
+      "울챔스 / 스위스 스테이지 Day 1 | 2025 월드 챔피언십 #WORLDS2025",
+      new Date("2025-10-15T04:00:00Z"),
+      [worlds2024, worlds2025],
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id),
+      ["w25"],
     );
   });
 
