@@ -27,7 +27,7 @@ export function teamFieldMatchesQuery(field: string, query: string): boolean {
   const needle = query.trim();
   if (hay.length === 0 || needle.length < 2) return false;
   if (/^[A-Za-z0-9]+$/.test(needle) && needle.length <= 4) {
-    return new RegExp(`(^|[^A-Za-z0-9])${escapeRegExp(needle)}([^A-Za-z0-9]|$)`, "i").test(hay);
+    return new RegExp(`(^|[^A-Za-z0-9]|vs)${escapeRegExp(needle)}([^A-Za-z0-9]|vs|$)`, "i").test(hay);
   }
   return hay.toLowerCase().includes(needle.toLowerCase());
 }

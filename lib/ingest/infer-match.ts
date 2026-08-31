@@ -35,11 +35,16 @@ export function aliasIndexInTitle(title: string, alias: string): number {
   const needle = alias.trim();
   if (needle.length < 2) return -1;
   if (/^[A-Za-z0-9]+$/.test(needle) && needle.length <= 4) {
-    const match = title.match(new RegExp(`(^|[^A-Za-z0-9])(${escapeRegExp(needle)})`, "i"));
+    // Treat glued "vs" as a boundary so SKvsG2 hits G2 (prefix was previously "s").
+    const match = title.match(new RegExp(`(^|[^A-Za-z0-9]|vs)(${escapeRegExp(needle)})`, "i"));
     if (!match || match.index === undefined) return -1;
     return match.index + match[1].length;
   }
   return title.toLowerCase().indexOf(needle.toLowerCase());
+}
+
+export function teamAppearsInTitle(title: string, aliases: string[]): boolean {
+  return aliases.some((alias) => aliasIndexInTitle(title, alias) >= 0);
 }
 
 function teamHits(title: string, teams: InferTeam[]): { id: string; league: string; index: number }[] {

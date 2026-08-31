@@ -103,22 +103,11 @@ export async function attachReaction(input: AttachReactionInput) {
   if (!creator) throw new OpsError("방송인을 찾을 수 없습니다.", 404);
 
   const title = input.title?.trim() || "수동 보정";
-  const slot = await prisma.reactionVod.findFirst({
-    where: { matchId, creatorId, platform: parsed.platform },
+  const slot = await prisma.reactionVod.findUnique({
+    where: {
+      matchId_creatorId_platform: { matchId, creatorId, platform: parsed.platform },
+    },
   });
-  const byUrl = await prisma.reactionVod.findUnique({
-    where: { platform_externalId: { platform: parsed.platform, externalId: parsed.externalId } },
-  });
-
-  if (slot && byUrl && slot.id !== byUrl.id) {
-    await prisma.reactionVod.delete({ where: { id: slot.id } });
-    const moved = await prisma.reactionVod.update({
-      where: { id: byUrl.id },
-      data: { matchId, creatorId, title, url: parsed.canonicalUrl },
-      include: { creator: true },
-    });
-    return toOpsReactionDto(moved);
-  }
 
   if (slot) {
     const replaced = await prisma.reactionVod.update({
@@ -134,9 +123,8 @@ export async function attachReaction(input: AttachReactionInput) {
     return toOpsReactionDto(replaced);
   }
 
-  const row = await prisma.reactionVod.upsert({
-    where: { platform_externalId: { platform: parsed.platform, externalId: parsed.externalId } },
-    create: {
+  const row = await prisma.reactionVod.create({
+    data: {
       matchId,
       creatorId,
       platform: parsed.platform,
@@ -144,12 +132,6 @@ export async function attachReaction(input: AttachReactionInput) {
       url: parsed.canonicalUrl,
       externalId: parsed.externalId,
       publishedAt: new Date(),
-    },
-    update: {
-      matchId,
-      creatorId,
-      title: input.title?.trim() || undefined,
-      url: parsed.canonicalUrl,
     },
     include: { creator: true },
   });
