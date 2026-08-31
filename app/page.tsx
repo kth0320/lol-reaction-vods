@@ -1,3 +1,4 @@
+import { UpcomingBoard, type UpcomingSlot } from "@/components/upcoming-board";
 import { VodHubGrid } from "@/components/vod-hub";
 import { LiveCarousel } from "@/components/live-carousel";
 import type { LiveSlide } from "@/components/vs-card";
@@ -7,10 +8,16 @@ import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
 import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
-import { fetchLeagueArt, resolveMatchArt } from "@/lib/league-art";
-import { PROTOTYPE_LIVE_LEAGUES, isLeague, isPrototypeLiveLeague, sortLiveMatchesByLeague } from "@/lib/leagues";
+import { fetchLeagueArt, leagueArtForTournament, resolveMatchArt } from "@/lib/league-art";
+import {
+  PROTOTYPE_LIVE_LEAGUES,
+  isLeague,
+  isPrototypeLiveLeague,
+  pickNextMatchByLeague,
+  sortLiveMatchesByLeague,
+} from "@/lib/leagues";
 import { prisma } from "@/lib/prisma";
-import { countHubStats } from "@/lib/vod-hub";
+import { VOD_HUB_CARDS, countHubStats, hubTournamentForArt, type VodHubId } from "@/lib/vod-hub";
 import { after } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +29,14 @@ export default async function HomePage() {
     void refreshVodsInBackground();
   });
 
-  const [scheduleLive, vodRows] = await Promise.all([
+  const [scheduleLive, scheduleUpcoming, vodRows] = await Promise.all([
     prisma.match.findMany({
       where: { status: "live", source: SCHEDULE_MATCH_SOURCE, tournament: { in: [...PROTOTYPE_LIVE_LEAGUES] } },
+      include: { blueTeam: true, redTeam: true },
+      orderBy: { startsAt: "asc" },
+    }),
+    prisma.match.findMany({
+      where: { status: "upcoming", source: SCHEDULE_MATCH_SOURCE, tournament: { in: [...PROTOTYPE_LIVE_LEAGUES] } },
       include: { blueTeam: true, redTeam: true },
       orderBy: { startsAt: "asc" },
     }),
@@ -38,17 +50,28 @@ export default async function HomePage() {
     (match): match is typeof match & { tournament: LiveSlide["tournament"] } =>
       isLeague(match.tournament) && isPrototypeLiveLeague(match.tournament),
   );
-  const [looks, leagueArt] = await Promise.all([
+  const nextByLeague = pickNextMatchByLeague(scheduleUpcoming);
+  const upcomingRows = PROTOTYPE_LIVE_LEAGUES.map((league) => nextByLeague[league]).filter(
+    (match): match is NonNullable<typeof match> => Boolean(match),
+  );
+  const [liveLooks, upcomingLooks, leagueArt] = await Promise.all([
     Promise.all(
       liveRows.map((match) =>
         match.externalEventId ? lookForEvent(match.externalEventId) : Promise.resolve(null),
       ),
     ),
+    liveRows.length === 0
+      ? Promise.all(
+          upcomingRows.map((match) =>
+            match.externalEventId ? lookForEvent(match.externalEventId) : Promise.resolve(null),
+          ),
+        )
+      : Promise.resolve([] as Awaited<ReturnType<typeof lookForEvent>>[]),
     fetchLeagueArt(),
   ]);
 
   const slides: LiveSlide[] = liveRows.map((match, index) => {
-    const look = looks[index];
+    const look = liveLooks[index];
     const art = resolveMatchArt({
       tournament: match.tournament,
       leagueArt,
@@ -75,20 +98,57 @@ export default async function HomePage() {
       broadcast: art.broadcast,
     };
   });
+
+  const lookByMatchId = new Map(upcomingRows.map((match, index) => [match.id, upcomingLooks[index]]));
+  const upcomingSlots: UpcomingSlot[] = PROTOTYPE_LIVE_LEAGUES.map((league) => {
+    const match = nextByLeague[league];
+    if (!match) {
+      return {
+        league,
+        matchId: null,
+        startsAtLabel: null,
+        blueAbbr: "",
+        redAbbr: "",
+        blueImageUrl: "",
+        redImageUrl: "",
+        leagueImageUrl: leagueArtForTournament(leagueArt, league),
+      };
+    }
+    const look = lookByMatchId.get(match.id);
+    const art = resolveMatchArt({
+      tournament: match.tournament,
+      leagueArt,
+      eventLeagueImageUrl: look?.leagueImageUrl,
+      eventBlueImageUrl: look?.blueImageUrl,
+      eventRedImageUrl: look?.redImageUrl,
+      storedBlueImageUrl: match.blueTeam.imageUrl,
+      storedRedImageUrl: match.redTeam.imageUrl,
+    });
+    return {
+      league,
+      matchId: match.id,
+      startsAtLabel: formatKst(match.startsAt),
+      blueAbbr: match.blueTeam.abbr,
+      redAbbr: match.redTeam.abbr,
+      blueImageUrl: art.blueImageUrl,
+      redImageUrl: art.redImageUrl,
+      leagueImageUrl: art.leagueImageUrl,
+    };
+  });
+
   const vodStats = countHubStats(
     vodRows.map((row) => ({ tournament: row.tournament, reactionCount: row._count.reactions })),
   );
+  const hubArt = Object.fromEntries(
+    VOD_HUB_CARDS.map((card) => [card.id, leagueArtForTournament(leagueArt, hubTournamentForArt(card.id))]),
+  ) as Record<VodHubId, string>;
 
   return (
     <main>
-      {slides.length === 0 ? (
-        <p className="empty">지금은 생중계 중인 LCK · LPL · LEC 경기가 없습니다.</p>
-      ) : (
-        <LiveCarousel slides={slides} />
-      )}
+      {slides.length === 0 ? <UpcomingBoard slots={upcomingSlots} /> : <LiveCarousel slides={slides} />}
       <section className="vod-section">
         <h2 className="section-title">다시보기</h2>
-        <VodHubGrid stats={vodStats} />
+        <VodHubGrid stats={vodStats} leagueArt={hubArt} />
       </section>
     </main>
   );

@@ -472,12 +472,14 @@ a {
 }
 
 .vod-hub-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 18px;
   min-height: 108px;
   padding: 18px 18px 16px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--bg-elevated);
@@ -488,7 +490,23 @@ a {
   border-color: var(--gold);
 }
 
+.vod-hub-mark {
+  position: absolute;
+  right: -6px;
+  bottom: -10px;
+  z-index: 0;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  opacity: 0.18;
+  filter: blur(0.4px);
+  pointer-events: none;
+  user-select: none;
+}
+
 .vod-hub-label {
+  position: relative;
+  z-index: 1;
   margin: 0;
   font-size: 20px;
   font-weight: 800;
@@ -497,9 +515,123 @@ a {
 }
 
 .vod-hub-count {
+  position: relative;
+  z-index: 1;
   margin: 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+.upcoming-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.upcoming-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 168px;
+  padding: 18px 16px 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  color: inherit;
+}
+
+.upcoming-card:hover {
+  border-color: var(--gold);
+}
+
+.upcoming-mark {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  z-index: 0;
+  width: 88px;
+  height: 88px;
+  transform: translateY(-50%);
+  object-fit: contain;
+  opacity: 0.14;
+  pointer-events: none;
+  user-select: none;
+}
+
+.upcoming-league {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.upcoming-matchup {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.upcoming-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.upcoming-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.upcoming-logo.empty {
+  display: block;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.upcoming-abbr {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.upcoming-vs {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.upcoming-time {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.upcoming-empty {
+  position: relative;
+  z-index: 1;
+  margin: auto 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 800px) {
+  .upcoming-board {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 800px) {

@@ -12,6 +12,7 @@ import {
   vodAttachTournaments,
   hubUsesLeagueSeasons,
   hubUsesEventYears,
+  hubTournamentForArt,
 } from "./vod-hub";
 
 describe("vod hub", () => {
@@ -81,6 +82,13 @@ describe("vod hub", () => {
     assert.ok(vodAttachTournaments().includes("LPL"));
     assert.ok(vodAttachTournaments().includes("Worlds"));
     assert.ok(vodAttachTournaments().includes("EWC"));
+  });
+
+  it("maps hub cards onto official league art tournaments", () => {
+    assert.equal(hubTournamentForArt("worlds"), "Worlds");
+    assert.equal(hubTournamentForArt("first-stand"), "First Stand");
+    assert.equal(hubTournamentForArt("lck"), "LCK");
+    assert.equal(hubTournamentForArt("ewc"), "EWC");
   });
 
   it("puts season selects on LCK LPL LEC and year selects on international hubs", () => {
