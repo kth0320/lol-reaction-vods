@@ -1,5 +1,6 @@
 import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
 import { pickMatchesForVod, type VodAttachMatch } from "@/lib/ingest/attach-vod";
+import { extraTitlesForVod, liveTitleMatchIdsForVod } from "@/lib/ingest/live-title-history";
 import { shouldFetchVods } from "@/lib/ingest/platforms";
 import { isLivePollFresh } from "@/lib/ingest/poll-fresh";
 import { collapseReactionsBySlot, pickPreferredReaction } from "@/lib/ingest/reaction-slot";
@@ -61,7 +62,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
   await ensureCreatorCatalog();
   await ensureTeamCatalog();
 
-  const [creators, matches] = await Promise.all([
+  const [creators, matches, liveTitles] = await Promise.all([
     prisma.creator.findMany({
       where: { ingestEnabled: true },
       include: { channels: true },
@@ -73,6 +74,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
         redTeam: { include: { aliases: true } },
       },
     }),
+    prisma.liveTitleHistory.findMany({ orderBy: { seenAt: "desc" } }),
   ]);
 
   const attachable: VodAttachMatch[] = matches.map((match) => ({
@@ -87,6 +89,12 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
     blueAliases: aliases(match.blueTeam),
     redAliases: aliases(match.redTeam),
   }));
+  const historyByCreator = new Map<string, typeof liveTitles>();
+  for (const row of liveTitles) {
+    const list = historyByCreator.get(row.creatorId) ?? [];
+    list.push(row);
+    historyByCreator.set(row.creatorId, list);
+  }
 
   let scanned = 0;
   let attached = 0;
@@ -105,11 +113,23 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
         return [];
       }
       scanned += items.length;
+      const history = historyByCreator.get(creator.id) ?? [];
       const hits: { creatorId: string; item: VodListItem; matchId: string }[] = [];
       for (const item of items) {
-        for (const match of pickMatchesForVod(item.title, item.publishedAt, attachable)) {
-          hits.push({ creatorId: creator.id, item, matchId: match.id });
+        const matchIds = new Set<string>();
+        for (const title of extraTitlesForVod({
+          currentTitle: item.title,
+          publishedAt: item.publishedAt,
+          rows: history,
+        })) {
+          for (const match of pickMatchesForVod(title, item.publishedAt, attachable)) {
+            matchIds.add(match.id);
+          }
         }
+        for (const matchId of liveTitleMatchIdsForVod({ publishedAt: item.publishedAt, rows: history })) {
+          if (attachable.some((match) => match.id === matchId)) matchIds.add(matchId);
+        }
+        for (const matchId of matchIds) hits.push({ creatorId: creator.id, item, matchId });
       }
       return hits;
     }),

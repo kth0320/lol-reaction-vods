@@ -1,5 +1,7 @@
 import { attachTitleToOfficial, type OfficialLiveMatch } from "@/lib/ingest/attach-live";
 import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
+import { discoverLiveCostreamers } from "@/lib/ingest/discover-live";
+import { recordLiveTitle } from "@/lib/ingest/live-title-history";
 import { isLivePollFresh, LIVE_POLL_FRESH_MS } from "@/lib/ingest/poll-fresh";
 import { probeLive, type LiveProbe } from "@/lib/ingest/live-status";
 import { prisma } from "@/lib/prisma";
@@ -85,11 +87,6 @@ async function runLivePoll(): Promise<PollRow[]> {
   await syncOfficialScheduleIfStale();
   await ensureCreatorCatalog();
   await ensureTeamCatalog();
-  const creators = await prisma.creator.findMany({
-    where: { ingestEnabled: true },
-    include: { channels: true },
-    orderBy: { name: "asc" },
-  });
   const official = await prisma.match.findMany({
     where: {
       source: SCHEDULE_MATCH_SOURCE,
@@ -102,6 +99,12 @@ async function runLivePoll(): Promise<PollRow[]> {
     },
   });
   const officialLive = official.filter((match) => isPrototypeLiveLeague(match.tournament));
+  await discoverLiveCostreamers(officialLive);
+  const creators = await prisma.creator.findMany({
+    where: { ingestEnabled: true },
+    include: { channels: true },
+    orderBy: { name: "asc" },
+  });
 
   type Draft = {
     creator: (typeof creators)[number];
@@ -170,6 +173,13 @@ async function runLivePoll(): Promise<PollRow[]> {
         imageUrl: probe?.imageUrl ?? "",
       },
     });
+    await recordLiveTitle({
+      creatorId: creator.id,
+      platform: channel.platform,
+      title,
+      matchId: liveMatch?.id ?? null,
+      isLive,
+    }).catch(() => undefined);
 
     rows.push({
       creatorId: creator.id,

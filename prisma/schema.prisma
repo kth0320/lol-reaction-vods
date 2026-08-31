@@ -49,16 +49,18 @@ model Match {
 }
 
 model Creator {
-  id                      String           @id
+  id                      String             @id
   name                    String
   kind                    String
-  ingestEnabled           Boolean          @default(false)
+  ingestEnabled           Boolean            @default(false)
+  discovered              Boolean            @default(false)
   defaultSupportingTeamId String?
-  defaultSupportingTeam   Team?            @relation("CreatorDefaultTeam", fields: [defaultSupportingTeamId], references: [id])
+  defaultSupportingTeam   Team?              @relation("CreatorDefaultTeam", fields: [defaultSupportingTeamId], references: [id])
   channels                CreatorChannel[]
   reactions               ReactionVod[]
   liveCasts               LiveCast[]
   liveCandidates          LiveCandidate[]
+  liveTitles              LiveTitleHistory[]
 }
 
 model CreatorChannel {
@@ -129,4 +131,16 @@ model LiveCast {
 
   @@unique([matchId, creatorId, platform])
   @@index([matchId])
+}
+
+model LiveTitleHistory {
+  id        String   @id @default(cuid())
+  creatorId String
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  platform  String
+  title     String
+  matchId   String?
+  seenAt    DateTime @default(now())
+
+  @@index([creatorId, platform, seenAt])
 }
