@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseChzzkVideos, parseSoopVods, parseYouTubeAtom, fetchChzzkReplays, fetchSoopVods, fetchVodsForChannel } from "./vod-list";
+import { parseChzzkVideos, parseSoopVods, parseYouTubeAtom, parseYouTubeBrowse, parseRelativeYoutubeAge, fetchChzzkReplays, fetchSoopVods, fetchVodsForChannel, fetchYouTubeUploads, youtubeUploadsBrowseId } from "./vod-list";
 import { shouldFetchVods } from "./platforms";
 import { vodInMatchWindow } from "./vod-window";
 import { pickMatchForVod } from "./attach-vod";
@@ -30,6 +30,86 @@ describe("vod list parsers", () => {
     assert.equal(rows[0].platform, "youtube");
     assert.equal(rows[0].externalId, "abc123XYZ-_");
     assert.match(rows[0].url, /abc123XYZ-_/);
+  });
+
+  it("reads relative YouTube ages in English and Korean", () => {
+    const now = new Date("2026-08-31T12:00:00Z");
+    const day = parseRelativeYoutubeAge("1 day ago", now);
+    const ko = parseRelativeYoutubeAge("2시간 전", now);
+    assert.equal(day?.toISOString(), "2026-08-30T12:00:00.000Z");
+    assert.equal(ko?.toISOString(), "2026-08-31T10:00:00.000Z");
+    assert.equal(parseRelativeYoutubeAge("343K views", now), null);
+  });
+
+  it("reads YouTube lockup browse cards", () => {
+    const now = new Date("2026-08-31T12:00:00Z");
+    const rows = parseYouTubeBrowse(
+      {
+        contents: {
+          lockupViewModel: {
+            contentId: "abcdefghijk",
+            contentType: "LOCKUP_CONTENT_TYPE_VIDEO",
+            metadata: {
+              lockupMetadataViewModel: {
+                title: { content: "T1 VS GEN LCK SUMMER 2026" },
+                metadata: {
+                  contentMetadataViewModel: {
+                    metadataRows: [{ metadataParts: [{ text: { content: "1 day ago" } }] }],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      now,
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].externalId, "abcdefghijk");
+    assert.equal(rows[0].title, "T1 VS GEN LCK SUMMER 2026");
+    assert.equal(rows[0].publishedAt?.toISOString(), "2026-08-30T12:00:00.000Z");
+  });
+
+  it("merges RSS dates with paged YouTube browse uploads", async () => {
+    assert.equal(youtubeUploadsBrowseId("UCOFiUtKui6-x4T-J7_DgCag"), "VLUUOFiUtKui6-x4T-J7_DgCag");
+    const rows = await fetchYouTubeUploads(
+      "UCOFiUtKui6-x4T-J7_DgCag",
+      async (input) => {
+        const url = String(input);
+        if (url.includes("feeds/videos.xml")) {
+          return new Response(
+            `<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015"><entry><yt:videoId>rssVideo12</yt:videoId><title>RSS T1 VS GEN</title><published>2026-08-30T12:00:00Z</published></entry></feed>`,
+            { status: 200 },
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            contents: {
+              lockupViewModel: {
+                contentId: "browseVid1x",
+                metadata: {
+                  lockupMetadataViewModel: {
+                    title: { content: "OLDER HLE VS KT LCK" },
+                    metadata: {
+                      contentMetadataViewModel: {
+                        metadataRows: [{ metadataParts: [{ text: { content: "3 days ago" } }] }],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }),
+          { status: 200 },
+        );
+      },
+      { maxPages: 1 },
+    );
+    assert.deepEqual(
+      rows.map((row) => row.externalId),
+      ["rssVideo12", "browseVid1x"],
+    );
+    assert.equal(rows[0].publishedAt?.toISOString(), "2026-08-30T12:00:00.000Z");
   });
 
   it("keeps Chzzk REPLAY rows and drops other types", () => {

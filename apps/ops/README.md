@@ -1,6 +1,6 @@
 # apps/ops
 
-수동 보정 화면은 지금 루트 Next 앱의 `/ops`입니다. 인증 없음.
+수동 보정 화면은 지금 루트 Next 앱의 `/ops`입니다. `OPS_PASSWORD`가 있으면 쿠키 로그인, 비어 있으면 로컬처럼 열어 둡니다.
 
 - 자동 매칭 결과 확인
 - 오매칭 연결 해제 (`DELETE /api/ops/reactions/:id`)

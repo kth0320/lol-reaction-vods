@@ -40,19 +40,21 @@ LCK     LPL   LEC
 
 화이트리스트 채널에서 끝난 대회 경기에 리액션 VOD를 붙인다.
 
-- YouTube: 채널 RSS. Twitch로 생중계하는 방송인도 YouTube만
+- YouTube: 채널 RSS + uploads/동영상 탭 페이징(상대 날짜). Twitch로 생중계하는 방송인도 YouTube만
 - 치지직·숲: 방송국 다시보기
 - Twitch 원본 VOD는 가져오지 않음
 - 제목의 대회·두 팀 + 경기 시간창으로 공식 경기에만 붙임. ingest 경기를 만들지 않음. 같은 경기·같은 방송인·같은 플랫폼은 다시보기 하나(대기방·재연결보다 본 방송)
+- 라이브 제목은 바뀔 때마다 저장하고, 다시보기 제목이 비어도 그 창의 라이브 제목·경기 id로 붙인다
+- 치지직 검색·Twitch GQL 검색으로 지금 공식 경기를 중계하는 채널을 화이트리스트 없이 넣는다. JSON 채널은 그대로고, 자동 수집 채널은 sync 때 지우지 않는다. 숲 검색 API는 공개 엔드포인트가 없어 화이트리스트만
 - 일정 API는 LCK·LEC뿐 아니라 **LPL · 롤드컵 · MSI · 퍼스트스탠드 · EWC** 끝난 경기도 저장한다. 홈 상단 라이브 탭은 **LCK · LPL · LEC**
 - 대회 화면 팀 검색은 약자 단어 단위다. `KT`가 T1의 옛 별칭 `SKT`에 부분 일치하지 않는다
 - LCK·LPL·LEC는 **시즌 + 스플릿** 셀렉트(LCK컵/LCK, Split 1–3/선발전, 버서스/스프링/서머). 국제전은 **연도 + 구간**. 필터는 URL(`?year=&stage=&q=`)에 남고, 끝난 경기에서 같은 허브로 돌아온다. 홈 대회 카드는 `경기 N · 리액션 M`
-- 지난 시즌 아카이브: `getTournamentsForLeague` + `getCompletedEvents`로 2026·2025·2024 끝난 경기를 저장한다. 치지직·숲은 방송국 페이지를 더 넘긴다(최대 50). 숲은 한 페이지가 실패해도 다음 페이지를 이어 가져온다. YouTube는 채널 RSS(최근 업로드)만. 홈 라이브 동기화는 최근 `getSchedule` 페이지만
-- 보정: `/ops`에서 자동 매칭을 보고 끊거나 YouTube·치지직·숲 주소를 붙인다. 조회는 TypeScript DTO + `/api/ops/*`. 인증 없음(로컬)
+- 지난 시즌 아카이브: `getTournamentsForLeague` + `getCompletedEvents`로 2026·2025·2024 끝난 경기를 저장한다. 치지직·숲은 방송국 페이지를 더 넘긴다(최대 50). 숲은 한 페이지가 실패해도 다음 페이지를 이어 가져온다. YouTube는 RSS 이후 InnerTube 페이지를 더 넘긴다. 홈 라이브 동기화는 최근 `getSchedule` 페이지만
+- 보정: `/ops`에서 자동 매칭을 보고 끊거나 YouTube·치지직·숲 주소를 붙인다. 조회는 TypeScript DTO + `/api/ops/*`. `OPS_PASSWORD`가 있으면 쿠키 로그인
 - 홈·라이브 경기 vs 카드는 **공식 매치업 플레이트**(리그 마크 + 양 팀 로고). `getLeagues`·`getEventDetails` 이미지를 https로 쓰고, 마크·로고가 없을 때만 공식 중계 음소거. 합성된 T1-vs-KT JPG는 API에 없다
 - 치지직 다시보기·라이브는 공식 시청 페이지(`chzzk.naver.com/video` · `/live`)를 iframe. 퍼가기 주소는 클립만 있다. Twitch 라이브는 `player.twitch.tv` (parent=페이지 호스트). Twitch 원본 VOD는 모으지 않음. 숲 라이브는 원본 링크
 - 홈 대회 카드는 공식 리그 마크를 가운데에 흐리게 깔고, 생중계가 없으면 라이브 카드와 같은 크기의 다음 경기 한 장에 LCK·LPL·LEC 시간과 팀 로고를 보여 준다. 클릭하지 않는다
 
 ## 이후
 
-없음. 방송인 자동 수집, `/ops` 로그인은 필요할 때.
+없음.

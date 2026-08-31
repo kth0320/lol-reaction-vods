@@ -1,7 +1,13 @@
-import { inferLiveMatchFromTitle, mentionedLeagues, type InferTeam } from "@/lib/ingest/infer-match";
+import { kstYear } from "@/lib/format";
+import { aliasIndexInTitle, inferLiveMatchFromTitle, mentionedLeagues, type InferTeam } from "@/lib/ingest/infer-match";
 import { pickPrototypeLiveMatch, type TitleMatchInput } from "@/lib/ingest/match-title";
 import { attachInferredToOfficial, sameTeamPair } from "@/lib/ingest/schedule-map";
 import { vodInMatchWindow } from "@/lib/ingest/vod-window";
+
+const INTERNATIONAL_TOURNAMENTS = new Set(["Worlds", "MSI", "EWC", "First Stand"]);
+const DAY_SLATE_CUE =
+  /중계|입중계|스위스|swiss|플레이-?\s*인|플레이인|play-?\s*ins?|녹아웃|knockout|결승|4강|8강|준결승|\bday\s*\d|일차|스테이지|응원/i;
+const DAY_SLATE_SKIP = /시차|휴방|팬페스타|road\s*to|로드\s*투|이기면\s*msi|준우승|클래식|cctv|이벤트\s*매치/i;
 
 export type VodAttachMatch = {
   id: string;
@@ -9,6 +15,7 @@ export type VodAttachMatch = {
   status: string;
   startsAt: Date;
   bestOf: number;
+  split?: string;
   blueTeamId: string;
   redTeamId: string;
   blueAliases: string[];
@@ -110,8 +117,100 @@ export function pickMatchesForVod(
   const hits = scoped.length > 0 ? scoped : vsHits;
   if (hits.length > 0) return hits;
 
+  const slate = pickDaySlateMatches(title, publishedAt, pool, matches);
+  if (slate.length > 0) return slate;
+
   const inferred = pickInferredMatch(title, publishedAt, pool);
   return inferred ? [inferred] : [];
+}
+
+function teamIdsInTitle(title: string, pool: VodAttachMatch[]): string[] {
+  const ids = new Set<string>();
+  for (const match of pool) {
+    if (match.blueAliases.some((alias) => aliasIndexInTitle(title, alias) >= 0)) ids.add(match.blueTeamId);
+    if (match.redAliases.some((alias) => aliasIndexInTitle(title, alias) >= 0)) ids.add(match.redTeamId);
+  }
+  return [...ids];
+}
+
+function splitMatchesStage(title: string, split: string | undefined): boolean {
+  if (!split) return true;
+  if (/스위스|\bswiss\b/i.test(title)) return /swiss/i.test(split);
+  if (/플레이-?\s*인|플레이인|play-?\s*ins?/i.test(title)) return /play/i.test(split);
+  if (/8강|quarter/i.test(title)) return /quarter/i.test(split);
+  if (/4강|준결승|semi/i.test(title)) return /semi/i.test(split);
+  if (/(?<!준)결승|\bfinals?\b/i.test(title)) return /final/i.test(split) && !/semi|quarter/i.test(split);
+  if (/녹아웃|knockout/i.test(title)) return /knock|quarter|semi|final/i.test(split);
+  return true;
+}
+
+export function slateDayIndex(title: string): number | "last" | null {
+  if (/마지막날|막날/.test(title)) return "last";
+  const numbered = title.match(/(\d+)\s*일차/i) ?? title.match(/\bday\s*(\d+)/i);
+  if (!numbered) return null;
+  const index = Number(numbered[1]);
+  return Number.isFinite(index) && index >= 1 ? index : null;
+}
+
+const SLATE_DAY_GAP_MS = 8 * 60 * 60 * 1000;
+
+/** One event day = matches chained with less than 8h between starts (EU Worlds overnight is longer). */
+export function groupMatchesByEventDay(matches: VodAttachMatch[]): VodAttachMatch[][] {
+  const sorted = [...matches].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  const days: VodAttachMatch[][] = [];
+  for (const match of sorted) {
+    const last = days[days.length - 1];
+    const prev = last?.[last.length - 1];
+    if (!last || !prev || match.startsAt.getTime() - prev.startsAt.getTime() > SLATE_DAY_GAP_MS) {
+      days.push([match]);
+    } else {
+      last.push(match);
+    }
+  }
+  return days;
+}
+
+function matchesOnSlateDay(
+  title: string,
+  publishedAt: Date,
+  candidates: VodAttachMatch[],
+): VodAttachMatch[] {
+  const days = groupMatchesByEventDay(candidates);
+  if (days.length === 0) return [];
+
+  const index = slateDayIndex(title);
+  if (index === "last") return days[days.length - 1] ?? [];
+  if (typeof index === "number") return days[index - 1] ?? [];
+
+  return days.reduce((best, group) => {
+    const start = group[0]?.startsAt.getTime() ?? 0;
+    const bestStart = best[0]?.startsAt.getTime() ?? 0;
+    return Math.abs(start - publishedAt.getTime()) < Math.abs(bestStart - publishedAt.getTime()) ? group : best;
+  });
+}
+
+/** Whole-day Worlds/MSI/FST streams often omit vs pairs ("스위스 Day 9", "월즈 입중계 T1 응원방"). */
+export function pickDaySlateMatches(
+  title: string,
+  publishedAt: Date | null,
+  _windowed: VodAttachMatch[],
+  all: VodAttachMatch[] = _windowed,
+): VodAttachMatch[] {
+  if (!publishedAt || DAY_SLATE_SKIP.test(title) || !DAY_SLATE_CUE.test(title)) return [];
+  const intl = mentionedLeagues(title).filter((tournament) => INTERNATIONAL_TOURNAMENTS.has(tournament));
+  if (intl.length === 0) return [];
+
+  const stagePool = all.filter(
+    (match) =>
+      intl.includes(match.tournament) &&
+      splitMatchesStage(title, match.split) &&
+      kstYear(match.startsAt) === kstYear(publishedAt),
+  );
+  const teams = teamIdsInTitle(title, all);
+  return matchesOnSlateDay(title, publishedAt, stagePool).filter((match) => {
+    if (teams.length === 0) return true;
+    return teams.includes(match.blueTeamId) || teams.includes(match.redTeamId);
+  });
 }
 
 export function pickMatchForVod(
