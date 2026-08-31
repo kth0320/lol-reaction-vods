@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { PrototypeLiveLeague } from "@/lib/leagues";
 
 export type UpcomingSlot = {
@@ -27,11 +26,11 @@ export function UpcomingBoard({ slots }: { slots: UpcomingSlot[] }) {
       <div className="live-hub-head">
         <h2 className="section-title">다음 경기</h2>
       </div>
-      <div className="upcoming-board">
-        {slots.map((slot) => {
-          const inner = (
-            <>
-              {slot.leagueImageUrl ? <img className="upcoming-mark" src={slot.leagueImageUrl} alt="" /> : null}
+      <div className="upcoming-card">
+        <p className="upcoming-kicker">지금은 생중계 중인 LCK · LPL · LEC 경기가 없습니다.</p>
+        <div className="upcoming-rows">
+          {slots.map((slot) => (
+            <div key={slot.league} className="upcoming-row">
               <p className="upcoming-league">{slot.league}</p>
               {slot.matchId ? (
                 <>
@@ -45,21 +44,9 @@ export function UpcomingBoard({ slots }: { slots: UpcomingSlot[] }) {
               ) : (
                 <p className="upcoming-empty">다음 일정이 없습니다.</p>
               )}
-            </>
-          );
-          if (!slot.matchId) {
-            return (
-              <div key={slot.league} className="upcoming-card">
-                {inner}
-              </div>
-            );
-          }
-          return (
-            <Link key={slot.league} href={`/matches/${slot.matchId}`} className="upcoming-card">
-              {inner}
-            </Link>
-          );
-        })}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
