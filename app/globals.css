@@ -472,12 +472,14 @@ a {
 }
 
 .vod-hub-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 18px;
   min-height: 108px;
   padding: 18px 18px 16px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--bg-elevated);
@@ -488,7 +490,24 @@ a {
   border-color: var(--gold);
 }
 
+.vod-hub-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  width: min(70%, 128px);
+  height: min(70%, 128px);
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  opacity: 0.16;
+  filter: blur(0.4px);
+  pointer-events: none;
+  user-select: none;
+}
+
 .vod-hub-label {
+  position: relative;
+  z-index: 1;
   margin: 0;
   font-size: 20px;
   font-weight: 800;
@@ -497,9 +516,129 @@ a {
 }
 
 .vod-hub-count {
+  position: relative;
+  z-index: 1;
   margin: 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+.upcoming-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  min-height: 420px;
+  height: 420px;
+  padding: 28px 28px 24px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.05), transparent 42%),
+    #0c0f16;
+  color: inherit;
+}
+
+.upcoming-kicker {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.upcoming-rows {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.upcoming-row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) minmax(10rem, auto);
+  align-items: center;
+  gap: 16px 20px;
+}
+
+.upcoming-league {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.upcoming-matchup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.upcoming-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.upcoming-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.upcoming-logo.empty {
+  display: block;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.upcoming-abbr {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.upcoming-vs {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.upcoming-time {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: right;
+}
+
+.upcoming-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  grid-column: 2 / -1;
+}
+
+@media (max-width: 720px) {
+  .upcoming-card {
+    min-height: 0;
+    height: auto;
+    padding: 20px 18px;
+  }
+
+  .upcoming-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .upcoming-time {
+    text-align: left;
+  }
 }
 
 @media (max-width: 800px) {

@@ -53,6 +53,17 @@ export function vodHubSearchExample(id: VodHubId): string {
   return "T1";
 }
 
+/** Official getLeagues mark for a hub card watermark. */
+export function hubTournamentForArt(id: VodHubId): string {
+  if (id === "worlds") return "Worlds";
+  if (id === "msi") return "MSI";
+  if (id === "first-stand") return "First Stand";
+  if (id === "ewc") return "EWC";
+  if (id === "lck") return "LCK";
+  if (id === "lpl") return "LPL";
+  return "LEC";
+}
+
 export function matchTournamentToHub(tournament: string): VodHubId | null {
   const key = tournament.trim().toUpperCase().replace(/[\s-]+/g, "");
   if (key === "롤드컵" || key === "WORLDS") return "worlds";
