@@ -44,14 +44,36 @@ a {
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px 24px;
-  align-items: flex-end;
+  align-items: center;
   margin-bottom: 36px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--line);
 }
 
+.brand-home {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  min-width: 0;
+}
+
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .brand-kicker {
-  margin: 0 0 6px;
+  margin: 0;
   color: var(--gold);
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -63,6 +85,7 @@ a {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .brand-note {
