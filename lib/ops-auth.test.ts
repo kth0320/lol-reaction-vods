@@ -12,26 +12,26 @@ describe("ops auth", () => {
     assert.equal(safeOpsNext("https://evil.example/ops"), "/ops");
   });
 
-  it("skips auth when the password is empty", () => {
+  it("skips auth when the password is empty", async () => {
     const prev = process.env.OPS_PASSWORD;
     delete process.env.OPS_PASSWORD;
     try {
       assert.equal(opsAuthEnabled(), false);
-      assert.equal(opsSessionValid(undefined), true);
+      assert.equal(await opsSessionValid(undefined), true);
     } finally {
       if (prev == null) delete process.env.OPS_PASSWORD;
       else process.env.OPS_PASSWORD = prev;
     }
   });
 
-  it("round-trips a signed session when a password is set", () => {
+  it("round-trips a signed session when a password is set", async () => {
     const prev = process.env.OPS_PASSWORD;
     process.env.OPS_PASSWORD = "test-ops";
     try {
-      const token = signOpsSession(1_000);
-      assert.equal(opsSessionValid(token, 1_000), true);
-      assert.equal(opsSessionValid(token, 1_000 + 8 * 24 * 60 * 60 * 1000), false);
-      assert.equal(opsSessionValid("nope", 1_000), false);
+      const token = await signOpsSession(1_000);
+      assert.equal(await opsSessionValid(token, 1_000), true);
+      assert.equal(await opsSessionValid(token, 1_000 + 8 * 24 * 60 * 60 * 1000), false);
+      assert.equal(await opsSessionValid("nope", 1_000), false);
       assert.equal(passwordMatches("test-ops"), true);
       assert.equal(passwordMatches("other"), false);
     } finally {

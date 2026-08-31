@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   const response = NextResponse.json({ ok: true });
   response.cookies.set({
     name: OPS_SESSION_COOKIE,
-    value: signOpsSession(),
+    value: await signOpsSession(),
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
