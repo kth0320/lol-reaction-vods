@@ -59,6 +59,16 @@ export const API_CODE_TO_TEAM_ID: Record<string, string> = {
   MKOI: "koi",
 };
 
+/** Short names streamers put in titles (TLAW → TL, paiN → PNG). */
+export const API_TEAM_EXTRA_ALIASES: Record<string, string[]> = {
+  TLAW: ["TL", "Team Liquid", "리퀴드"],
+  PAIN: ["PNG", "paiN"],
+};
+
+export function extraAliasesForAbbr(abbr: string): string[] {
+  return API_TEAM_EXTRA_ALIASES[abbr.trim().toUpperCase()] ?? [];
+}
+
 export function scheduleMatchId(externalEventId: string): string {
   return `schedule-${externalEventId}`;
 }

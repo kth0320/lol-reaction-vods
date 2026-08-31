@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { extraAliasesForAbbr } from "@/lib/ingest/schedule-map";
 import { prisma } from "@/lib/prisma";
 import type { InferTeam } from "@/lib/ingest/infer-match";
 
@@ -42,6 +43,8 @@ export async function ensureTeamCatalog(root = process.cwd()): Promise<InferTeam
     }
   }
 
+  await applyExtraScheduleAliases();
+
   const stored = await prisma.team.findMany({ include: { aliases: true } });
   return stored.map((team) => ({
     id: team.id,
@@ -71,8 +74,21 @@ export async function ensureScheduleTeams(
         data: { id: team.id, abbr, name, league: team.league },
       });
     }
-    const aliases = [...new Set([abbr, name].filter((alias) => alias.length >= 2))];
+    const aliases = [...new Set([abbr, name, ...extraAliasesForAbbr(abbr)].filter((alias) => alias.length >= 2))];
     for (const alias of aliases) {
+      await prisma.teamAlias.upsert({
+        where: { teamId_alias: { teamId: team.id, alias } },
+        create: { teamId: team.id, alias },
+        update: {},
+      });
+    }
+  }
+}
+
+async function applyExtraScheduleAliases(): Promise<void> {
+  const teams = await prisma.team.findMany({ select: { id: true, abbr: true } });
+  for (const team of teams) {
+    for (const alias of extraAliasesForAbbr(team.abbr)) {
       await prisma.teamAlias.upsert({
         where: { teamId_alias: { teamId: team.id, alias } },
         create: { teamId: team.id, alias },

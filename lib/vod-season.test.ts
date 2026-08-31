@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { kstYear } from "./format";
+import { kstDateKey, kstYear } from "./format";
 import { hubUsesEventYears, hubUsesLeagueSeasons } from "./vod-hub";
 import { filterMatchesBySeason, hubYearFilter, pastYearEmptyMessage, vodArchiveYears, vodYearOptionLabel } from "./vod-season";
 
@@ -14,6 +14,8 @@ describe("VOD year filters", () => {
   it("uses Seoul calendar year so a New Year KST match is not the UTC year", () => {
     assert.equal(kstYear(new Date("2025-12-31T16:00:00Z")), 2026);
     assert.equal(kstYear(new Date("2026-08-08T08:00:00Z")), 2026);
+    assert.equal(kstDateKey(new Date("2025-10-15T05:00:00Z")), "2025-10-15");
+    assert.equal(kstDateKey(new Date("2025-10-14T16:00:00Z")), "2025-10-15");
   });
 
   it("uses 시즌 on LCK LPL LEC and 연도 on Worlds MSI First Stand EWC", () => {

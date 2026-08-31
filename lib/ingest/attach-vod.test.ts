@@ -99,4 +99,124 @@ describe("pickMatchesForVod", () => {
       "fst-g2-blg",
     );
   });
+
+  it("attaches TL vs TES First Stand when Liquid is stored as TLAW", () => {
+    const tlTes = match({
+      id: "fst-tl-tes",
+      tournament: "First Stand",
+      blueTeamId: "api-tlaw",
+      redTeamId: "tes",
+      blueAliases: ["TLAW", "TL", "Team Liquid"],
+      redAliases: ["TES"],
+      startsAt: new Date("2025-03-11T11:00:00Z"),
+    });
+    assert.equal(vsPairInTitle("울챔스 / CFO vs KC - TL vs TES #FST2025", ["TLAW", "TL"], ["TES"]), true);
+    assert.equal(
+      pickMatchForVod("울챔스 / TL vs TES #FST2025", new Date("2025-03-11T14:00:00Z"), [tlTes])?.id,
+      "fst-tl-tes",
+    );
+  });
+
+  it("attaches a Worlds Swiss day stream to every Swiss match that KST day", () => {
+    const day1 = [
+      match({
+        id: "w-vks-tsw",
+        tournament: "Worlds",
+        split: "Swiss",
+        blueTeamId: "vks",
+        redTeamId: "tsw",
+        blueAliases: ["VKS"],
+        redAliases: ["TSW"],
+        startsAt: new Date("2025-10-15T05:00:00Z"),
+      }),
+      match({
+        id: "w-t1-fly",
+        tournament: "Worlds",
+        split: "Swiss",
+        blueTeamId: "t1",
+        redTeamId: "fly",
+        blueAliases: ["T1"],
+        redAliases: ["FLY"],
+        startsAt: new Date("2025-10-15T09:00:00Z"),
+      }),
+      match({
+        id: "w-qf",
+        tournament: "Worlds",
+        split: "Quarterfinals",
+        blueTeamId: "t1",
+        redTeamId: "al",
+        blueAliases: ["T1"],
+        redAliases: ["AL"],
+        startsAt: new Date("2025-10-31T08:00:00Z"),
+      }),
+    ];
+    const hits = pickMatchesForVod(
+      "울챔스 / 스위스 스테이지 Day 1 | 2025 월드 챔피언십 #WORLDS2025",
+      new Date("2025-10-15T12:00:00Z"),
+      day1,
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id).sort(),
+      ["w-t1-fly", "w-vks-tsw"],
+    );
+  });
+
+  it("attaches a 월즈 cheer-room title to that team's matches that day", () => {
+    const t1Gen = match({
+      id: "w-t1-gen",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "t1",
+      redTeamId: "gen",
+      blueAliases: ["T1"],
+      redAliases: ["GEN", "젠지"],
+      startsAt: new Date("2025-10-18T09:00:00Z"),
+    });
+    const g2Blg = match({
+      id: "w-g2-blg",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "g2",
+      redTeamId: "blg",
+      blueAliases: ["G2"],
+      redAliases: ["BLG"],
+      startsAt: new Date("2025-10-18T10:00:00Z"),
+    });
+    const hits = pickMatchesForVod(
+      "월즈 입중계 T1 응원방 끝까지 다 봅니댜",
+      new Date("2025-10-18T12:00:00Z"),
+      [t1Gen, g2Blg],
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id),
+      ["w-t1-gen"],
+    );
+  });
+
+  it("does not attach timezone-prep or Road to MSI titles to international matches", () => {
+    const msi = match({
+      id: "msi-t1-gen",
+      tournament: "MSI",
+      split: "Play-Ins",
+      blueTeamId: "t1",
+      redTeamId: "gen",
+      blueAliases: ["T1"],
+      redAliases: ["GEN"],
+      startsAt: new Date("2025-06-26T08:00:00Z"),
+    });
+    assert.equal(pickMatchForVod("MSI 시차 맞추기", new Date("2025-06-26T10:00:00Z"), [msi]), null);
+    const lck = match({
+      id: "lck-t1-gen",
+      tournament: "LCK",
+      blueTeamId: "t1",
+      redTeamId: "gen",
+      blueAliases: ["T1"],
+      redAliases: ["GEN"],
+      startsAt: new Date("2026-06-14T08:00:00Z"),
+    });
+    assert.equal(
+      pickMatchForVod("김민교 LCK T1 vs GEN Road to MSI #LckWatchParty", new Date("2026-06-14T10:00:00Z"), [lck, msi])?.id,
+      "lck-t1-gen",
+    );
+  });
 });

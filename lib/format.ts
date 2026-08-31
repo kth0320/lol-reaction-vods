@@ -13,6 +13,20 @@ export function kstYear(date: Date): number {
   return Number(parts.find((part) => part.type === "year")?.value);
 }
 
+/** YYYY-MM-DD in Seoul. Day-of-event VOD titles attach by this, not UTC. */
+export function kstDateKey(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  return `${year}-${month}-${day}`;
+}
+
 /** MMDD in Seoul, e.g. March 1 → 301. */
 export function kstMonthDay(date: Date): number {
   const parts = new Intl.DateTimeFormat("en-US", {
