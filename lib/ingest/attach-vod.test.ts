@@ -161,6 +161,48 @@ describe("pickMatchesForVod", () => {
     );
   });
 
+  it("attaches a 2024 EU Worlds Swiss day stream even when the VOD posts next KST morning", () => {
+    const day1 = match({
+      id: "w24-t1-tes",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "t1",
+      redTeamId: "tes",
+      blueAliases: ["T1"],
+      redAliases: ["TES"],
+      startsAt: new Date("2024-10-03T12:00:00Z"),
+    });
+    const day1b = match({
+      id: "w24-wbg-gen",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "wbg",
+      redTeamId: "gen",
+      blueAliases: ["WBG"],
+      redAliases: ["GEN"],
+      startsAt: new Date("2024-10-03T14:00:00Z"),
+    });
+    const day2 = match({
+      id: "w24-lng-blg",
+      tournament: "Worlds",
+      split: "Swiss",
+      blueTeamId: "lng",
+      redTeamId: "blg",
+      blueAliases: ["LNG"],
+      redAliases: ["BLG"],
+      startsAt: new Date("2024-10-04T12:00:00Z"),
+    });
+    const hits = pickMatchesForVod(
+      "울챔스 / 스위스 스테이지 1일차 #worlds2024",
+      new Date("2024-10-03T16:00:00Z"),
+      [day1, day1b, day2],
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id).sort(),
+      ["w24-t1-tes", "w24-wbg-gen"],
+    );
+  });
+
   it("attaches a 월즈 cheer-room title to that team's matches that day", () => {
     const t1Gen = match({
       id: "w-t1-gen",

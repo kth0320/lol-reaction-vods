@@ -117,7 +117,7 @@ export function pickMatchesForVod(
   const hits = scoped.length > 0 ? scoped : vsHits;
   if (hits.length > 0) return hits;
 
-  const slate = pickDaySlateMatches(title, publishedAt, pool);
+  const slate = pickDaySlateMatches(title, publishedAt, pool, matches);
   if (slate.length > 0) return slate;
 
   const inferred = pickInferredMatch(title, publishedAt, pool);
@@ -144,22 +144,61 @@ function splitMatchesStage(title: string, split: string | undefined): boolean {
   return true;
 }
 
+export function slateDayIndex(title: string): number | "last" | null {
+  if (/마지막날|막날/.test(title)) return "last";
+  const numbered = title.match(/(\d+)\s*일차/i) ?? title.match(/\bday\s*(\d+)/i);
+  if (!numbered) return null;
+  const index = Number(numbered[1]);
+  return Number.isFinite(index) && index >= 1 ? index : null;
+}
+
+function matchesOnSlateDay(
+  title: string,
+  publishedAt: Date,
+  candidates: VodAttachMatch[],
+): VodAttachMatch[] {
+  const groups = new Map<string, VodAttachMatch[]>();
+  for (const match of candidates) {
+    const key = kstDateKey(match.startsAt);
+    const list = groups.get(key);
+    if (list) list.push(match);
+    else groups.set(key, [match]);
+  }
+  const days = [...groups.keys()].sort();
+  if (days.length === 0) return [];
+
+  const index = slateDayIndex(title);
+  let day: string | undefined;
+  if (index === "last") day = days[days.length - 1];
+  else if (typeof index === "number") day = days[index - 1];
+  else {
+    day = days.reduce((best, key) => {
+      const start = groups.get(key)?.[0]?.startsAt.getTime() ?? 0;
+      const bestStart = groups.get(best)?.[0]?.startsAt.getTime() ?? 0;
+      return Math.abs(start - publishedAt.getTime()) < Math.abs(bestStart - publishedAt.getTime()) ? key : best;
+    });
+  }
+  return day ? (groups.get(day) ?? []) : [];
+}
+
 /** Whole-day Worlds/MSI/FST streams often omit vs pairs ("스위스 Day 9", "월즈 입중계 T1 응원방"). */
 export function pickDaySlateMatches(
   title: string,
   publishedAt: Date | null,
-  matches: VodAttachMatch[],
+  windowed: VodAttachMatch[],
+  all: VodAttachMatch[] = windowed,
 ): VodAttachMatch[] {
   if (!publishedAt || DAY_SLATE_SKIP.test(title) || !DAY_SLATE_CUE.test(title)) return [];
   const intl = mentionedLeagues(title).filter((tournament) => INTERNATIONAL_TOURNAMENTS.has(tournament));
   if (intl.length === 0) return [];
 
-  const day = kstDateKey(publishedAt);
-  const teams = teamIdsInTitle(title, matches);
-  return matches.filter((match) => {
-    if (!intl.includes(match.tournament)) return false;
-    if (kstDateKey(match.startsAt) !== day) return false;
-    if (!splitMatchesStage(title, match.split)) return false;
+  const stagePool = all.filter(
+    (match) => intl.includes(match.tournament) && splitMatchesStage(title, match.split),
+  );
+  const teams = teamIdsInTitle(title, all);
+  const windowIds = new Set(windowed.map((match) => match.id));
+  return matchesOnSlateDay(title, publishedAt, stagePool).filter((match) => {
+    if (!windowIds.has(match.id)) return false;
     if (teams.length === 0) return true;
     return teams.includes(match.blueTeamId) || teams.includes(match.redTeamId);
   });
