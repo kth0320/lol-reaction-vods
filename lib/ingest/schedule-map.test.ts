@@ -11,6 +11,7 @@ import {
 import {
   API_CODE_TO_TEAM_ID,
   attachInferredToOfficial,
+  extraAliasesForAbbr,
   fallbackApiTeamId,
   mapScheduleEvents,
   prototypeLeagueSlugs,
@@ -247,6 +248,9 @@ describe("schedule mapping", () => {
     assert.equal(tournamentFromSlug("first_stand"), "First Stand");
     assert.equal(tournamentFromSlug("ewc_lol"), "EWC");
     assert.equal(fallbackApiTeamId("TES"), "api-tes");
+    assert.deepEqual(extraAliasesForAbbr("TLAW"), ["TL", "Team Liquid", "리퀴드"]);
+    assert.deepEqual(extraAliasesForAbbr("PAIN"), ["PNG", "paiN"]);
+    assert.deepEqual(extraAliasesForAbbr("T1"), []);
     assert.equal(resolveScheduleTeamId(teams, "TES", "Top Esports"), "api-tes");
     assert.deepEqual(prototypeLeagueSlugs(), ["lck", "lpl", "lec"]);
     assert.ok(vodHubScheduleSlugs().includes("lpl"));

@@ -91,4 +91,13 @@ describe("inferLiveMatchFromTitle", () => {
     assert.equal(fst?.league, "First Stand");
     assert.equal(fst?.key, "ingest-firststand-blg-g2");
   });
+
+  it("reads Korean Worlds tokens", () => {
+    const worldsTeams: InferTeam[] = [
+      { id: "t1", league: "LCK", aliases: ["T1"] },
+      { id: "g2", league: "LEC", aliases: ["G2"] },
+    ];
+    assert.equal(inferLiveMatchFromTitle("T1 vs G2 월즈 입중계", worldsTeams)?.league, "Worlds");
+    assert.equal(inferLiveMatchFromTitle("T1 vs G2 2025 월드 챔피언십", worldsTeams)?.league, "Worlds");
+  });
 });

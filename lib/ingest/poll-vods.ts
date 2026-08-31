@@ -81,6 +81,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
     status: match.status,
     startsAt: match.startsAt,
     bestOf: match.bestOf,
+    split: match.split,
     blueTeamId: match.blueTeamId,
     redTeamId: match.redTeamId,
     blueAliases: aliases(match.blueTeam),
