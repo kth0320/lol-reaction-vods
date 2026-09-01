@@ -88,8 +88,17 @@ describe("liveTitleMatchIdsForVod", () => {
     const ids = liveTitleMatchIdsForVod({
       publishedAt: new Date("2026-09-01T07:00:00Z"),
       rows: [{ seenAt: new Date("2026-09-01T07:15:00Z"), matchId: "lck-gen-kt" }],
-      matches: [{ id: "lck-gen-kt", startsAt: new Date("2026-09-01T08:00:00Z"), bestOf: 5 }],
+      matches: [{ id: "lck-gen-kt", startsAt: new Date("2026-09-01T08:00:00Z"), bestOf: 5, status: "ended" }],
     });
     assert.deepEqual(ids, ["lck-gen-kt"]);
+  });
+
+  it("does not attach via live title while the official match is still live", () => {
+    const ids = liveTitleMatchIdsForVod({
+      publishedAt: new Date("2026-09-01T07:00:00Z"),
+      rows: [{ seenAt: new Date("2026-09-01T07:15:00Z"), matchId: "lck-gen-kt" }],
+      matches: [{ id: "lck-gen-kt", startsAt: new Date("2026-09-01T08:00:00Z"), bestOf: 5, status: "live" }],
+    });
+    assert.deepEqual(ids, []);
   });
 });

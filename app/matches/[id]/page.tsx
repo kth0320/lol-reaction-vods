@@ -159,7 +159,7 @@ export default async function MatchPage({
           casts={liveCastViews}
         />
       ) : null}
-      {reactions.length > 0 || !live ? (
+      {!live ? (
         <section className="vod-section">
           <h2 className="section-title">다시보기</h2>
           <p className="page-lead">

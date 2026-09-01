@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { vodInMatchWindow } from "@/lib/ingest/vod-window";
+import { matchAcceptsReactionVods, vodInMatchWindow } from "@/lib/ingest/vod-window";
 
 /** VOD uploaded after the live (YouTube). Live titles from this far before publish still count. */
 export const TITLE_BEFORE_VOD_MS = 18 * 60 * 60 * 1000;
@@ -10,6 +10,7 @@ export type LiveTitleMatchWindow = {
   id: string;
   startsAt: Date;
   bestOf: number;
+  status?: string;
 };
 
 export async function recordLiveTitle(options: {
@@ -75,6 +76,7 @@ export function liveTitleMatchIdsForVod(options: {
     if (byId) {
       const match = byId.get(row.matchId);
       if (!match) continue;
+      if (!matchAcceptsReactionVods(match.status ?? "ended")) continue;
       if (!vodInMatchWindow(options.publishedAt, match.startsAt, match.bestOf)) continue;
     }
     ids.push(row.matchId);

@@ -3,7 +3,7 @@ import { extraTitlesForVod, liveTitleMatchIdsForVod } from "@/lib/ingest/live-ti
 import { aliasIndexInTitle, inferLiveMatchFromTitle, mentionedLeagues, type InferTeam } from "@/lib/ingest/infer-match";
 import { pickPrototypeLiveMatch, type TitleMatchInput } from "@/lib/ingest/match-title";
 import { attachInferredToOfficial, sameTeamPair } from "@/lib/ingest/schedule-map";
-import { vodInMatchWindow } from "@/lib/ingest/vod-window";
+import { matchAcceptsReactionVods, vodInMatchWindow } from "@/lib/ingest/vod-window";
 
 const INTERNATIONAL_TOURNAMENTS = new Set(["Worlds", "MSI", "EWC", "First Stand"]);
 const DAY_SLATE_CUE =
@@ -109,7 +109,9 @@ export function pickMatchesForVod(
   publishedAt: Date | null,
   matches: VodAttachMatch[],
 ): VodAttachMatch[] {
-  const pool = matches.filter((match) => inWindow(match, publishedAt));
+  const pool = matches.filter(
+    (match) => matchAcceptsReactionVods(match.status) && inWindow(match, publishedAt),
+  );
   if (pool.length === 0) return [];
 
   const mentioned = mentionedLeagues(title);
@@ -203,6 +205,7 @@ export function pickDaySlateMatches(
 
   const stagePool = all.filter(
     (match) =>
+      matchAcceptsReactionVods(match.status) &&
       intl.includes(match.tournament) &&
       splitMatchesStage(title, match.split) &&
       kstYear(match.startsAt) === kstYear(publishedAt),
