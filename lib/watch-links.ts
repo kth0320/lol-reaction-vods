@@ -13,6 +13,7 @@ export type ReactionForWatch = {
 
 export type WatchLink = {
   href: string;
+  platform: string;
   label: string;
 };
 
@@ -71,7 +72,7 @@ function cardFor(group: ReactionForWatch[]): CreatorWatchCard {
     badge: platforms.join(" · "),
     links: rows.map((row) => {
       const label = platformName(row.platform);
-      return { href: row.url, label: `${label}에서 보기` };
+      return { href: row.url, platform: row.platform, label: `${label}에서 보기` };
     }),
   };
 }

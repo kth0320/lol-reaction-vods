@@ -53,7 +53,7 @@ describe("groupReactionsForWatch", () => {
     ]);
     assert.equal(cards.length, 1);
     assert.deepEqual(cards[0].links, [
-      { href: "https://chzzk.naver.com/video/14594686", label: "치지직에서 보기" },
+      { href: "https://chzzk.naver.com/video/14594686", platform: "chzzk", label: "치지직에서 보기" },
     ]);
   });
 
@@ -82,8 +82,8 @@ describe("groupReactionsForWatch", () => {
     ]);
     assert.equal(cards.length, 1);
     assert.deepEqual(cards[0].links, [
-      { href: "https://chzzk.naver.com/video/14594686", label: "치지직에서 보기" },
-      { href: "https://www.youtube.com/watch?v=RxF_OZTbneM", label: "YouTube에서 보기" },
+      { href: "https://chzzk.naver.com/video/14594686", platform: "chzzk", label: "치지직에서 보기" },
+      { href: "https://www.youtube.com/watch?v=RxF_OZTbneM", platform: "youtube", label: "YouTube에서 보기" },
     ]);
     assert.equal(cards[0].badge, "치지직 · YouTube");
   });
@@ -102,6 +102,8 @@ describe("groupReactionsForWatch", () => {
       },
     ]);
     assert.equal(cards.length, 1);
-    assert.deepEqual(cards[0].links, [{ href: "https://vod.sooplive.com/player/203559103", label: "숲에서 보기" }]);
+    assert.deepEqual(cards[0].links, [
+      { href: "https://vod.sooplive.com/player/203559103", platform: "soop", label: "숲에서 보기" },
+    ]);
   });
 });

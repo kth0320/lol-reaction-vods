@@ -8,7 +8,6 @@ import { lookForEvent } from "@/lib/ingest/official-stream";
 import { fetchLeagueArt, resolveMatchArt } from "@/lib/league-art";
 import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
 import { isLeague } from "@/lib/leagues";
-import { creatorKindLabel } from "@/lib/playback";
 import { groupReactionsForWatch } from "@/lib/watch-links";
 import { prisma } from "@/lib/prisma";
 import { collapseReactionsBySlot } from "@/lib/ingest/reaction-slot";
@@ -165,19 +164,12 @@ export default async function MatchPage({
           </div>
         </>
       )}
-      {live ? (
-        <LiveCasterBoard
-          blue={{ id: match.blueTeam.id, abbr: match.blueTeam.abbr }}
-          red={{ id: match.redTeam.id, abbr: match.redTeam.abbr }}
-          casts={liveCastViews}
-        />
-      ) : null}
+      {live ? <LiveCasterBoard casts={liveCastViews} /> : null}
       {!live ? (
         <section className="vod-section">
           <h2 className="section-title">다시보기</h2>
           <p className="page-lead">
-            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {reactions.length}개. 영상은 유튜브·숲·치지직에서
-            봅니다.
+            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {watchCards.length}명. 로고를 누르면 원본으로 이동합니다.
           </p>
           {watchCards.length === 0 ? (
             <p className="empty">아직 연결된 리액션이 없습니다.</p>
@@ -186,14 +178,10 @@ export default async function MatchPage({
               {watchCards.map((card) => (
                 <article key={card.key} className="reaction-card">
                   <div className="reaction-head">
-                    <div>
-                      <h2 className="creator-name">{card.creatorName}</h2>
-                      <p className="creator-kind">{creatorKindLabel(card.creatorKind)}</p>
-                    </div>
-                    <span className="platform-badge">{card.badge}</span>
+                    <h2 className="creator-name">{card.creatorName}</h2>
+                    <WatchOutbound links={card.links} />
                   </div>
                   <p className="reaction-title">{card.title}</p>
-                  <WatchOutbound links={card.links} />
                 </article>
               ))}
             </div>
