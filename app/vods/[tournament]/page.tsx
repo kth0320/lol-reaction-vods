@@ -1,6 +1,5 @@
 import { VodMatchList, type VodMatchRow } from "@/components/vod-match-list";
 import { formatKst, kstYear } from "@/lib/format";
-import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import { parseVodFilter } from "@/lib/vod-filter";
 import { prisma } from "@/lib/prisma";
@@ -30,7 +29,6 @@ export default async function VodHubPage({
 
   after(() => {
     void syncOfficialScheduleIfStale();
-    void refreshVodsInBackground();
   });
 
   const matches = await prisma.match.findMany({

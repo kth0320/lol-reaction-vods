@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { readCreatorChannels, readCreatorWhitelist } from "../lib/creators";
-import { SCHEDULE_MATCH_SOURCE } from "../lib/ingest/schedule-map";
+import { seedShouldWipe } from "../lib/ingest/keep-collected";
 
 const prisma = new PrismaClient();
 const root = join(import.meta.dirname, "..");
@@ -51,11 +51,14 @@ async function main() {
   const reactions = readJson<ReactionRow[]>("data/reactions/seed.json");
   const liveCasts = readJson<LiveCastRow[]>("data/live-casts/seed.json");
 
-  const collected = await prisma.reactionVod.count();
-  const scheduled = await prisma.match.count({ where: { source: SCHEDULE_MATCH_SOURCE } });
-  if (collected > reactions.length || scheduled > 0) {
+  const existing = {
+    reactionVods: await prisma.reactionVod.count(),
+    matches: await prisma.match.count(),
+    liveTitles: await prisma.liveTitleHistory.count(),
+  };
+  if (!seedShouldWipe(existing)) {
     console.log(
-      `seed: keeping ${collected} reaction VODs and ${scheduled} schedule matches (will not wipe)`,
+      `seed: keeping ${existing.reactionVods} reaction VODs, ${existing.matches} matches, ${existing.liveTitles} live titles (will not wipe)`,
     );
     return;
   }
