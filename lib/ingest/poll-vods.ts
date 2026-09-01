@@ -62,6 +62,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
   await syncOfficialScheduleIfStale();
   await ensureCreatorCatalog();
   await ensureTeamCatalog();
+  await prisma.reactionVod.deleteMany({ where: { match: { status: "live" } } });
 
   const [creators, matches, liveTitles] = await Promise.all([
     prisma.creator.findMany({
@@ -69,7 +70,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
       include: { channels: true },
     }),
     prisma.match.findMany({
-      where: { status: { in: ["ended", "live"] }, tournament: { in: vodAttachTournaments() } },
+      where: { status: "ended", tournament: { in: vodAttachTournaments() } },
       include: {
         blueTeam: { include: { aliases: true } },
         redTeam: { include: { aliases: true } },

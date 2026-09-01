@@ -353,7 +353,24 @@ describe("pickMatchesForVodWithLiveTitles", () => {
     redAliases: ["KT", "KT Rolster"],
     startsAt: new Date("2026-09-01T08:00:00Z"),
     bestOf: 5,
-    status: "live",
+    status: "ended",
+  });
+
+  it("does not attach a current stream VOD while the official match is still live", () => {
+    const liveMatch = { ...genKt, status: "live" as const };
+    const hits = pickMatchesForVodWithLiveTitles(
+      { title: "울챔스 / GEN vs KT #LCKWatchParty", publishedAt: new Date("2026-09-01T07:15:00Z"), platform: "chzzk" },
+      [
+        {
+          title: "울챔스 / GEN vs KT #LCKWatchParty",
+          seenAt: new Date("2026-09-01T07:15:00Z"),
+          matchId: liveMatch.id,
+          platform: "chzzk",
+        },
+      ],
+      [liveMatch],
+    );
+    assert.deepEqual(hits, []);
   });
 
   it("does not attach yesterday's Overwatch VOD because today's LCK title was seen", () => {
