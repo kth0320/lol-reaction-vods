@@ -1,6 +1,6 @@
 import { LiveCasterBoard } from "@/components/live-caster-board";
 import { MatchTeams } from "@/components/match-teams";
-import { VodPlayer } from "@/components/vod-player";
+import { WatchOutbound } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
@@ -8,7 +8,8 @@ import { lookForEvent } from "@/lib/ingest/official-stream";
 import { fetchLeagueArt, resolveMatchArt } from "@/lib/league-art";
 import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
 import { isLeague } from "@/lib/leagues";
-import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
+import { creatorKindLabel } from "@/lib/playback";
+import { groupReactionsForWatch } from "@/lib/watch-links";
 import { prisma } from "@/lib/prisma";
 import { collapseReactionsBySlot } from "@/lib/ingest/reaction-slot";
 import { vodMatchBack } from "@/lib/vod-filter";
@@ -55,7 +56,7 @@ export default async function MatchPage({
         orderBy: { creator: { name: "asc" } },
       },
       reactions: {
-        include: { creator: true },
+        include: { creator: { include: { channels: true } } },
         orderBy: { publishedAt: "asc" },
       },
     },
@@ -102,6 +103,19 @@ export default async function MatchPage({
     redAliases: [match.redTeam.abbr, match.redTeam.name, ...match.redTeam.aliases.map((row) => row.alias)],
   })).sort(
     (left, right) => (left.publishedAt?.getTime() ?? 0) - (right.publishedAt?.getTime() ?? 0),
+  );
+  const watchCards = groupReactionsForWatch(
+    reactions.map((reaction) => ({
+      id: reaction.id,
+      creatorId: reaction.creatorId,
+      creatorName: reaction.creator.name,
+      creatorKind: reaction.creator.kind,
+      platform: reaction.platform,
+      title: reaction.title,
+      url: reaction.url,
+      publishedAt: reaction.publishedAt,
+      channels: reaction.creator.channels,
+    })),
   );
 
   return (
@@ -163,25 +177,24 @@ export default async function MatchPage({
         <section className="vod-section">
           <h2 className="section-title">다시보기</h2>
           <p className="page-lead">
-            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {reactions.length}개.
+            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {reactions.length}개. 영상은 유튜브·숲·치지직에서
+            봅니다.
           </p>
-          {reactions.length === 0 ? (
+          {watchCards.length === 0 ? (
             <p className="empty">아직 연결된 리액션이 없습니다.</p>
           ) : (
             <div className="reaction-list">
-              {reactions.map((reaction) => (
-                <article key={reaction.id} className="reaction-card">
+              {watchCards.map((card) => (
+                <article key={card.key} className="reaction-card">
                   <div className="reaction-head">
                     <div>
-                      <h2 className="creator-name">{reaction.creator.name}</h2>
-                      <p className="creator-kind">{creatorKindLabel(reaction.creator.kind)}</p>
+                      <h2 className="creator-name">{card.creatorName}</h2>
+                      <p className="creator-kind">{creatorKindLabel(card.creatorKind)}</p>
                     </div>
-                    <span className="platform-badge">
-                      {isPlatform(reaction.platform) ? platformLabel(reaction.platform) : reaction.platform}
-                    </span>
+                    <span className="platform-badge">{card.badge}</span>
                   </div>
-                  <p className="reaction-title">{reaction.title}</p>
-                  <VodPlayer platform={reaction.platform} externalId={reaction.externalId} url={reaction.url} />
+                  <p className="reaction-title">{card.title}</p>
+                  <WatchOutbound links={card.links} />
                 </article>
               ))}
             </div>
