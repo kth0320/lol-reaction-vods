@@ -37,7 +37,7 @@ function publishedMs(row: { publishedAt: Date | null }): number {
   return row.publishedAt?.getTime() ?? 0;
 }
 
-/** Station replay first. YouTube recap is added later, not a replacement. */
+/** 방송국 다시보기 영상 먼저. 유튜브 편집본이 붙으면 그 영상 링크를 추가. 채널 홈은 쓰지 않음. */
 export function pickWatchReactions<T extends { platform: string; publishedAt: Date | null }>(rows: T[]): T[] {
   if (rows.length === 0) {
     throw new Error("pickWatchReactions: empty");

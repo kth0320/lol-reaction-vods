@@ -85,7 +85,8 @@ describe("groupReactionsForWatch", () => {
       { href: "https://chzzk.naver.com/video/14594686", platform: "chzzk", label: "치지직에서 보기" },
       { href: "https://www.youtube.com/watch?v=RxF_OZTbneM", platform: "youtube", label: "YouTube에서 보기" },
     ]);
-    assert.equal(cards[0].badge, "치지직 · YouTube");
+    assert.match(cards[0].links[0].href, /chzzk\.naver\.com\/video\//);
+    assert.match(cards[0].links[1].href, /youtube\.com\/watch\?v=/);
   });
 
   it("keeps a single SOOP VOD as one outbound video link", () => {

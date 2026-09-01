@@ -428,11 +428,14 @@ a {
 }
 
 .platform-hit svg,
+.platform-hit img,
 .caster-platform svg,
+.caster-platform img,
 .filter-platform-mark {
   display: block;
   width: 36px;
   height: 36px;
+  object-fit: cover;
 }
 
 .filter-platform-mark {

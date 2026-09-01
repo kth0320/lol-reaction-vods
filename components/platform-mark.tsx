@@ -1,7 +1,15 @@
 import type { ReactNode } from "react";
 import { isPlatform, type Platform } from "@/lib/playback";
 
+const RASTER: Partial<Record<Platform, string>> = {
+  chzzk: "/platforms/chzzk.png",
+  soop: "/platforms/soop.png",
+};
+
 export function PlatformMark({ platform, className }: { platform: string; className?: string }) {
+  if (isPlatform(platform) && RASTER[platform]) {
+    return <img className={className} src={RASTER[platform]} alt="" draggable={false} />;
+  }
   const mark = isPlatform(platform) ? MARKS[platform] : null;
   if (!mark) {
     return <span className={className}>{platform.slice(0, 1)}</span>;
@@ -13,7 +21,7 @@ export function PlatformMark({ platform, className }: { platform: string; classN
   );
 }
 
-const MARKS: Record<Platform, ReactNode> = {
+const MARKS: Record<Exclude<Platform, "chzzk" | "soop">, ReactNode> = {
   youtube: (
     <>
       <rect width="24" height="24" rx="7" fill="#FF0033" />
@@ -29,24 +37,6 @@ const MARKS: Record<Platform, ReactNode> = {
       />
       <rect x="13.1" y="8.4" width="1.5" height="3.4" fill="#9146FF" />
       <rect x="9.8" y="8.4" width="1.5" height="3.4" fill="#9146FF" />
-    </>
-  ),
-  chzzk: (
-    <>
-      <rect width="24" height="24" rx="7" fill="#141517" />
-      <path
-        fill="#00FFA3"
-        d="M16.8 6.2c-3.4-1.6-7.6-.4-9.6 2.8-2 3.2-1.2 7.4 1.8 9.6 2.4 1.8 5.8 1.8 8.2.2-2.2.2-4.6-.6-6.2-2.4-2.2-2.4-2.2-6.2.2-8.4 1.8-1.8 4.6-2.2 6.8-1.2.2-.2.2-.4-.2-.6z"
-      />
-    </>
-  ),
-  soop: (
-    <>
-      <rect width="24" height="24" rx="7" fill="#00E6A0" />
-      <path
-        fill="#111"
-        d="M7.2 8.4c2.4-2 6.2-1.8 8.4.6 1.2 1.4 1.6 3.2 1.2 4.8-.8-.8-1.8-1.4-3-1.6.4 1.2.2 2.6-.6 3.6-1.4 1.8-3.8 2.2-5.8 1.2 1.2.2 2.6 0 3.6-.8 1.4-1 1.8-2.8 1.2-4.2-1.6 1.4-4 1.4-5.6-.2-1.2-1.2-1.4-3-.4-4.4.2-.4.6-.8 1-.9z"
-      />
     </>
   ),
 };
