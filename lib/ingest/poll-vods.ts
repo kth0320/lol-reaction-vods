@@ -121,7 +121,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
       for (const item of items) {
         listed.push({ creatorId: creator.id, platform: item.platform, externalId: item.externalId });
         for (const match of pickMatchesForVodWithLiveTitles(
-          { title: item.title, publishedAt: item.publishedAt },
+          { title: item.title, publishedAt: item.publishedAt, platform: item.platform },
           history,
           attachable,
         )) {

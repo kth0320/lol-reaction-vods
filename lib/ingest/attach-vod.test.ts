@@ -358,8 +358,8 @@ describe("pickMatchesForVodWithLiveTitles", () => {
 
   it("does not attach yesterday's Overwatch VOD because today's LCK title was seen", () => {
     const hits = pickMatchesForVodWithLiveTitles(
-      { title: "갑자기 옵치내전이 하고싶네 ㅎ;", publishedAt: new Date("2026-08-31T14:31:00Z") },
-      [{ title: "울챔스 / GEN vs KT #LCKWatchParty", seenAt: new Date("2026-09-01T07:15:00Z"), matchId: genKt.id }],
+      { title: "갑자기 옵치내전이 하고싶네 ㅎ;", publishedAt: new Date("2026-08-31T14:31:00Z"), platform: "chzzk" },
+      [{ title: "울챔스 / GEN vs KT #LCKWatchParty", seenAt: new Date("2026-09-01T07:15:00Z"), matchId: genKt.id, platform: "chzzk" }],
       [genKt],
     );
     assert.deepEqual(hits, []);
@@ -367,13 +367,36 @@ describe("pickMatchesForVodWithLiveTitles", () => {
 
   it("still attaches a retitled 다시보기 from the same LCK session", () => {
     const hits = pickMatchesForVodWithLiveTitles(
-      { title: "다시보기", publishedAt: new Date("2026-09-01T07:00:00Z") },
-      [{ title: "울챔스 / GEN vs KT #LCKWatchParty", seenAt: new Date("2026-09-01T07:15:00Z"), matchId: genKt.id }],
+      { title: "다시보기", publishedAt: new Date("2026-09-01T07:00:00Z"), platform: "chzzk" },
+      [
+        {
+          title: "울챔스 / GEN vs KT #LCKWatchParty",
+          seenAt: new Date("2026-09-01T07:15:00Z"),
+          matchId: genKt.id,
+          platform: "chzzk",
+        },
+      ],
       [genKt],
     );
     assert.deepEqual(
       hits.map((row) => row.id),
       ["lck-gen-kt"],
     );
+  });
+
+  it("does not reuse a Chzzk live title on a YouTube VOD", () => {
+    const hits = pickMatchesForVodWithLiveTitles(
+      { title: "궁대박", publishedAt: new Date("2026-09-01T08:00:12Z"), platform: "youtube" },
+      [
+        {
+          title: "울챔스 / GEN vs KT #LCKWatchParty",
+          seenAt: new Date("2026-09-01T07:45:00Z"),
+          matchId: genKt.id,
+          platform: "chzzk",
+        },
+      ],
+      [genKt],
+    );
+    assert.deepEqual(hits, []);
   });
 });

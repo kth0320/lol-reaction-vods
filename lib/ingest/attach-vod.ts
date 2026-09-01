@@ -222,25 +222,31 @@ export function pickMatchForVod(
   return pickMatchesForVod(title, publishedAt, matches)[0] ?? null;
 }
 
-export type LiveTitleRow = { title: string; seenAt: Date; matchId: string | null };
+export type LiveTitleRow = { title: string; seenAt: Date; matchId: string | null; platform?: string };
+
+function historyForVod(item: { platform?: string }, history: LiveTitleRow[]): LiveTitleRow[] {
+  if (!item.platform) return history;
+  return history.filter((row) => !row.platform || row.platform === item.platform);
+}
 
 /** Title match plus live-title insurance, without using the next stream's title. */
 export function pickMatchesForVodWithLiveTitles(
-  item: { title: string; publishedAt: Date | null },
+  item: { title: string; publishedAt: Date | null; platform?: string },
   history: LiveTitleRow[],
   matches: VodAttachMatch[],
 ): VodAttachMatch[] {
+  const rows = historyForVod(item, history);
   const ids = new Set<string>();
   for (const title of extraTitlesForVod({
     currentTitle: item.title,
     publishedAt: item.publishedAt,
-    rows: history,
+    rows,
   })) {
     for (const match of pickMatchesForVod(title, item.publishedAt, matches)) ids.add(match.id);
   }
   for (const matchId of liveTitleMatchIdsForVod({
     publishedAt: item.publishedAt,
-    rows: history,
+    rows,
     matches,
   })) {
     ids.add(matchId);
