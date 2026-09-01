@@ -9,6 +9,7 @@ const wolfChannels = [
 
 describe("usesChannelPair", () => {
   it("pairs station + YouTube when a recap channel exists", () => {
+    assert.equal(usesChannelPair(0, wolfChannels), true);
     assert.equal(usesChannelPair(1, wolfChannels), true);
     assert.equal(usesChannelPair(2, wolfChannels), true);
   });
@@ -34,9 +35,9 @@ describe("groupReactionsForWatch", () => {
         creatorId: "wolf",
         creatorName: "울프",
         creatorKind: "streamer",
-        platform: "youtube",
-        title: "GEN vs T1 하이라이트 1",
-        url: "https://www.youtube.com/watch?v=aaaa",
+        platform: "chzzk",
+        title: "울챔스 T1 vs HLE",
+        url: "https://chzzk.naver.com/video/14594686",
         publishedAt: new Date("2026-07-12T12:00:00Z"),
         channels: wolfChannels,
       },

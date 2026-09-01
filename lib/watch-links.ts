@@ -49,9 +49,9 @@ export function pickYoutubeChannel(channels: ChannelRef[]): ChannelRef | null {
 /** Wolf / 갱맘: recap VODs live on YouTube, live home is 치지직·숲·Twitch. */
 export function usesChannelPair(youtubeCount: number, channels: ChannelRef[]): boolean {
   const youtube = pickYoutubeChannel(channels);
-  if (!youtube) return false;
-  if (youtubeCount >= 2) return true;
-  return youtubeCount >= 1 && Boolean(pickStationChannel(channels));
+  const station = pickStationChannel(channels);
+  if (youtube && station) return true;
+  return youtubeCount >= 2 && Boolean(youtube);
 }
 
 function earliestMs(rows: ReactionForWatch[]): number {
