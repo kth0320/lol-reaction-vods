@@ -1,68 +1,54 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PROTOTYPE_LIVE_LEAGUES, LIVE_CAROUSEL_INTERVAL_MS, type League } from "@/lib/leagues";
+import { liveHubHref, liveHubRotateIndices, type LiveHubKind } from "@/lib/live-hub";
 import { VsCard, type LiveSlide } from "@/components/vs-card";
 
 export function LiveCarousel({ slides }: { slides: LiveSlide[] }) {
-  const [index, setIndex] = useState(0);
+  const kinds = useMemo(
+    () => slides.map((slide) => (slide.kind ?? "live") as LiveHubKind),
+    [slides],
+  );
+  const rotate = useMemo(() => liveHubRotateIndices(kinds), [kinds]);
+  const [index, setIndex] = useState(rotate[0] ?? 0);
   const [paused, setPaused] = useState(false);
-  const [animate, setAnimate] = useState(true);
+  const [hold, setHold] = useState(false);
 
-  const looping = slides.length > 1;
-  const trackSlides = looping ? [...slides, slides[0]] : slides;
-  const realIndex = looping && index === slides.length ? 0 : index;
-  const active = slides[realIndex] ?? slides[0];
-  const present = new Set(slides.map((slide) => slide.tournament));
+  const looping = rotate.length > 1;
+  const active = slides[index] ?? slides[0];
 
   useEffect(() => {
-    if (!looping || paused) {
-      return;
-    }
+    if (!looping || paused || hold) return;
     const timer = window.setInterval(() => {
-      setAnimate(true);
-      setIndex((current) => current + 1);
+      setIndex((current) => {
+        const pos = rotate.indexOf(current);
+        if (pos < 0) return current;
+        return rotate[(pos + 1) % rotate.length];
+      });
     }, LIVE_CAROUSEL_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [looping, paused]);
-
-  useLayoutEffect(() => {
-    if (animate || index !== 0) {
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => setAnimate(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, [animate, index]);
-
-  function onTrackTransitionEnd() {
-    if (looping && index >= slides.length) {
-      setAnimate(false);
-      setIndex(0);
-    }
-  }
+  }, [hold, looping, paused, rotate]);
 
   function selectLeague(league: League) {
     const next = slides.findIndex((slide) => slide.tournament === league);
-    if (next < 0) {
-      return;
-    }
-    setAnimate(true);
+    if (next < 0) return;
     setIndex(next);
+    setHold((slides[next].kind ?? "live") !== "live");
   }
 
-  if (slides.length === 0) {
-    return null;
-  }
+  if (slides.length === 0) return null;
+
+  const anyLive = kinds.includes("live");
 
   return (
     <section className="live-hub">
       <div className="live-hub-head">
-        <h2 className="section-title">지금 생중계</h2>
+        <h2 className="section-title">{anyLive ? "지금 생중계" : "다음 경기"}</h2>
       </div>
       <div className="league-tabs" role="tablist" aria-label="리그">
         {PROTOTYPE_LIVE_LEAGUES.map((league) => {
-          const enabled = present.has(league);
-          const selected = active.tournament === league;
+          const selected = active?.tournament === league;
           return (
             <button
               key={league}
@@ -70,7 +56,6 @@ export function LiveCarousel({ slides }: { slides: LiveSlide[] }) {
               role="tab"
               aria-selected={selected}
               className={`league-tab${selected ? " selected" : ""}`}
-              disabled={!enabled}
               onClick={() => selectLeague(league)}
             >
               {league}
@@ -84,16 +69,15 @@ export function LiveCarousel({ slides }: { slides: LiveSlide[] }) {
         onMouseLeave={() => setPaused(false)}
       >
         <div
-          className={`live-track${animate ? "" : " no-animate"}`}
+          className="live-track"
           style={{
-            width: `${trackSlides.length * 100}%`,
-            transform: `translateX(-${(index * 100) / trackSlides.length}%)`,
+            width: `${slides.length * 100}%`,
+            transform: `translateX(-${(index * 100) / slides.length}%)`,
           }}
-          onTransitionEnd={onTrackTransitionEnd}
         >
-          {trackSlides.map((slide, slideIndex) => (
-            <div className="live-slide" key={`${slide.id}-${slideIndex}`}>
-              <VsCard slide={slide} href={`/matches/${slide.id}`} />
+          {slides.map((slide) => (
+            <div className="live-slide" key={slide.id}>
+              <VsCard slide={slide} href={liveHubHref(slide.kind ?? "live", slide.id)} />
             </div>
           ))}
         </div>
