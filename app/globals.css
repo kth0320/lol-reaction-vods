@@ -366,8 +366,9 @@ a {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 8px 16px;
-  margin-bottom: 10px;
+  align-items: center;
+  gap: 10px 16px;
+  margin-bottom: 8px;
 }
 
 .creator-name {
@@ -394,10 +395,62 @@ a {
 }
 
 .reaction-title {
-  margin: 0 0 14px;
+  margin: 0;
   color: var(--muted);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.platform-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.platform-hit {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: transparent;
+  color: inherit;
+}
+
+.platform-hit:hover {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.platform-hit svg,
+.platform-hit img,
+.caster-platform svg,
+.caster-platform img,
+.filter-platform-mark {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+}
+
+.filter-platform-mark {
+  width: 22px;
+  height: 22px;
+}
+
+.caster-platform {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .player-frame {
@@ -714,8 +767,12 @@ a {
 }
 
 .filter-chip {
-  height: 32px;
-  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #0f1218;
@@ -1029,6 +1086,7 @@ a {
   color: inherit;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
 

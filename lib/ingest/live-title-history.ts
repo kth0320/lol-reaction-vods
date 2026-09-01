@@ -6,6 +6,17 @@ export const TITLE_BEFORE_VOD_MS = 18 * 60 * 60 * 1000;
 /** Same Chzzk session after VOD create. Next morning's stream is outside this. */
 export const TITLE_AFTER_VOD_MS = 12 * 60 * 60 * 1000;
 
+const LIVE_INSURANCE_TITLE =
+  /다시보기|풀영상|풀버전|전체다시|전체보기|\breplays?\b|\bvods?\b|하이라이트|모음/i;
+const LIVE_INSURANCE_WAITING = /대기방|시참|손푼다|생각정리/;
+
+/** Live titles fill in a retitled replay, not a later FC Online / TFT / variety VOD. */
+export function vodTitleNeedsLiveInsurance(title: string): boolean {
+  const trimmed = title.trim();
+  if (trimmed.length === 0) return true;
+  return LIVE_INSURANCE_TITLE.test(trimmed) || LIVE_INSURANCE_WAITING.test(trimmed);
+}
+
 export type LiveTitleMatchWindow = {
   id: string;
   startsAt: Date;

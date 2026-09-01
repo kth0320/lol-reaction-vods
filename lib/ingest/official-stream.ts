@@ -137,15 +137,44 @@ export function parseEventLook(payload: unknown): EventLook {
   };
 }
 
+export const EVENT_LOOK_FRESH_MS = 10 * 60 * 1000;
+
+const eventLookState = globalThis as unknown as {
+  eventLookCache?: Map<string, { at: number; value: EventLook }>;
+  eventLookInflight?: Map<string, Promise<EventLook>>;
+};
+
+const EMPTY_EVENT_LOOK: EventLook = {
+  broadcast: null,
+  leagueImageUrl: "",
+  blueImageUrl: "",
+  redImageUrl: "",
+};
+
 export async function lookForEvent(
   eventId: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<EventLook> {
-  try {
-    return parseEventLook(await fetchEventDetails(eventId, fetchImpl));
-  } catch {
-    return { broadcast: null, leagueImageUrl: "", blueImageUrl: "", redImageUrl: "" };
-  }
+  const cache = (eventLookState.eventLookCache ??= new Map());
+  const inflight = (eventLookState.eventLookInflight ??= new Map());
+  const hit = cache.get(eventId);
+  if (hit && Date.now() - hit.at < EVENT_LOOK_FRESH_MS) return hit.value;
+  const pending = inflight.get(eventId);
+  if (pending) return pending;
+
+  const work = (async () => {
+    try {
+      const value = parseEventLook(await fetchEventDetails(eventId, fetchImpl));
+      cache.set(eventId, { at: Date.now(), value });
+      return value;
+    } catch {
+      return EMPTY_EVENT_LOOK;
+    } finally {
+      inflight.delete(eventId);
+    }
+  })();
+  inflight.set(eventId, work);
+  return work;
 }
 
 export async function backgroundForEvent(

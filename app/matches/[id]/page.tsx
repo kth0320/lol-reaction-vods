@@ -1,14 +1,14 @@
 import { LiveCasterBoard } from "@/components/live-caster-board";
 import { MatchTeams } from "@/components/match-teams";
-import { VodPlayer } from "@/components/vod-player";
+import { WatchOutbound } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
 import { lookForEvent } from "@/lib/ingest/official-stream";
-import { fetchLeagueArt, resolveMatchArt } from "@/lib/league-art";
+import { fetchLeagueArt, hasMatchupPlate, leagueArtForTournament, resolveMatchArt } from "@/lib/league-art";
 import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
 import { isLeague } from "@/lib/leagues";
-import { creatorKindLabel, isPlatform, platformLabel } from "@/lib/playback";
+import { groupReactionsForWatch } from "@/lib/watch-links";
 import { prisma } from "@/lib/prisma";
 import { collapseReactionsBySlot } from "@/lib/ingest/reaction-slot";
 import { vodMatchBack } from "@/lib/vod-filter";
@@ -66,10 +66,14 @@ export default async function MatchPage({
   }
 
   const live = match.status === "live";
-  const [look, leagueArt] = await Promise.all([
-    live && match.externalEventId ? lookForEvent(match.externalEventId) : Promise.resolve(null),
-    fetchLeagueArt(),
-  ]);
+  const leagueArt = await fetchLeagueArt();
+  const plateReady = hasMatchupPlate({
+    leagueImageUrl: leagueArtForTournament(leagueArt, match.tournament),
+    blueImageUrl: match.blueTeam.imageUrl,
+    redImageUrl: match.redTeam.imageUrl,
+  });
+  const look =
+    live && match.externalEventId && !plateReady ? await lookForEvent(match.externalEventId) : null;
   const art = resolveMatchArt({
     tournament: match.tournament,
     leagueArt,
@@ -102,6 +106,18 @@ export default async function MatchPage({
     redAliases: [match.redTeam.abbr, match.redTeam.name, ...match.redTeam.aliases.map((row) => row.alias)],
   })).sort(
     (left, right) => (left.publishedAt?.getTime() ?? 0) - (right.publishedAt?.getTime() ?? 0),
+  );
+  const watchCards = groupReactionsForWatch(
+    reactions.map((reaction) => ({
+      id: reaction.id,
+      creatorId: reaction.creatorId,
+      creatorName: reaction.creator.name,
+      creatorKind: reaction.creator.kind,
+      platform: reaction.platform,
+      title: reaction.title,
+      url: reaction.url,
+      publishedAt: reaction.publishedAt,
+    })),
   );
 
   return (
@@ -152,36 +168,24 @@ export default async function MatchPage({
           </div>
         </>
       )}
-      {live ? (
-        <LiveCasterBoard
-          blue={{ id: match.blueTeam.id, abbr: match.blueTeam.abbr }}
-          red={{ id: match.redTeam.id, abbr: match.redTeam.abbr }}
-          casts={liveCastViews}
-        />
-      ) : null}
+      {live ? <LiveCasterBoard casts={liveCastViews} /> : null}
       {!live ? (
         <section className="vod-section">
           <h2 className="section-title">다시보기</h2>
           <p className="page-lead">
-            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {reactions.length}개.
+            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {watchCards.length}명. 로고를 누르면 원본으로 이동합니다.
           </p>
-          {reactions.length === 0 ? (
+          {watchCards.length === 0 ? (
             <p className="empty">아직 연결된 리액션이 없습니다.</p>
           ) : (
             <div className="reaction-list">
-              {reactions.map((reaction) => (
-                <article key={reaction.id} className="reaction-card">
+              {watchCards.map((card) => (
+                <article key={card.key} className="reaction-card">
                   <div className="reaction-head">
-                    <div>
-                      <h2 className="creator-name">{reaction.creator.name}</h2>
-                      <p className="creator-kind">{creatorKindLabel(reaction.creator.kind)}</p>
-                    </div>
-                    <span className="platform-badge">
-                      {isPlatform(reaction.platform) ? platformLabel(reaction.platform) : reaction.platform}
-                    </span>
+                    <h2 className="creator-name">{card.creatorName}</h2>
+                    <WatchOutbound links={card.links} />
                   </div>
-                  <p className="reaction-title">{reaction.title}</p>
-                  <VodPlayer platform={reaction.platform} externalId={reaction.externalId} url={reaction.url} />
+                  <p className="reaction-title">{card.title}</p>
                 </article>
               ))}
             </div>

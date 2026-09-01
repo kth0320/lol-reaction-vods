@@ -401,6 +401,56 @@ describe("pickMatchesForVodWithLiveTitles", () => {
     );
   });
 
+  it("does not glue FC Online / variety VODs onto an LCK match via live titles", () => {
+    const dkKt = match({
+      id: "lck-kt-dk",
+      tournament: "LCK",
+      blueTeamId: "kt",
+      redTeamId: "dk",
+      blueAliases: ["KT", "KT Rolster"],
+      redAliases: ["DK", "Dplus"],
+      startsAt: new Date("2026-08-30T08:00:00Z"),
+      bestOf: 5,
+    });
+    const hits = pickMatchesForVodWithLiveTitles(
+      { title: "이상호 새벽 FC온라인 공차기", publishedAt: new Date("2026-08-30T14:00:00Z"), platform: "chzzk" },
+      [
+        {
+          title: "이상호 DK vs KT #LckWatchParty",
+          seenAt: new Date("2026-08-30T08:30:00Z"),
+          matchId: dkKt.id,
+          platform: "chzzk",
+        },
+      ],
+      [dkKt],
+    );
+    assert.deepEqual(hits, []);
+  });
+
+  it("does not park a GEN vs KT VOD on yesterday's DK vs KT because today's series is still live", () => {
+    const dkKt = match({
+      id: "lck-kt-dk",
+      tournament: "LCK",
+      blueTeamId: "kt",
+      redTeamId: "dk",
+      blueAliases: ["KT"],
+      redAliases: ["DK"],
+      startsAt: new Date("2026-08-30T08:00:00Z"),
+      bestOf: 5,
+    });
+    const liveGenKt = { ...genKt, status: "live" as const };
+    const hits = pickMatchesForVodWithLiveTitles(
+      {
+        title: "✨ LCK GEN vs KT 강팀 대전이 재밌어 #LCKWatchPArty",
+        publishedAt: new Date("2026-09-01T07:00:00Z"),
+        platform: "chzzk",
+      },
+      [],
+      [dkKt, liveGenKt],
+    );
+    assert.deepEqual(hits, []);
+  });
+
   it("does not reuse a Chzzk live title on a YouTube VOD", () => {
     const hits = pickMatchesForVodWithLiveTitles(
       { title: "궁대박", publishedAt: new Date("2026-09-01T08:00:12Z"), platform: "youtube" },

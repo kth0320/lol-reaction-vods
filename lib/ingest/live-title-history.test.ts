@@ -1,6 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { extraTitlesForVod, liveTitleMatchIdsForVod, liveTitleNearVod } from "./live-title-history";
+import { extraTitlesForVod, liveTitleMatchIdsForVod, liveTitleNearVod, vodTitleNeedsLiveInsurance } from "./live-title-history";
+
+describe("vodTitleNeedsLiveInsurance", () => {
+  it("allows retitled replay placeholders", () => {
+    assert.equal(vodTitleNeedsLiveInsurance("다시보기"), true);
+    assert.equal(vodTitleNeedsLiveInsurance("울챔스 하이라이트"), true);
+  });
+
+  it("does not treat a later variety or other-game VOD as a replay placeholder", () => {
+    assert.equal(vodTitleNeedsLiveInsurance("이상호 새벽 FC온라인 공차기"), false);
+    assert.equal(vodTitleNeedsLiveInsurance("로보토미 코퍼레이션 / 이리"), false);
+    assert.equal(vodTitleNeedsLiveInsurance("오늘 미스릴가는날"), false);
+  });
+});
 
 describe("liveTitleNearVod", () => {
   it("keeps a live title from before the VOD was uploaded", () => {

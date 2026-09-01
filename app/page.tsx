@@ -4,10 +4,14 @@ import type { LiveSlide } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { lookForEvent } from "@/lib/ingest/official-stream";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
-import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
-import { fetchLeagueArt, leagueArtForTournament, resolveMatchArt } from "@/lib/league-art";
+import {
+  fetchLeagueArt,
+  hasMatchupPlate,
+  leagueArtForTournament,
+  resolveMatchArt,
+} from "@/lib/league-art";
 import { pickLiveHubByLeague, type LiveHubKind } from "@/lib/live-hub";
 import {
   PROTOTYPE_LIVE_LEAGUES,
@@ -71,19 +75,19 @@ function emptySlide(league: LiveSlide["tournament"], leagueImageUrl: string): Li
 }
 
 export default async function HomePage() {
-  await syncOfficialScheduleIfStale();
   after(() => {
+    void syncOfficialScheduleIfStale();
     void refreshLiveCandidatesInBackground();
-    void refreshVodsInBackground();
   });
 
-  const [scheduleLive, scheduleUpcoming, vodRows] = await Promise.all([
+  const [scheduleLive, scheduleUpcoming, vodRows, leagueArt] = await Promise.all([
     loadScheduleMatches("live"),
     loadScheduleMatches("upcoming"),
     prisma.match.findMany({
       where: { status: "ended", reactions: { some: {} } },
       select: { tournament: true, _count: { select: { reactions: true } } },
     }),
+    fetchLeagueArt(),
   ]);
 
   const liveRows = sortLiveMatchesByLeague(scheduleLive).filter(
@@ -99,10 +103,21 @@ export default async function HomePage() {
     const pick = picked[league];
     return pick ? [pick.match] : [];
   });
-  const [looks, leagueArt] = await Promise.all([
-    Promise.all(shown.map((match) => (match.externalEventId ? lookForEvent(match.externalEventId) : Promise.resolve(null)))),
-    fetchLeagueArt(),
-  ]);
+  const looks = await Promise.all(
+    shown.map((match) => {
+      if (!match.externalEventId) return Promise.resolve(null);
+      if (
+        hasMatchupPlate({
+          leagueImageUrl: leagueArtForTournament(leagueArt, match.tournament),
+          blueImageUrl: match.blueTeam.imageUrl,
+          redImageUrl: match.redTeam.imageUrl,
+        })
+      ) {
+        return Promise.resolve(null);
+      }
+      return lookForEvent(match.externalEventId);
+    }),
+  );
   const lookByMatchId = new Map(shown.map((match, index) => [match.id, looks[index]]));
 
   const slides: LiveSlide[] = PROTOTYPE_LIVE_LEAGUES.map((league) => {

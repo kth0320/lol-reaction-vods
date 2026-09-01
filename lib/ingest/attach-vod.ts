@@ -1,5 +1,9 @@
 import { kstYear } from "@/lib/format";
-import { extraTitlesForVod, liveTitleMatchIdsForVod } from "@/lib/ingest/live-title-history";
+import {
+  extraTitlesForVod,
+  liveTitleMatchIdsForVod,
+  vodTitleNeedsLiveInsurance,
+} from "@/lib/ingest/live-title-history";
 import { aliasIndexInTitle, inferLiveMatchFromTitle, mentionedLeagues, type InferTeam } from "@/lib/ingest/infer-match";
 import { pickPrototypeLiveMatch, type TitleMatchInput } from "@/lib/ingest/match-title";
 import { attachInferredToOfficial, sameTeamPair } from "@/lib/ingest/schedule-map";
@@ -115,10 +119,11 @@ export function pickMatchesForVod(
   if (pool.length === 0) return [];
 
   const mentioned = mentionedLeagues(title);
+  const vsAny = matches.filter((match) => vsPairInTitle(title, match.blueAliases, match.redAliases));
   const vsHits = pool.filter((match) => vsPairInTitle(title, match.blueAliases, match.redAliases));
   const scoped = mentioned.length === 0 ? vsHits : vsHits.filter((match) => mentioned.includes(match.tournament));
   const hits = scoped.length > 0 ? scoped : vsHits;
-  if (hits.length > 0) return hits;
+  if (vsAny.length > 0) return hits;
 
   const slate = pickDaySlateMatches(title, publishedAt, pool, matches);
   if (slate.length > 0) return slate;
@@ -238,8 +243,11 @@ export function pickMatchesForVodWithLiveTitles(
   history: LiveTitleRow[],
   matches: VodAttachMatch[],
 ): VodAttachMatch[] {
+  const own = pickMatchesForVod(item.title, item.publishedAt, matches);
+  if (!vodTitleNeedsLiveInsurance(item.title)) return own;
+
   const rows = historyForVod(item, history);
-  const ids = new Set<string>();
+  const ids = new Set(own.map((match) => match.id));
   for (const title of extraTitlesForVod({
     currentTitle: item.title,
     publishedAt: item.publishedAt,
