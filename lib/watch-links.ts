@@ -36,38 +36,43 @@ function publishedMs(row: { publishedAt: Date | null }): number {
   return row.publishedAt?.getTime() ?? 0;
 }
 
-/** YouTube recap replaces the station VOD once it is attached. Until then, the 치지직/숲 video. */
-export function pickPreferredWatchReaction<T extends { platform: string; publishedAt: Date | null }>(
-  rows: T[],
-): T {
+/** Station replay first. YouTube recap is added later, not a replacement. */
+export function pickWatchReactions<T extends { platform: string; publishedAt: Date | null }>(rows: T[]): T[] {
   if (rows.length === 0) {
-    throw new Error("pickPreferredWatchReaction: empty");
+    throw new Error("pickWatchReactions: empty");
+  }
+  const picked: T[] = [];
+  for (const platform of STATION_ORDER) {
+    const hit = rows.find((row) => row.platform === platform);
+    if (hit) picked.push(hit);
   }
   const youtube = rows
     .filter((row) => row.platform === "youtube")
     .sort((left, right) => publishedMs(right) - publishedMs(left));
-  if (youtube[0]) return youtube[0];
-  for (const platform of STATION_ORDER) {
-    const hit = rows.find((row) => row.platform === platform);
-    if (hit) return hit;
-  }
-  return rows[0];
+  if (youtube[0]) picked.push(youtube[0]);
+  return picked.length > 0 ? picked : [rows[0]];
 }
 
 function earliestMs(rows: ReactionForWatch[]): number {
   return Math.min(...rows.map((row) => row.publishedAt?.getTime() ?? Number.POSITIVE_INFINITY));
 }
 
-function cardFor(row: ReactionForWatch): CreatorWatchCard {
-  const label = platformName(row.platform);
+function cardFor(group: ReactionForWatch[]): CreatorWatchCard {
+  const rows = pickWatchReactions(group);
+  const first = rows[0];
+  const titles = [...new Set(rows.map((row) => row.title))];
+  const platforms = [...new Set(rows.map((row) => platformName(row.platform)))];
   return {
-    key: row.id,
-    creatorId: row.creatorId,
-    creatorName: row.creatorName,
-    creatorKind: row.creatorKind,
-    title: row.title,
-    badge: label,
-    links: [{ href: row.url, label: `${label}에서 보기` }],
+    key: first.creatorId,
+    creatorId: first.creatorId,
+    creatorName: first.creatorName,
+    creatorKind: first.creatorKind,
+    title: titles.join(" · "),
+    badge: platforms.join(" · "),
+    links: rows.map((row) => {
+      const label = platformName(row.platform);
+      return { href: row.url, label: `${label}에서 보기` };
+    }),
   };
 }
 
@@ -81,5 +86,5 @@ export function groupReactionsForWatch(rows: ReactionForWatch[]): CreatorWatchCa
 
   return [...byCreator.values()]
     .sort((left, right) => earliestMs(left) - earliestMs(right))
-    .map((group) => cardFor(pickPreferredWatchReaction(group)));
+    .map((group) => cardFor(group));
 }
