@@ -10,7 +10,7 @@
     "ingest:live": "tsx scripts/ingest-live.ts",
     "ingest:schedule": "tsx scripts/ingest-schedule.ts",
     "ingest:vods": "tsx scripts/ingest-vods.ts",
-    "restore:db": "tsx scripts/restore-local-db.ts",
+    "restore:db": "node scripts/restore-local-db.js",
     "postinstall": "prisma generate"
   },
   "prisma": {
