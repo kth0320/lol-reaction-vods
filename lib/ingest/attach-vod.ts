@@ -1,4 +1,5 @@
 import { kstYear } from "@/lib/format";
+import { extraTitlesForVod, liveTitleMatchIdsForVod } from "@/lib/ingest/live-title-history";
 import { aliasIndexInTitle, inferLiveMatchFromTitle, mentionedLeagues, type InferTeam } from "@/lib/ingest/infer-match";
 import { pickPrototypeLiveMatch, type TitleMatchInput } from "@/lib/ingest/match-title";
 import { attachInferredToOfficial, sameTeamPair } from "@/lib/ingest/schedule-map";
@@ -219,4 +220,30 @@ export function pickMatchForVod(
   matches: VodAttachMatch[],
 ): VodAttachMatch | null {
   return pickMatchesForVod(title, publishedAt, matches)[0] ?? null;
+}
+
+export type LiveTitleRow = { title: string; seenAt: Date; matchId: string | null };
+
+/** Title match plus live-title insurance, without using the next stream's title. */
+export function pickMatchesForVodWithLiveTitles(
+  item: { title: string; publishedAt: Date | null },
+  history: LiveTitleRow[],
+  matches: VodAttachMatch[],
+): VodAttachMatch[] {
+  const ids = new Set<string>();
+  for (const title of extraTitlesForVod({
+    currentTitle: item.title,
+    publishedAt: item.publishedAt,
+    rows: history,
+  })) {
+    for (const match of pickMatchesForVod(title, item.publishedAt, matches)) ids.add(match.id);
+  }
+  for (const matchId of liveTitleMatchIdsForVod({
+    publishedAt: item.publishedAt,
+    rows: history,
+    matches,
+  })) {
+    ids.add(matchId);
+  }
+  return matches.filter((match) => ids.has(match.id));
 }

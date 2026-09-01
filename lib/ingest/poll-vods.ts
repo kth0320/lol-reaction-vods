@@ -1,6 +1,5 @@
 import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
-import { pickMatchesForVod, type VodAttachMatch } from "@/lib/ingest/attach-vod";
-import { extraTitlesForVod, liveTitleMatchIdsForVod } from "@/lib/ingest/live-title-history";
+import { pickMatchesForVodWithLiveTitles, type VodAttachMatch } from "@/lib/ingest/attach-vod";
 import { shouldFetchVods } from "@/lib/ingest/platforms";
 import { isLivePollFresh } from "@/lib/ingest/poll-fresh";
 import { collapseReactionsBySlot, pickPreferredReaction } from "@/lib/ingest/reaction-slot";
@@ -22,6 +21,8 @@ export type VodPollSummary = {
   attached: number;
   skippedTwitch: number;
 };
+
+type ListedVod = { creatorId: string; platform: string; externalId: string };
 
 function aliases(team: { abbr: string; name: string; aliases: { alias: string }[] }): string[] {
   return [team.abbr, team.name, ...team.aliases.map((row) => row.alias)];
@@ -105,37 +106,35 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
 
   const jobs = creators.flatMap((creator) =>
     creator.channels.map(async (channel) => {
-      if (!shouldFetchVods(channel.platform)) return [] as { creatorId: string; item: VodListItem; matchId: string }[];
+      const empty = { hits: [] as { creatorId: string; item: VodListItem; matchId: string }[], listed: [] as ListedVod[] };
+      if (!shouldFetchVods(channel.platform)) return empty;
       let items: VodListItem[] = [];
       try {
         items = await fetchVodsForChannel(channel.platform, channel.channelId, fetch, vods);
       } catch {
-        return [];
+        return empty;
       }
       scanned += items.length;
       const history = historyByCreator.get(creator.id) ?? [];
       const hits: { creatorId: string; item: VodListItem; matchId: string }[] = [];
+      const listed: ListedVod[] = [];
       for (const item of items) {
-        const matchIds = new Set<string>();
-        for (const title of extraTitlesForVod({
-          currentTitle: item.title,
-          publishedAt: item.publishedAt,
-          rows: history,
-        })) {
-          for (const match of pickMatchesForVod(title, item.publishedAt, attachable)) {
-            matchIds.add(match.id);
-          }
+        listed.push({ creatorId: creator.id, platform: item.platform, externalId: item.externalId });
+        for (const match of pickMatchesForVodWithLiveTitles(
+          { title: item.title, publishedAt: item.publishedAt },
+          history,
+          attachable,
+        )) {
+          hits.push({ creatorId: creator.id, item, matchId: match.id });
         }
-        for (const matchId of liveTitleMatchIdsForVod({ publishedAt: item.publishedAt, rows: history })) {
-          if (attachable.some((match) => match.id === matchId)) matchIds.add(matchId);
-        }
-        for (const matchId of matchIds) hits.push({ creatorId: creator.id, item, matchId });
       }
-      return hits;
+      return { hits, listed };
     }),
   );
 
-  const hits = (await Promise.all(jobs)).flat();
+  const scans = await Promise.all(jobs);
+  const hits = scans.flatMap((scan) => scan.hits);
+  const listed = scans.flatMap((scan) => scan.listed);
   const matchById = new Map(attachable.map((match) => [match.id, match]));
   const collapsed = collapseReactionsBySlot(
     hits.map((hit) => ({
@@ -156,6 +155,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
     if (await saveReactionSlot(hit, match)) attached += 1;
   }
 
+  await dropFetchedVodsNotInHits(listed, hits);
   await dropStaleUrlCopies(collapsed);
   await dedupeExistingSlots(matchById);
 
@@ -171,6 +171,51 @@ type SlotHit = {
   externalId: string;
   item: VodListItem;
 };
+
+function listedVodKey(row: { creatorId: string; platform: string; externalId: string }): string {
+  return `${row.creatorId}\0${row.platform}\0${row.externalId}`;
+}
+
+/** Re-evaluate VODs we just listed so a later stream's live title does not keep an old row. */
+async function dropFetchedVodsNotInHits(
+  listed: ListedVod[],
+  hits: { creatorId: string; item: VodListItem; matchId: string }[],
+): Promise<void> {
+  const keep = new Map<string, Set<string>>();
+  for (const row of listed) {
+    const key = listedVodKey(row);
+    if (!keep.has(key)) keep.set(key, new Set());
+  }
+  for (const hit of hits) {
+    keep
+      .get(
+        listedVodKey({
+          creatorId: hit.creatorId,
+          platform: hit.item.platform,
+          externalId: hit.item.externalId,
+        }),
+      )
+      ?.add(hit.matchId);
+  }
+  const seen = new Set<string>();
+  for (const row of listed) {
+    const key = listedVodKey(row);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const matchIds = [...(keep.get(key) ?? [])];
+    await prisma.reactionVod.deleteMany({
+      where:
+        matchIds.length === 0
+          ? { creatorId: row.creatorId, platform: row.platform, externalId: row.externalId }
+          : {
+              creatorId: row.creatorId,
+              platform: row.platform,
+              externalId: row.externalId,
+              matchId: { notIn: matchIds },
+            },
+    });
+  }
+}
 
 async function saveReactionSlot(hit: SlotHit, match: VodAttachMatch): Promise<boolean> {
   const incoming = {

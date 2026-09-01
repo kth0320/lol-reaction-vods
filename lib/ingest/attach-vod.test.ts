@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { pickMatchForVod, pickMatchesForVod, vsPairInTitle, type VodAttachMatch } from "./attach-vod";
+import {
+  pickMatchForVod,
+  pickMatchesForVod,
+  pickMatchesForVodWithLiveTitles,
+  vsPairInTitle,
+  type VodAttachMatch,
+} from "./attach-vod";
 
 function match(partial: Partial<VodAttachMatch> & Pick<VodAttachMatch, "id" | "blueTeamId" | "redTeamId">): VodAttachMatch {
   return {
@@ -333,6 +339,41 @@ describe("pickMatchesForVod", () => {
     assert.equal(
       pickMatchForVod("김민교 LCK T1 vs GEN Road to MSI #LckWatchParty", new Date("2026-06-14T10:00:00Z"), [lck, msi])?.id,
       "lck-t1-gen",
+    );
+  });
+});
+
+describe("pickMatchesForVodWithLiveTitles", () => {
+  const genKt = match({
+    id: "lck-gen-kt",
+    tournament: "LCK",
+    blueTeamId: "gen",
+    redTeamId: "kt",
+    blueAliases: ["GEN", "Gen.G"],
+    redAliases: ["KT", "KT Rolster"],
+    startsAt: new Date("2026-09-01T08:00:00Z"),
+    bestOf: 5,
+    status: "live",
+  });
+
+  it("does not attach yesterday's Overwatch VOD because today's LCK title was seen", () => {
+    const hits = pickMatchesForVodWithLiveTitles(
+      { title: "갑자기 옵치내전이 하고싶네 ㅎ;", publishedAt: new Date("2026-08-31T14:31:00Z") },
+      [{ title: "울챔스 / GEN vs KT #LCKWatchParty", seenAt: new Date("2026-09-01T07:15:00Z"), matchId: genKt.id }],
+      [genKt],
+    );
+    assert.deepEqual(hits, []);
+  });
+
+  it("still attaches a retitled 다시보기 from the same LCK session", () => {
+    const hits = pickMatchesForVodWithLiveTitles(
+      { title: "다시보기", publishedAt: new Date("2026-09-01T07:00:00Z") },
+      [{ title: "울챔스 / GEN vs KT #LCKWatchParty", seenAt: new Date("2026-09-01T07:15:00Z"), matchId: genKt.id }],
+      [genKt],
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id),
+      ["lck-gen-kt"],
     );
   });
 });
