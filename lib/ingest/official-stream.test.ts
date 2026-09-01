@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   eventSeriesIsLive,
+  lookForEvent,
   mutedBroadcastSrc,
   parseEventGameWins,
   parseEventGames,
@@ -67,6 +68,42 @@ describe("official muted background", () => {
     assert.equal(look.blueImageUrl, "https://static.lolesports.com/teams/t1.png");
     assert.equal(look.redImageUrl, "https://static.lolesports.com/teams/kt.png");
     assert.deepEqual(look.broadcast, { provider: "twitch", id: "lck" });
+  });
+
+  it("caches event details so the home hub does not refetch every tab", async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return new Response(JSON.stringify(lckDetails), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }) as typeof fetch;
+    const eventId = `cache-${Math.random().toString(16).slice(2)}`;
+    const first = await lookForEvent(eventId, fetchImpl);
+    const second = await lookForEvent(eventId, fetchImpl);
+    assert.equal(calls, 1);
+    assert.equal(first.leagueImageUrl, "https://static.lolesports.com/leagues/lck-color-on-black.png");
+    assert.equal(second.leagueImageUrl, first.leagueImageUrl);
+  });
+
+  it("shares an in-flight event lookup", async () => {
+    let calls = 0;
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const fetchImpl = (async () => {
+      calls += 1;
+      await gate;
+      return new Response(JSON.stringify(lckDetails), { status: 200 });
+    }) as typeof fetch;
+    const eventId = `inflight-${Math.random().toString(16).slice(2)}`;
+    const pending = Promise.all([lookForEvent(eventId, fetchImpl), lookForEvent(eventId, fetchImpl)]);
+    release();
+    const [left, right] = await pending;
+    assert.equal(calls, 1);
+    assert.equal(left.leagueImageUrl, right.leagueImageUrl);
   });
 
   it("treats a completed schedule event as live when a game is still inProgress", () => {

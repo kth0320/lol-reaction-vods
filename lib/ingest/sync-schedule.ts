@@ -10,13 +10,38 @@ import {
 } from "@/lib/ingest/schedule-map";
 import { ensureScheduleTeams, ensureTeamCatalog } from "@/lib/ingest/team-catalog";
 import { prisma } from "@/lib/prisma";
+import { readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
 export const SCHEDULE_FRESH_MS = 120_000;
+
+const SCHEDULE_SYNC_STAMP = path.join(process.cwd(), "prisma", ".schedule-sync-at");
 
 const scheduleState = globalThis as unknown as {
   scheduleSyncAt?: number;
   scheduleSyncInflight?: Promise<OfficialScheduleMatch[]>;
 };
+
+function readPersistedSyncAt(): number | undefined {
+  try {
+    const at = Number(readFileSync(SCHEDULE_SYNC_STAMP, "utf8").trim());
+    return Number.isFinite(at) && at > 0 ? at : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function persistSyncAt(at: number) {
+  try {
+    writeFileSync(SCHEDULE_SYNC_STAMP, String(at));
+  } catch {
+    // keep the in-memory stamp if the file cannot be written
+  }
+}
+
+if (!scheduleState.scheduleSyncAt) {
+  scheduleState.scheduleSyncAt = readPersistedSyncAt();
+}
 
 function catalogToScheduleTeams(
   rows: { id: string; league: string; aliases: string[] }[],
@@ -132,6 +157,7 @@ export async function syncOfficialSchedule(
   });
 
   scheduleState.scheduleSyncAt = Date.now();
+  persistSyncAt(scheduleState.scheduleSyncAt);
   return persist;
 }
 

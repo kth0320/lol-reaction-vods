@@ -5,7 +5,7 @@ import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
 import { lookForEvent } from "@/lib/ingest/official-stream";
-import { fetchLeagueArt, resolveMatchArt } from "@/lib/league-art";
+import { fetchLeagueArt, hasMatchupPlate, leagueArtForTournament, resolveMatchArt } from "@/lib/league-art";
 import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
 import { isLeague } from "@/lib/leagues";
 import { groupReactionsForWatch } from "@/lib/watch-links";
@@ -66,10 +66,14 @@ export default async function MatchPage({
   }
 
   const live = match.status === "live";
-  const [look, leagueArt] = await Promise.all([
-    live && match.externalEventId ? lookForEvent(match.externalEventId) : Promise.resolve(null),
-    fetchLeagueArt(),
-  ]);
+  const leagueArt = await fetchLeagueArt();
+  const plateReady = hasMatchupPlate({
+    leagueImageUrl: leagueArtForTournament(leagueArt, match.tournament),
+    blueImageUrl: match.blueTeam.imageUrl,
+    redImageUrl: match.redTeam.imageUrl,
+  });
+  const look =
+    live && match.externalEventId && !plateReady ? await lookForEvent(match.externalEventId) : null;
   const art = resolveMatchArt({
     tournament: match.tournament,
     leagueArt,
