@@ -410,26 +410,29 @@ a {
 
 .platform-hit {
   display: inline-flex;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: #0f1218;
-  border: 1px solid var(--line);
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: transparent;
   color: inherit;
 }
 
 .platform-hit:hover {
-  border-color: var(--gold);
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .platform-hit svg,
 .caster-platform svg,
 .filter-platform-mark {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
 }
 
 .filter-platform-mark {
@@ -439,10 +442,12 @@ a {
 
 .caster-platform {
   display: inline-flex;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .player-frame {
