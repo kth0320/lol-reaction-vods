@@ -8,6 +8,7 @@ import { fetchVodsForChannel, type VodFetchOptions, type VodListItem } from "@/l
 import { prisma } from "@/lib/prisma";
 import { vodAttachTournaments } from "@/lib/vod-hub";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
+import { matchAcceptsReactionVods } from "@/lib/ingest/vod-window";
 
 export const VOD_POLL_FRESH_MS = 30 * 60 * 1000;
 
@@ -70,7 +71,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
       include: { channels: true },
     }),
     prisma.match.findMany({
-      where: { status: "ended", tournament: { in: vodAttachTournaments() } },
+      where: { status: { in: ["ended", "live"] }, tournament: { in: vodAttachTournaments() } },
       include: {
         blueTeam: { include: { aliases: true } },
         redTeam: { include: { aliases: true } },
@@ -152,11 +153,12 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
 
   for (const hit of collapsed) {
     const match = matchById.get(hit.matchId);
-    if (!match) continue;
+    if (!match || !matchAcceptsReactionVods(match.status)) continue;
     if (await saveReactionSlot(hit, match)) attached += 1;
   }
 
   await dropFetchedVodsNotInHits(listed, hits);
+  await dropUnmatchedStoredVods(attachable, historyByCreator);
   await dropStaleUrlCopies(collapsed);
   await dedupeExistingSlots(matchById);
 
@@ -216,6 +218,24 @@ async function dropFetchedVodsNotInHits(
             },
     });
   }
+}
+
+async function dropUnmatchedStoredVods(
+  attachable: VodAttachMatch[],
+  historyByCreator: Map<string, { title: string; seenAt: Date; matchId: string | null; platform: string }[]>,
+): Promise<void> {
+  const rows = await prisma.reactionVod.findMany();
+  const drop: string[] = [];
+  for (const row of rows) {
+    const hits = pickMatchesForVodWithLiveTitles(
+      { title: row.title, publishedAt: row.publishedAt, platform: row.platform },
+      historyByCreator.get(row.creatorId) ?? [],
+      attachable,
+    );
+    if (!hits.some((match) => match.id === row.matchId)) drop.push(row.id);
+  }
+  if (drop.length === 0) return;
+  await prisma.reactionVod.deleteMany({ where: { id: { in: drop } } });
 }
 
 async function saveReactionSlot(hit: SlotHit, match: VodAttachMatch): Promise<boolean> {
