@@ -63,7 +63,7 @@ Phase 1은 시드 JSON으로 라이브 허브(다시보기 포함)를 보여 줍
 | 중계진 연결 | 라이브 **제목에서 리그·두 팀**을 읽어 그 공식 경기에 붙임 | 운영 화면에서 확인 후 게시 |
 | 공개 | 공식 LCK·LEC 경기는 홈에 올림. `/ops`는 `OPS_PASSWORD`가 있으면 로그인 | 운영 화면 |
 
-홈 상단은 시드(젠지 vs DK)를 쓰지 않는다. 방송 제목으로 ingest 경기를 만들지도 않는다. 페이지는 DB에 있는 일정을 바로 그리고, 공식 일정·라이브 후보는 응답 뒤에서 맞춘다. 다시보기 전체 수집은 `npm run ingest:vods`로 돈다.
+홈 상단은 시드(젠지 vs DK)를 쓰지 않는다. 방송 제목으로 ingest 경기를 만들지도 않는다. 페이지는 DB에 있는 일정을 바로 그리고, 공식 일정·라이브 후보·다시보기 수집은 응답 뒤에서 맞춘다. 한 번에 끝까지 채우려면 `npm run ingest:vods`를 쓴다.
 
 팀 별칭이 `data/teams.json`에 있어야 제목으로 중계진을 붙일 수 있다. 일정 API 팀 코드(DNS, KRX, MKOI 등)는 별칭·코드 맵으로 우리 팀 id에 맞춘다.
 
@@ -94,15 +94,17 @@ Phase 1은 시드 JSON으로 라이브 허브(다시보기 포함)를 보여 줍
 
 ```bash
 npm install
-npx prisma migrate dev
+npx prisma migrate dev --skip-seed
 npx prisma db seed
 npm run dev -- -p 43123
 ```
 
-브라우저에서 `http://localhost:43123` → 상단 vs 카드(LCK / LEC 탭 / 5초 전환) → 경기 화면(플랫폼 필터) / 하단 다시보기.  
-수집 후보는 `http://localhost:43123/candidates`. 수동 보정은 `http://localhost:43123/ops` (`OPS_PASSWORD`가 있으면 로그인). 일정만: `npm run ingest:schedule` (최근 창 + 2026·2025·2024 끝난 대회). 라이브: `npm run ingest:live`. 다시보기: `npm run ingest:vods` (치지직·숲·YouTube는 지난 시즌까지 페이지).
+빈 DB를 처음 만들 때만 `npx prisma db seed`를 씁니다. 시드 JSON 다시보기는 5개뿐입니다. 경기·다시보기·라이브 제목 기록이 하나라도 있으면 시드는 전부 건너뛰고 지우지 않습니다. 수집본이 있는 로컬은 항상 `npx prisma migrate dev --skip-seed`를 쓰고, `ingest:vods`는 이미 붙은 다시보기를 삭제하지 않습니다.
 
-시드 데이터는 `data/` JSON입니다. SQLite 파일(`prisma/dev.db`)은 커밋하지 않습니다.
+브라우저에서 `http://localhost:43123` → 상단 vs 카드(LCK / LEC 탭 / 5초 전환) → 경기 화면(플랫폼 필터) / 하단 다시보기.  
+수집 후보는 `http://localhost:43123/candidates`. 수동 보정은 `http://localhost:43123/ops` (`OPS_PASSWORD`가 있으면 로그인). 일정만: `npm run ingest:schedule` (최근 창 + 2026·2025·2024 끝난 대회). 라이브: `npm run ingest:live`. 다시보기: `npm run ingest:vods` (치지직·숲·YouTube는 지난 시즌까지 페이지). 홈을 열면 응답 뒤에서 라이브 후보만 맞추고, 다시보기 전체 수집은 `npm run ingest:vods`로 돕니다.
+
+시드 데이터는 `data/` JSON입니다. SQLite 파일(`prisma/dev.db`)은 커밋하지 않습니다. Git pull만으로는 다시보기가 복구되지 않습니다.
 
 ## 레포 구조
 

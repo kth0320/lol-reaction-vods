@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { readCreatorChannels, readCreatorWhitelist } from "../lib/creators";
+import { seedShouldWipe } from "../lib/ingest/keep-collected";
 
 const prisma = new PrismaClient();
 const root = join(import.meta.dirname, "..");
@@ -49,6 +50,18 @@ async function main() {
   const matches = [...vodMatches, ...liveMatches];
   const reactions = readJson<ReactionRow[]>("data/reactions/seed.json");
   const liveCasts = readJson<LiveCastRow[]>("data/live-casts/seed.json");
+
+  const existing = {
+    reactionVods: await prisma.reactionVod.count(),
+    matches: await prisma.match.count(),
+    liveTitles: await prisma.liveTitleHistory.count(),
+  };
+  if (!seedShouldWipe(existing)) {
+    console.log(
+      `seed: keeping ${existing.reactionVods} reaction VODs, ${existing.matches} matches, ${existing.liveTitles} live titles (will not wipe)`,
+    );
+    return;
+  }
 
   await prisma.liveCandidate.deleteMany();
   await prisma.liveCast.deleteMany();
