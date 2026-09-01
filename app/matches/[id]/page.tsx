@@ -56,7 +56,7 @@ export default async function MatchPage({
         orderBy: { creator: { name: "asc" } },
       },
       reactions: {
-        include: { creator: { include: { channels: true } } },
+        include: { creator: true },
         orderBy: { publishedAt: "asc" },
       },
     },
@@ -114,7 +114,6 @@ export default async function MatchPage({
       title: reaction.title,
       url: reaction.url,
       publishedAt: reaction.publishedAt,
-      channels: reaction.creator.channels,
     })),
   );
 

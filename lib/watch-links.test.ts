@@ -1,34 +1,39 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { groupReactionsForWatch, usesChannelPair } from "./watch-links";
+import { groupReactionsForWatch, pickPreferredWatchReaction } from "./watch-links";
 
-const wolfChannels = [
-  { platform: "chzzk", url: "https://chzzk.naver.com/wolf" },
-  { platform: "youtube", url: "https://www.youtube.com/@WolfYoutube_Official" },
-];
-
-describe("usesChannelPair", () => {
-  it("pairs station + YouTube when a recap channel exists", () => {
-    assert.equal(usesChannelPair(0, wolfChannels), true);
-    assert.equal(usesChannelPair(1, wolfChannels), true);
-    assert.equal(usesChannelPair(2, wolfChannels), true);
+describe("pickPreferredWatchReaction", () => {
+  it("keeps the Chzzk VOD until a YouTube recap exists", () => {
+    const picked = pickPreferredWatchReaction([
+      {
+        platform: "chzzk",
+        publishedAt: new Date("2026-08-08T12:00:00Z"),
+        url: "https://chzzk.naver.com/video/14594686",
+      },
+    ]);
+    assert.equal(picked.platform, "chzzk");
   });
 
-  it("does not pair a station-only creator", () => {
-    assert.equal(usesChannelPair(0, [{ platform: "soop", url: "https://play.sooplive.com/phonics1" }]), false);
-    assert.equal(
-      usesChannelPair(1, [{ platform: "youtube", url: "https://www.youtube.com/@solo" }]),
-      false,
-    );
-  });
-
-  it("pairs two YouTube recaps even without a station", () => {
-    assert.equal(usesChannelPair(2, [{ platform: "youtube", url: "https://www.youtube.com/@solo" }]), true);
+  it("replaces the Chzzk VOD with the YouTube video once it is attached", () => {
+    const picked = pickPreferredWatchReaction([
+      {
+        platform: "chzzk",
+        publishedAt: new Date("2026-08-08T12:00:00Z"),
+        url: "https://chzzk.naver.com/video/14594686",
+      },
+      {
+        platform: "youtube",
+        publishedAt: new Date("2026-08-08T14:00:00Z"),
+        url: "https://www.youtube.com/watch?v=RxF_OZTbneM",
+      },
+    ]);
+    assert.equal(picked.platform, "youtube");
+    assert.equal(picked.url, "https://www.youtube.com/watch?v=RxF_OZTbneM");
   });
 });
 
 describe("groupReactionsForWatch", () => {
-  it("gives Wolf a 치지직 station link and a YouTube channel link", () => {
+  it("shows Wolf's Chzzk replay when YouTube is not up yet", () => {
     const cards = groupReactionsForWatch([
       {
         id: "r1",
@@ -39,16 +44,43 @@ describe("groupReactionsForWatch", () => {
         title: "울챔스 T1 vs HLE",
         url: "https://chzzk.naver.com/video/14594686",
         publishedAt: new Date("2026-07-12T12:00:00Z"),
-        channels: wolfChannels,
       },
     ]);
     assert.equal(cards.length, 1);
-    assert.deepEqual(
-      cards[0].links.map((link) => link.label),
-      ["치지직 방송국", "YouTube 채널"],
-    );
-    assert.equal(cards[0].links[0].href, "https://chzzk.naver.com/wolf");
-    assert.equal(cards[0].links[1].href, "https://www.youtube.com/@WolfYoutube_Official");
+    assert.deepEqual(cards[0].links, [
+      { href: "https://chzzk.naver.com/video/14594686", label: "치지직에서 보기" },
+    ]);
+    assert.equal(cards[0].title, "울챔스 T1 vs HLE");
+  });
+
+  it("shows only the YouTube video after the recap is attached", () => {
+    const cards = groupReactionsForWatch([
+      {
+        id: "r-chzzk",
+        creatorId: "wolf",
+        creatorName: "울프",
+        creatorKind: "streamer",
+        platform: "chzzk",
+        title: "울챔스 T1 vs HLE",
+        url: "https://chzzk.naver.com/video/14594686",
+        publishedAt: new Date("2026-07-12T12:00:00Z"),
+      },
+      {
+        id: "r-yt",
+        creatorId: "wolf",
+        creatorName: "울프",
+        creatorKind: "streamer",
+        platform: "youtube",
+        title: "으악 오렌지 괴수다! │ T1 vs HLE",
+        url: "https://www.youtube.com/watch?v=RxF_OZTbneM",
+        publishedAt: new Date("2026-07-12T14:00:00Z"),
+      },
+    ]);
+    assert.equal(cards.length, 1);
+    assert.deepEqual(cards[0].links, [
+      { href: "https://www.youtube.com/watch?v=RxF_OZTbneM", label: "YouTube에서 보기" },
+    ]);
+    assert.equal(cards[0].title, "으악 오렌지 괴수다! │ T1 vs HLE");
   });
 
   it("keeps a single SOOP VOD as one outbound video link", () => {
@@ -62,48 +94,9 @@ describe("groupReactionsForWatch", () => {
         title: "김민교 LCK T1 vs DK",
         url: "https://vod.sooplive.com/player/203559103",
         publishedAt: new Date("2026-08-06T11:00:00Z"),
-        channels: [{ platform: "soop", url: "https://play.sooplive.com/phonics1" }],
       },
     ]);
     assert.equal(cards.length, 1);
     assert.deepEqual(cards[0].links, [{ href: "https://vod.sooplive.com/player/203559103", label: "숲에서 보기" }]);
-    assert.equal(cards[0].title, "김민교 LCK T1 vs DK");
-  });
-
-  it("collapses two YouTube recaps for one creator into channel links", () => {
-    const cards = groupReactionsForWatch([
-      {
-        id: "g1",
-        creatorId: "gangmam",
-        creatorName: "갱맘",
-        creatorKind: "youtuber",
-        platform: "youtube",
-        title: "LCK 1세트",
-        url: "https://www.youtube.com/watch?v=one",
-        publishedAt: new Date("2026-08-01T10:00:00Z"),
-        channels: [
-          { platform: "chzzk", url: "https://chzzk.naver.com/gangmam" },
-          { platform: "youtube", url: "https://www.youtube.com/@gangmam" },
-        ],
-      },
-      {
-        id: "g2",
-        creatorId: "gangmam",
-        creatorName: "갱맘",
-        creatorKind: "youtuber",
-        platform: "youtube",
-        title: "LCK 2세트",
-        url: "https://www.youtube.com/watch?v=two",
-        publishedAt: new Date("2026-08-01T11:00:00Z"),
-        channels: [
-          { platform: "chzzk", url: "https://chzzk.naver.com/gangmam" },
-          { platform: "youtube", url: "https://www.youtube.com/@gangmam" },
-        ],
-      },
-    ]);
-    assert.equal(cards.length, 1);
-    assert.equal(cards[0].links.length, 2);
-    assert.equal(cards[0].links[0].label, "치지직 방송국");
-    assert.equal(cards[0].links[1].label, "YouTube 채널");
   });
 });

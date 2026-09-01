@@ -1,10 +1,5 @@
 import { isPlatform, platformLabel, type Platform } from "@/lib/playback";
 
-export type ChannelRef = {
-  platform: string;
-  url: string;
-};
-
 export type ReactionForWatch = {
   id: string;
   creatorId: string;
@@ -14,7 +9,6 @@ export type ReactionForWatch = {
   title: string;
   url: string;
   publishedAt: Date | null;
-  channels: ChannelRef[];
 };
 
 export type WatchLink = {
@@ -34,32 +28,47 @@ export type CreatorWatchCard = {
 
 const STATION_ORDER: Platform[] = ["chzzk", "soop", "twitch"];
 
-export function pickStationChannel(channels: ChannelRef[]): ChannelRef | null {
+function platformName(platform: string): string {
+  return isPlatform(platform) ? platformLabel(platform) : platform;
+}
+
+function publishedMs(row: { publishedAt: Date | null }): number {
+  return row.publishedAt?.getTime() ?? 0;
+}
+
+/** YouTube recap replaces the station VOD once it is attached. Until then, the 치지직/숲 video. */
+export function pickPreferredWatchReaction<T extends { platform: string; publishedAt: Date | null }>(
+  rows: T[],
+): T {
+  if (rows.length === 0) {
+    throw new Error("pickPreferredWatchReaction: empty");
+  }
+  const youtube = rows
+    .filter((row) => row.platform === "youtube")
+    .sort((left, right) => publishedMs(right) - publishedMs(left));
+  if (youtube[0]) return youtube[0];
   for (const platform of STATION_ORDER) {
-    const hit = channels.find((channel) => channel.platform === platform && channel.url);
+    const hit = rows.find((row) => row.platform === platform);
     if (hit) return hit;
   }
-  return null;
-}
-
-export function pickYoutubeChannel(channels: ChannelRef[]): ChannelRef | null {
-  return channels.find((channel) => channel.platform === "youtube" && channel.url) ?? null;
-}
-
-/** Wolf / 갱맘: recap VODs live on YouTube, live home is 치지직·숲·Twitch. */
-export function usesChannelPair(youtubeCount: number, channels: ChannelRef[]): boolean {
-  const youtube = pickYoutubeChannel(channels);
-  const station = pickStationChannel(channels);
-  if (youtube && station) return true;
-  return youtubeCount >= 2 && Boolean(youtube);
+  return rows[0];
 }
 
 function earliestMs(rows: ReactionForWatch[]): number {
   return Math.min(...rows.map((row) => row.publishedAt?.getTime() ?? Number.POSITIVE_INFINITY));
 }
 
-function platformName(platform: string): string {
-  return isPlatform(platform) ? platformLabel(platform) : platform;
+function cardFor(row: ReactionForWatch): CreatorWatchCard {
+  const label = platformName(row.platform);
+  return {
+    key: row.id,
+    creatorId: row.creatorId,
+    creatorName: row.creatorName,
+    creatorKind: row.creatorKind,
+    title: row.title,
+    badge: label,
+    links: [{ href: row.url, label: `${label}에서 보기` }],
+  };
 }
 
 export function groupReactionsForWatch(rows: ReactionForWatch[]): CreatorWatchCard[] {
@@ -70,52 +79,7 @@ export function groupReactionsForWatch(rows: ReactionForWatch[]): CreatorWatchCa
     else byCreator.set(row.creatorId, [row]);
   }
 
-  const groups = [...byCreator.values()].sort((left, right) => earliestMs(left) - earliestMs(right));
-  const cards: CreatorWatchCard[] = [];
-
-  for (const group of groups) {
-    group.sort((left, right) => (left.publishedAt?.getTime() ?? 0) - (right.publishedAt?.getTime() ?? 0));
-    const first = group[0];
-    const youtubeCount = group.filter((row) => row.platform === "youtube").length;
-
-    if (usesChannelPair(youtubeCount, first.channels)) {
-      const station = pickStationChannel(first.channels);
-      const youtube = pickYoutubeChannel(first.channels);
-      const links: WatchLink[] = [];
-      if (station) {
-        links.push({
-          href: station.url,
-          label: `${platformName(station.platform)} 방송국`,
-        });
-      }
-      if (youtube) {
-        links.push({ href: youtube.url, label: "YouTube 채널" });
-      }
-      cards.push({
-        key: first.creatorId,
-        creatorId: first.creatorId,
-        creatorName: first.creatorName,
-        creatorKind: first.creatorKind,
-        title: "유튜브 다시보기가 여러 개라 채널로 이동합니다.",
-        badge: "방송국 · YouTube",
-        links,
-      });
-      continue;
-    }
-
-    for (const row of group) {
-      const label = platformName(row.platform);
-      cards.push({
-        key: row.id,
-        creatorId: row.creatorId,
-        creatorName: row.creatorName,
-        creatorKind: row.creatorKind,
-        title: row.title,
-        badge: label,
-        links: [{ href: row.url, label: `${label}에서 보기` }],
-      });
-    }
-  }
-
-  return cards;
+  return [...byCreator.values()]
+    .sort((left, right) => earliestMs(left) - earliestMs(right))
+    .map((group) => cardFor(pickPreferredWatchReaction(group)));
 }
