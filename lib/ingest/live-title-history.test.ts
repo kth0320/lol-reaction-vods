@@ -12,6 +12,7 @@ describe("vodTitleNeedsLiveInsurance", () => {
     assert.equal(vodTitleNeedsLiveInsurance("이상호 새벽 FC온라인 공차기"), false);
     assert.equal(vodTitleNeedsLiveInsurance("로보토미 코퍼레이션 / 이리"), false);
     assert.equal(vodTitleNeedsLiveInsurance("오늘 미스릴가는날"), false);
+    assert.equal(vodTitleNeedsLiveInsurance("군이루 솔로랭크"), false);
   });
 });
 

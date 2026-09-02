@@ -243,8 +243,8 @@ describe("vod list parsers", () => {
     );
     assert.equal(rows.length, 1);
     assert.deepEqual(calls, [
-      "https://chapi.sooplive.co.kr/api/phonics1/vods?page=1",
-      "https://chapi.sooplive.co.kr/api/phonics1/vods?page=2",
+      "https://chapi.sooplive.co.kr/api/phonics1/vods?page=1&orderby=reg_date",
+      "https://chapi.sooplive.co.kr/api/phonics1/vods?page=2&orderby=reg_date",
     ]);
   });
 

@@ -4,6 +4,7 @@ import { WatchOutbound } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
 import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
+import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { lookForEvent } from "@/lib/ingest/official-stream";
 import { fetchLeagueArt, hasMatchupPlate, leagueArtForTournament, resolveMatchArt } from "@/lib/league-art";
 import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
@@ -31,6 +32,7 @@ export default async function MatchPage({
   const query = await searchParams;
   after(() => {
     void refreshLiveCandidatesInBackground();
+    void refreshVodsInBackground();
   });
   const head = await prisma.match.findUnique({
     where: { id },

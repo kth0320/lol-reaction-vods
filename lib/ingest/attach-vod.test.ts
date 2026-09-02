@@ -4,6 +4,7 @@ import {
   pickMatchForVod,
   pickMatchesForVod,
   pickMatchesForVodWithLiveTitles,
+  storedVodIsUnrelatedToMatch,
   vsPairInTitle,
   type VodAttachMatch,
 } from "./attach-vod";
@@ -427,6 +428,32 @@ describe("pickMatchesForVodWithLiveTitles", () => {
     assert.deepEqual(hits, []);
   });
 
+  it("does not glue a solo-queue SOOP VOD onto GEN vs KT via live titles", () => {
+    const po = match({
+      id: "lck-gen-kt-po",
+      tournament: "LCK",
+      blueTeamId: "gen",
+      redTeamId: "kt",
+      blueAliases: ["GEN", "Gen.G", "젠지"],
+      redAliases: ["KT", "KT Rolster"],
+      startsAt: new Date("2026-09-01T08:00:00Z"),
+      bestOf: 5,
+    });
+    const hits = pickMatchesForVodWithLiveTitles(
+      { title: "군이루 솔로랭크", publishedAt: new Date("2026-09-01T10:56:00Z"), platform: "soop" },
+      [
+        {
+          title: "군이루 GEN vs KT #LckWatchParty",
+          seenAt: new Date("2026-09-01T08:20:00Z"),
+          matchId: po.id,
+          platform: "soop",
+        },
+      ],
+      [po],
+    );
+    assert.deepEqual(hits, []);
+  });
+
   it("does not park a GEN vs KT VOD on yesterday's DK vs KT because today's series is still live", () => {
     const dkKt = match({
       id: "lck-kt-dk",
@@ -465,5 +492,27 @@ describe("pickMatchesForVodWithLiveTitles", () => {
       [genKt],
     );
     assert.deepEqual(hits, []);
+  });
+});
+
+describe("storedVodIsUnrelatedToMatch", () => {
+  it("drops a solo-queue VOD parked on GEN vs KT", () => {
+    assert.equal(
+      storedVodIsUnrelatedToMatch("군이루 솔로랭크", {
+        blueAliases: ["GEN", "젠지"],
+        redAliases: ["KT"],
+      }),
+      true,
+    );
+  });
+
+  it("keeps a GEN vs KT watchparty VOD", () => {
+    assert.equal(
+      storedVodIsUnrelatedToMatch("김민교x칸 LCK GEN vs KT 플레이오프 #LckWatchParty", {
+        blueAliases: ["GEN", "젠지"],
+        redAliases: ["KT"],
+      }),
+      false,
+    );
   });
 });
