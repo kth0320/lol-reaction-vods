@@ -2,10 +2,9 @@ import { attachTitleToOfficial, type OfficialLiveMatch } from "@/lib/ingest/atta
 import { prisma } from "@/lib/prisma";
 
 const SEARCH_KEYWORDS = ["LCK", "LPL", "LEC", "롤드컵", "Worlds", "MSI", "퍼스트스탠드"];
-const SKIP_NAME = /^(LCK|LPL|LEC|LCK_KR|LCK CL|LoL Esports|리그 오브 레전드|Riot Games)$/i;
+const SKIP_NAME = /^(LCK|LPL|LEC|LCK CL|LoL Esports|리그 오브 레전드|Riot Games)$/i;
 const SKIP_TITLE = /\bLCK\s*CL\b|LCKC\b|챌린저스|LPL\s*CL\b/i;
 const SKIP_TWITCH_LOGIN = /^(lck|lpl|lec)(_|$)|riotgames|lolesports/i;
-const SKIP_SOOP_ID = /^(aflol|lck|lpl|lec)(_|$)/i;
 const TWITCH_GQL_CLIENT_ID = process.env.TWITCH_GQL_CLIENT_ID ?? "kimne78kx3ncx6brgo4mv6wki5h1ko";
 const USER_AGENT = "Mozilla/5.0 (compatible; lol-reaction-vods-prototype/0.1)";
 
@@ -20,7 +19,7 @@ function text(value: unknown): string {
 }
 
 export type DiscoveredLive = {
-  platform: "chzzk" | "soop" | "twitch";
+  platform: "chzzk" | "twitch";
   channelId: string;
   name: string;
   title: string;
@@ -31,7 +30,6 @@ function keepDiscovered(live: Pick<DiscoveredLive, "name" | "title" | "channelId
   if (!live.channelId || !live.name || !live.title) return false;
   if (SKIP_NAME.test(live.name) || SKIP_TITLE.test(live.title)) return false;
   if (live.platform === "twitch" && SKIP_TWITCH_LOGIN.test(live.channelId)) return false;
-  if (live.platform === "soop" && SKIP_SOOP_ID.test(live.channelId)) return false;
   return true;
 }
 
@@ -84,28 +82,6 @@ export function parseTwitchSearchChannels(payload: unknown): DiscoveredLive[] {
   return rows;
 }
 
-export function parseSoopSearchLives(payload: unknown): DiscoveredLive[] {
-  const data = asRecord(payload)?.REAL_BROAD;
-  if (!Array.isArray(data)) return [];
-  const rows: DiscoveredLive[] = [];
-  for (const item of data) {
-    const row = asRecord(item);
-    const channelId = text(row?.user_id);
-    const name = text(row?.user_nick) || text(row?.station_name) || channelId;
-    const title = text(row?.broad_title);
-    const candidate: DiscoveredLive = {
-      platform: "soop",
-      channelId,
-      name,
-      title,
-      url: `https://play.sooplive.com/${encodeURIComponent(channelId)}`,
-    };
-    if (!keepDiscovered(candidate)) continue;
-    rows.push(candidate);
-  }
-  return rows;
-}
-
 export function discoveredCreatorId(platform: string, channelId: string): string {
   return `disc-${platform}-${channelId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 40)}`;
 }
@@ -134,13 +110,6 @@ async function fetchTwitchSearch(keyword: string, fetchImpl: typeof fetch): Prom
   });
   if (!response.ok) return [];
   return parseTwitchSearchChannels(JSON.parse(await response.text()) as unknown);
-}
-
-async function fetchSoopSearch(keyword: string, fetchImpl: typeof fetch): Promise<DiscoveredLive[]> {
-  const url = `https://sch.sooplive.co.kr/api.php?m=liveSearch&v=1.0&szOrder=score_desc&nPageNo=1&nListCnt=20&szKeyword=${encodeURIComponent(keyword)}`;
-  const response = await fetchImpl(url, { headers: { "User-Agent": USER_AGENT }, cache: "no-store" });
-  if (!response.ok) return [];
-  return parseSoopSearchLives(JSON.parse(await response.text()) as unknown);
 }
 
 export async function ensureDiscoveredCreator(live: DiscoveredLive): Promise<string> {
@@ -172,7 +141,6 @@ export async function discoverLiveCostreamers(
     SEARCH_KEYWORDS.flatMap((keyword) => [
       fetchChzzkSearch(keyword, fetchImpl).catch(() => [] as DiscoveredLive[]),
       fetchTwitchSearch(keyword, fetchImpl).catch(() => [] as DiscoveredLive[]),
-      fetchSoopSearch(keyword, fetchImpl).catch(() => [] as DiscoveredLive[]),
     ]),
   );
   const seen = new Set<string>();

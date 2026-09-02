@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseChzzkChannel, parseChzzkLiveStatus, parseSoopLive, parseSoopStation, parseTwitchGql, probeSoopLive, soopProfileImageUrl } from "./live-status";
+import { parseChzzkChannel, parseChzzkLiveStatus, parseSoopLive, parseSoopStation, parseTwitchGql, soopProfileImageUrl } from "./live-status";
 
 describe("live status parsers", () => {
   it("treats Chzzk OPEN as live and CLOSE as off", () => {
@@ -39,16 +39,13 @@ describe("live status parsers", () => {
     assert.equal(off.isLive, false);
   });
 
-  it("reads SOOP station profile images, viewers, and a live title", () => {
+  it("reads SOOP station profile images and current viewers", () => {
     const station = parseSoopStation({
       profile_image: "//profile.img.sooplive.co.kr/LOGO/eh/ehdrb866/ehdrb866.jpg",
-      broad: { current_sum_viewer: 663, broad_title: "[LCK] T1 vs 한화" },
+      broad: { current_sum_viewer: 663 },
     });
     assert.equal(station.imageUrl, "https://profile.img.sooplive.co.kr/LOGO/eh/ehdrb866/ehdrb866.jpg");
     assert.equal(station.viewerCount, 663);
-    assert.equal(station.isLive, true);
-    assert.equal(station.title, "[LCK] T1 vs 한화");
-    assert.equal(parseSoopStation({ profile_image: "" }).isLive, false);
   });
 
   it("treats Twitch stream type live as live", () => {
@@ -69,36 +66,5 @@ describe("live status parsers", () => {
     assert.equal(live.imageUrl, "https://static-cdn.jtvnw.net/caedrel.png");
     const off = parseTwitchGql({ data: { user: { stream: null } } }, "ibai", "https://www.twitch.tv/ibai");
     assert.equal(off.isLive, false);
-  });
-
-  it("keeps a SOOP live when the station request fails", async () => {
-    const live = await probeSoopLive("ehdrb866", "https://play.sooplive.com/ehdrb866", async (input) => {
-      const url = String(input);
-      if (url.includes("player_live_api")) {
-        return new Response(JSON.stringify({ CHANNEL: { RESULT: 1, TITLE: "[LCK] T1 vs 한화" } }), { status: 200 });
-      }
-      return new Response("timeout", { status: 504 });
-    });
-    assert.equal(live.isLive, true);
-    assert.equal(live.title, "[LCK] T1 vs 한화");
-  });
-
-  it("keeps a SOOP live from the station when player_live_api fails", async () => {
-    const live = await probeSoopLive("phonics1", "https://play.sooplive.com/phonics1", async (input) => {
-      const url = String(input);
-      if (url.includes("/station")) {
-        return new Response(
-          JSON.stringify({
-            profile_image: "//profile.img.sooplive.co.kr/LOGO/ph/phonics1/phonics1.jpg",
-            broad: { broad_title: "김민교 LCK T1 vs HLE", current_sum_viewer: 1200 },
-          }),
-          { status: 200 },
-        );
-      }
-      return new Response("blocked", { status: 403 });
-    });
-    assert.equal(live.isLive, true);
-    assert.equal(live.title, "김민교 LCK T1 vs HLE");
-    assert.equal(live.viewerCount, 1200);
   });
 });
