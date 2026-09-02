@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { discoveredCreatorId, parseChzzkSearchLives, parseTwitchSearchChannels } from "./discover-live";
+import { discoveredCreatorId, parseChzzkSearchLives, parseSoopSearchLives, parseTwitchSearchChannels } from "./discover-live";
 
 describe("parseChzzkSearchLives", () => {
   it("keeps a costream search hit and drops LCK CL / official names", () => {
@@ -44,5 +44,36 @@ describe("parseTwitchSearchChannels", () => {
       rows.map((row) => row.channelId),
       ["caedrel"],
     );
+  });
+});
+
+describe("parseSoopSearchLives", () => {
+  it("keeps costream hits and drops the official LCK station", () => {
+    const rows = parseSoopSearchLives({
+      RESULT: "1",
+      REAL_BROAD: [
+        {
+          user_id: "phonics1",
+          user_nick: "김민교.",
+          broad_title: "김민교x칸 LCK T1 vs HLE 플레이오프 #LckWatchParty",
+        },
+        {
+          user_id: "aflol",
+          user_nick: "LCK_KR",
+          broad_title: "[CC] [HLE vs T1] 2026 우리은행 LCK 플레이오프",
+        },
+        {
+          user_id: "lshooooo",
+          user_nick: "이상호",
+          broad_title: "이상호 T1 vs 한화 플레이오프 #LckWatchparty",
+        },
+      ],
+    });
+    assert.deepEqual(
+      rows.map((row) => row.channelId),
+      ["phonics1", "lshooooo"],
+    );
+    assert.equal(rows[0].platform, "soop");
+    assert.match(rows[0].url, /phonics1/);
   });
 });

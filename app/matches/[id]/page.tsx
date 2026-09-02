@@ -30,10 +30,6 @@ export default async function MatchPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  after(() => {
-    void refreshLiveCandidatesInBackground();
-    void refreshVodsInBackground();
-  });
   const head = await prisma.match.findUnique({
     where: { id },
     select: { status: true, source: true },
@@ -68,6 +64,10 @@ export default async function MatchPage({
   }
 
   const live = match.status === "live";
+  after(() => {
+    void refreshLiveCandidatesInBackground();
+    if (!live) void refreshVodsInBackground();
+  });
   const leagueArt = await fetchLeagueArt();
   const plateReady = hasMatchupPlate({
     leagueImageUrl: leagueArtForTournament(leagueArt, match.tournament),
