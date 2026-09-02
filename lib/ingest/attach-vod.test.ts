@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  persistFieldsForMatch,
   pickMatchForVod,
   pickMatchesForVod,
   pickMatchesForVodWithLiveTitles,
+  shouldFetchSoopChapters,
   storedVodIsUnrelatedToMatch,
   vsPairInTitle,
+  withSoopChapterTitles,
   type VodAttachMatch,
 } from "./attach-vod";
 
@@ -454,6 +457,88 @@ describe("pickMatchesForVodWithLiveTitles", () => {
     assert.deepEqual(hits, []);
   });
 
+  it("attaches 이상호 when the list title is FC온라인 but a chapter has 젠지 vs KT", () => {
+    const po = match({
+      id: "lck-gen-kt-po",
+      tournament: "LCK",
+      blueTeamId: "gen",
+      redTeamId: "kt",
+      blueAliases: ["GEN", "Gen.G", "젠지"],
+      redAliases: ["KT", "KT Rolster"],
+      startsAt: new Date("2026-09-01T08:00:00Z"),
+      bestOf: 5,
+    });
+    const hits = pickMatchesForVodWithLiveTitles(
+      {
+        title: "이상호 찌공배 10만개빵 3:3 FC온라인 ck 상글랜드출격",
+        publishedAt: new Date("2026-09-01T07:25:00Z"),
+        platform: "soop",
+        extraTitles: [
+          "이상호 안녕하세요 좋은아침이빈다",
+          "이상호 젠지 vs KT 대망의플레이오프 #LckWatchparty",
+          "이상호 찌공배 10만개빵 3:3 FC온라인 ck 상글랜드출격",
+        ],
+      },
+      [],
+      [po],
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id),
+      ["lck-gen-kt-po"],
+    );
+  });
+
+  it("attaches 클리드 when the list title is 3:3 CK but a chapter has KT vs GEN G", () => {
+    const po = match({
+      id: "lck-gen-kt-po",
+      tournament: "LCK",
+      blueTeamId: "gen",
+      redTeamId: "kt",
+      blueAliases: ["GEN", "Gen.G", "젠지"],
+      redAliases: ["KT", "KT Rolster"],
+      startsAt: new Date("2026-09-01T08:00:00Z"),
+      bestOf: 5,
+    });
+    const hits = pickMatchesForVodWithLiveTitles(
+      {
+        title: "3:3 CK",
+        publishedAt: new Date("2026-09-01T06:56:00Z"),
+        platform: "soop",
+        extraTitles: ["9월1일", "KT vs GEN G #lckwatchparty", "3:3 CK"],
+      },
+      [],
+      [po],
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id),
+      ["lck-gen-kt-po"],
+    );
+  });
+
+  it("does not attach a solo-queue VOD whose chapters have no vs pair", () => {
+    const po = match({
+      id: "lck-gen-kt-po",
+      tournament: "LCK",
+      blueTeamId: "gen",
+      redTeamId: "kt",
+      blueAliases: ["GEN", "Gen.G", "젠지"],
+      redAliases: ["KT", "KT Rolster"],
+      startsAt: new Date("2026-09-01T08:00:00Z"),
+      bestOf: 5,
+    });
+    const hits = pickMatchesForVodWithLiveTitles(
+      {
+        title: "군이루 솔로랭크",
+        publishedAt: new Date("2026-09-01T10:56:00Z"),
+        platform: "soop",
+        extraTitles: ["군이루 솔로랭크", "듀오"],
+      },
+      [],
+      [po],
+    );
+    assert.deepEqual(hits, []);
+  });
+
   it("does not park a GEN vs KT VOD on yesterday's DK vs KT because today's series is still live", () => {
     const dkKt = match({
       id: "lck-kt-dk",
@@ -514,5 +599,73 @@ describe("storedVodIsUnrelatedToMatch", () => {
       }),
       false,
     );
+  });
+
+  it("drops the FC온라인 list title and keeps the vs-pair chapter title", () => {
+    assert.equal(
+      storedVodIsUnrelatedToMatch("이상호 찌공배 10만개빵 3:3 FC온라인 ck 상글랜드출격", {
+        blueAliases: ["GEN", "젠지"],
+        redAliases: ["KT"],
+      }),
+      true,
+    );
+    assert.equal(
+      storedVodIsUnrelatedToMatch("이상호 젠지 vs KT 대망의플레이오프 #LckWatchparty", {
+        blueAliases: ["GEN", "젠지"],
+        redAliases: ["KT"],
+      }),
+      false,
+    );
+  });
+});
+
+describe("SOOP chapter attach", () => {
+  const po = match({
+    id: "lck-gen-kt-po",
+    tournament: "LCK",
+    blueTeamId: "gen",
+    redTeamId: "kt",
+    blueAliases: ["GEN", "Gen.G", "젠지"],
+    redAliases: ["KT", "KT Rolster"],
+    startsAt: new Date("2026-09-01T08:00:00Z"),
+    bestOf: 5,
+  });
+
+  const sangho = {
+    platform: "soop" as const,
+    externalId: "205943513",
+    title: "이상호 찌공배 10만개빵 3:3 FC온라인 ck 상글랜드출격",
+    url: "https://vod.sooplive.com/player/205943513",
+    publishedAt: new Date("2026-09-01T07:25:00Z"),
+  };
+
+  it("fetches chapters only for unmatched SOOP replays in a match window", () => {
+    assert.equal(shouldFetchSoopChapters(sangho, [], [po]), true);
+    assert.equal(shouldFetchSoopChapters(sangho, [po], [po]), false);
+    assert.equal(
+      shouldFetchSoopChapters({ ...sangho, platform: "chzzk" }, [], [po]),
+      false,
+    );
+    assert.equal(
+      shouldFetchSoopChapters({ ...sangho, publishedAt: new Date("2026-08-20T07:25:00Z") }, [], [po]),
+      false,
+    );
+  });
+
+  it("keeps only vs-pair chapters and starts the stored URL at that timestamp", () => {
+    const enriched = withSoopChapterTitles(
+      sangho,
+      [
+        { title: "이상호 안녕하세요 좋은아침이빈다", timeSec: 0 },
+        { title: "이상호 젠지 vs KT 대망의플레이오프 #LckWatchparty", timeSec: 1799 },
+        { title: "이상호 찌공배 10만개빵 3:3 FC온라인 ck 상글랜드출격", timeSec: 12119 },
+      ],
+      [po],
+    );
+    assert.deepEqual(enriched.extraTitles, ["이상호 젠지 vs KT 대망의플레이오프 #LckWatchparty"]);
+    assert.deepEqual(persistFieldsForMatch(enriched, po), {
+      title: "이상호 젠지 vs KT 대망의플레이오프 #LckWatchparty",
+      url: "https://vod.sooplive.com/player/205943513?seektime=1799",
+    });
   });
 });

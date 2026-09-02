@@ -1,10 +1,10 @@
 import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
-import { pickMatchesForVodWithLiveTitles, storedVodIsUnrelatedToMatch, type VodAttachMatch } from "@/lib/ingest/attach-vod";
+import { pickMatchesForVodWithLiveTitles, persistFieldsForMatch, shouldFetchSoopChapters, storedVodIsUnrelatedToMatch, withSoopChapterTitles, type VodAttachMatch } from "@/lib/ingest/attach-vod";
 import { shouldFetchVods } from "@/lib/ingest/platforms";
 import { isLivePollFresh } from "@/lib/ingest/poll-fresh";
 import { collapseReactionsBySlot, pickPreferredReaction } from "@/lib/ingest/reaction-slot";
 import { ensureTeamCatalog } from "@/lib/ingest/team-catalog";
-import { fetchVodsForChannel, type VodFetchOptions, type VodListItem } from "@/lib/ingest/vod-list";
+import { fetchSoopChapters, fetchVodsForChannel, type VodFetchOptions, type VodListItem } from "@/lib/ingest/vod-list";
 import { prisma } from "@/lib/prisma";
 import { vodAttachTournaments } from "@/lib/vod-hub";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
@@ -118,13 +118,37 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
       scanned += items.length;
       const history = historyByCreator.get(creator.id) ?? [];
       const hits: { creatorId: string; item: VodListItem; matchId: string }[] = [];
+      const needChapters = items.filter((item) =>
+        shouldFetchSoopChapters(
+          item,
+          pickMatchesForVodWithLiveTitles(
+            { title: item.title, publishedAt: item.publishedAt, platform: item.platform },
+            history,
+            attachable,
+          ),
+          attachable,
+        ),
+      );
+      const chaptersById = new Map<string, Awaited<ReturnType<typeof fetchSoopChapters>>>();
+      await Promise.all(
+        needChapters.map(async (item) => {
+          chaptersById.set(item.externalId, await fetchSoopChapters(item.externalId));
+        }),
+      );
       for (const item of items) {
+        const chapters = chaptersById.get(item.externalId);
+        const row = chapters ? withSoopChapterTitles(item, chapters, attachable) : item;
         for (const match of pickMatchesForVodWithLiveTitles(
-          { title: item.title, publishedAt: item.publishedAt, platform: item.platform },
+          {
+            title: row.title,
+            publishedAt: row.publishedAt,
+            platform: row.platform,
+            extraTitles: row.extraTitles,
+          },
           history,
           attachable,
         )) {
-          hits.push({ creatorId: creator.id, item, matchId: match.id });
+          hits.push({ creatorId: creator.id, item: row, matchId: match.id });
         }
       }
       return { hits };
@@ -170,8 +194,9 @@ type SlotHit = {
 };
 
 async function saveReactionSlot(hit: SlotHit, match: VodAttachMatch): Promise<boolean> {
+  const fields = persistFieldsForMatch(hit.item, match);
   const incoming = {
-    title: hit.item.title,
+    title: fields.title,
     publishedAt: hit.item.publishedAt,
     externalId: hit.item.externalId,
   };
@@ -197,8 +222,8 @@ async function saveReactionSlot(hit: SlotHit, match: VodAttachMatch): Promise<bo
     await prisma.reactionVod.update({
       where: { id: slot.id },
       data: {
-        title: hit.item.title,
-        url: hit.item.url,
+        title: fields.title,
+        url: fields.url,
         externalId: hit.item.externalId,
         publishedAt: hit.item.publishedAt,
       },
@@ -211,8 +236,8 @@ async function saveReactionSlot(hit: SlotHit, match: VodAttachMatch): Promise<bo
       matchId: hit.matchId,
       creatorId: hit.creatorId,
       platform: hit.item.platform,
-      title: hit.item.title,
-      url: hit.item.url,
+      title: fields.title,
+      url: fields.url,
       externalId: hit.item.externalId,
       publishedAt: hit.item.publishedAt,
     },

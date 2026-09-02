@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseChzzkVideos, parseSoopVods, parseYouTubeAtom, parseYouTubeBrowse, parseRelativeYoutubeAge, fetchChzzkReplays, fetchSoopVods, fetchVodsForChannel, fetchYouTubeUploads, youtubeUploadsBrowseId } from "./vod-list";
+import { parseChzzkVideos, parseSoopVods, parseSoopChapterList, parseYouTubeAtom, parseYouTubeBrowse, parseRelativeYoutubeAge, fetchChzzkReplays, fetchSoopVods, fetchSoopChapters, fetchVodsForChannel, fetchYouTubeUploads, soopChapterListUrl, soopPlayerUrl, youtubeUploadsBrowseId } from "./vod-list";
 import { shouldFetchVods } from "./platforms";
 import { vodInMatchWindow } from "./vod-window";
 import { pickMatchForVod } from "./attach-vod";
@@ -135,6 +135,45 @@ describe("vod list parsers", () => {
     assert.equal(rows[0].platform, "soop");
     assert.equal(rows[0].externalId, "203731555");
     assert.equal(rows[0].url, "https://vod.sooplive.com/player/203731555");
+  });
+
+  it("reads SOOP replay chapters and a seektime player URL", () => {
+    const chapters = parseSoopChapterList({
+      result: 1,
+      data: [
+        { title: "이상호 안녕하세요 좋은아침이빈다", time_sec: 0, time_stamp: "00:00" },
+        { title: "이상호 젠지 vs KT 대망의플레이오프 #LckWatchparty", time_sec: 1799, time_stamp: "29:59" },
+        { title: "KT vs GEN G #lckwatchparty", time_sec: 3601, time_stamp: "1:00:01" },
+      ],
+    });
+    assert.equal(chapters.length, 3);
+    assert.equal(chapters[1].timeSec, 1799);
+    assert.equal(chapters[2].title, "KT vs GEN G #lckwatchparty");
+    assert.deepEqual(parseSoopChapterList({ result: 0, data: [] }), []);
+    assert.equal(
+      soopChapterListUrl("205943513"),
+      "https://stbbs.sooplive.co.kr/api/chapter/Controllers/ChapterListController.php?nTitleNo=205943513&szFileType=REVIEW",
+    );
+    assert.equal(soopPlayerUrl("205943513"), "https://vod.sooplive.com/player/205943513");
+    assert.equal(soopPlayerUrl("205943513", 1799), "https://vod.sooplive.com/player/205943513?seektime=1799");
+    assert.equal(soopPlayerUrl("205943513", 0), "https://vod.sooplive.com/player/205943513");
+  });
+
+  it("fetches SOOP chapters and returns nothing when the request fails", async () => {
+    const chapters = await fetchSoopChapters("205934891", async (url) => {
+      assert.match(String(url), /nTitleNo=205934891/);
+      assert.match(String(url), /szFileType=REVIEW/);
+      return new Response(
+        JSON.stringify({
+          result: 1,
+          data: [{ title: "KT vs GEN G #lckwatchparty", time_sec: 3601, time_stamp: "1:00:01" }],
+        }),
+        { status: 200 },
+      );
+    });
+    assert.deepEqual(chapters, [{ title: "KT vs GEN G #lckwatchparty", timeSec: 3601 }]);
+    const empty = await fetchSoopChapters("1", async () => new Response("nope", { status: 500 }));
+    assert.deepEqual(empty, []);
   });
 
   it("returns nothing when asked to fetch Twitch VODs", async () => {

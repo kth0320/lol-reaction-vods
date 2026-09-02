@@ -9,12 +9,20 @@ export type VodFetchOptions = {
 export const VOD_LIVE_PAGES = 1;
 export const VOD_ARCHIVE_MAX_PAGES = 50;
 
+export type SoopChapter = {
+  title: string;
+  timeSec: number;
+};
+
 export type VodListItem = {
   platform: VodIngestPlatform;
   externalId: string;
   title: string;
   url: string;
   publishedAt: Date | null;
+  /** Replay chapter titles with an LCK/LEC vs pair; used when the list title is FC온라인. */
+  extraTitles?: string[];
+  chapters?: SoopChapter[];
 };
 
 const USER_AGENT = "Mozilla/5.0 (compatible; lol-reaction-vods-prototype/0.1)";
@@ -248,11 +256,48 @@ export function parseSoopVods(payload: unknown): VodListItem[] {
       platform: "soop",
       externalId,
       title,
-      url: `https://vod.sooplive.com/player/${encodeURIComponent(externalId)}`,
+      url: soopPlayerUrl(externalId),
       publishedAt: parseLooseDate(text(row?.reg_date), "+09:00"),
     });
   }
   return rows;
+}
+
+export function soopChapterListUrl(titleNo: string): string {
+  return `https://stbbs.sooplive.co.kr/api/chapter/Controllers/ChapterListController.php?nTitleNo=${encodeURIComponent(titleNo)}&szFileType=REVIEW`;
+}
+
+/** SOOP's player reads `seektime` (seconds) from the query string. */
+export function soopPlayerUrl(titleNo: string, startSec?: number): string {
+  const base = `https://vod.sooplive.com/player/${encodeURIComponent(titleNo)}`;
+  if (startSec == null || !Number.isFinite(startSec) || startSec <= 0) return base;
+  return `${base}?seektime=${Math.floor(startSec)}`;
+}
+
+export function parseSoopChapterList(payload: unknown): SoopChapter[] {
+  const rec = asRecord(payload);
+  if (!rec || Number(rec.result) !== 1 || !Array.isArray(rec.data)) return [];
+  const rows: SoopChapter[] = [];
+  for (const item of rec.data) {
+    const row = asRecord(item);
+    const title = text(row?.title);
+    const timeSec = Number(row?.time_sec);
+    if (!title || !Number.isFinite(timeSec) || timeSec < 0) continue;
+    rows.push({ title, timeSec });
+  }
+  return rows;
+}
+
+export async function fetchSoopChapters(
+  titleNo: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<SoopChapter[]> {
+  try {
+    const body = await readBody(await fetchOk(fetchImpl, soopChapterListUrl(titleNo)));
+    return parseSoopChapterList(JSON.parse(body) as unknown);
+  } catch {
+    return [];
+  }
 }
 
 export function parseLooseDate(value: string, offset = "Z"): Date | null {
