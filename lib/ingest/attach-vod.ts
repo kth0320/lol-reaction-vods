@@ -8,6 +8,7 @@ import {
 import { aliasIndexInTitle, inferLiveMatchFromTitle, mentionedLeagues, type InferTeam } from "@/lib/ingest/infer-match";
 import { pickPrototypeLiveMatch, type TitleMatchInput } from "@/lib/ingest/match-title";
 import { attachInferredToOfficial, sameTeamPair } from "@/lib/ingest/schedule-map";
+import { soopPlayerUrl, type SoopChapter, type VodListItem } from "@/lib/ingest/vod-list";
 import { matchAcceptsReactionVods, vodInMatchWindow } from "@/lib/ingest/vod-window";
 
 const INTERNATIONAL_TOURNAMENTS = new Set(["Worlds", "MSI", "EWC", "First Stand"]);
@@ -247,17 +248,71 @@ function historyForVod(item: { platform?: string }, history: LiveTitleRow[]): Li
   return history.filter((row) => !row.platform || row.platform === item.platform);
 }
 
+/** Chapter titles only attach when they contain this series as A vs B. */
+function matchesFromChapterTitles(
+  extraTitles: string[] | undefined,
+  publishedAt: Date | null,
+  matches: VodAttachMatch[],
+): VodAttachMatch[] {
+  const ids = new Set<string>();
+  for (const title of extraTitles ?? []) {
+    for (const match of pickMatchesForVod(title, publishedAt, matches)) {
+      if (vsPairInTitle(title, match.blueAliases, match.redAliases)) ids.add(match.id);
+    }
+  }
+  return matches.filter((match) => ids.has(match.id));
+}
+
+export function vodOverlapsEndedMatch(publishedAt: Date | null, matches: VodAttachMatch[]): boolean {
+  if (!publishedAt) return false;
+  return matches.some(
+    (match) => matchAcceptsReactionVods(match.status) && vodInMatchWindow(publishedAt, match.startsAt, match.bestOf),
+  );
+}
+
+/** Fetch SOOP chapters only after the list title missed, on a match-day replay. */
+export function shouldFetchSoopChapters(
+  item: { platform?: string; publishedAt: Date | null },
+  attached: VodAttachMatch[],
+  matches: VodAttachMatch[],
+): boolean {
+  if (item.platform !== "soop") return false;
+  if (attached.length > 0) return false;
+  return vodOverlapsEndedMatch(item.publishedAt, matches);
+}
+
+export function withSoopChapterTitles(item: VodListItem, chapters: SoopChapter[], matches: VodAttachMatch[]): VodListItem {
+  const useful = chapters.filter((chapter) =>
+    matches.some((match) => vsPairInTitle(chapter.title, match.blueAliases, match.redAliases)),
+  );
+  if (useful.length === 0) return item;
+  return { ...item, extraTitles: useful.map((chapter) => chapter.title), chapters: useful };
+}
+
+/** Store the vs-pair chapter title so FC온라인 list titles are not dropped later. */
+export function persistFieldsForMatch(
+  item: { title: string; url: string; externalId: string; chapters?: SoopChapter[] },
+  match: VodAttachMatch,
+): { title: string; url: string } {
+  const chapter = item.chapters?.find((row) => vsPairInTitle(row.title, match.blueAliases, match.redAliases));
+  if (!chapter) return { title: item.title, url: item.url };
+  return { title: chapter.title, url: soopPlayerUrl(item.externalId, chapter.timeSec) };
+}
+
 /** Title match plus live-title insurance, without using the next stream's title. */
 export function pickMatchesForVodWithLiveTitles(
-  item: { title: string; publishedAt: Date | null; platform?: string },
+  item: { title: string; publishedAt: Date | null; platform?: string; extraTitles?: string[] },
   history: LiveTitleRow[],
   matches: VodAttachMatch[],
 ): VodAttachMatch[] {
-  const own = pickMatchesForVod(item.title, item.publishedAt, matches);
-  if (!vodTitleNeedsLiveInsurance(item.title)) return own;
+  const ids = new Set(pickMatchesForVod(item.title, item.publishedAt, matches).map((match) => match.id));
+  for (const match of matchesFromChapterTitles(item.extraTitles, item.publishedAt, matches)) {
+    ids.add(match.id);
+  }
+  if (ids.size > 0) return matches.filter((match) => ids.has(match.id));
+  if (!vodTitleNeedsLiveInsurance(item.title)) return [];
 
   const rows = historyForVod(item, history);
-  const ids = new Set(own.map((match) => match.id));
   for (const title of extraTitlesForVod({
     currentTitle: item.title,
     publishedAt: item.publishedAt,
