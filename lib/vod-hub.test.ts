@@ -39,11 +39,16 @@ describe("vod hub", () => {
     }
   });
 
-  it("only lists ended matches that already have reaction VODs", () => {
+  it("lists ended matches that have reaction VODs", () => {
     const where = vodHubMatchWhere("lck");
     assert.equal(where.status, "ended");
     assert.deepEqual(where.tournament, { in: ["LCK"] });
-    assert.deepEqual(where.reactions, { some: {} });
+    assert.deepEqual(where.OR, [{ reactions: { some: {} } }]);
+  });
+
+  it("also lists ended matches that were seen live even before VODs attach", () => {
+    const where = vodHubMatchWhere("lck", ["schedule-t1-hle"]);
+    assert.deepEqual(where.OR, [{ reactions: { some: {} } }, { id: { in: ["schedule-t1-hle"] } }]);
   });
 
   it("uses one search box for every tournament hub, including LEC and later Worlds/LPL", () => {
