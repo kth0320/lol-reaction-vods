@@ -118,17 +118,19 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
       scanned += items.length;
       const history = historyByCreator.get(creator.id) ?? [];
       const hits: { creatorId: string; item: VodListItem; matchId: string }[] = [];
-      const needChapters = items.filter((item) =>
-        shouldFetchSoopChapters(
-          item,
-          pickMatchesForVodWithLiveTitles(
-            { title: item.title, publishedAt: item.publishedAt, platform: item.platform },
-            history,
+      const needChapters = items
+        .filter((item) =>
+          shouldFetchSoopChapters(
+            item,
+            pickMatchesForVodWithLiveTitles(
+              { title: item.title, publishedAt: item.publishedAt, platform: item.platform },
+              history,
+              attachable,
+            ),
             attachable,
           ),
-          attachable,
-        ),
-      );
+        )
+        .slice(0, (vods.maxPages ?? 1) > 1 ? Number.POSITIVE_INFINITY : 12);
       const chaptersById = new Map<string, Awaited<ReturnType<typeof fetchSoopChapters>>>();
       await Promise.all(
         needChapters.map(async (item) => {
