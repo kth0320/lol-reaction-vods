@@ -76,12 +76,6 @@ function emptySlide(league: LiveSlide["tournament"], leagueImageUrl: string): Li
 }
 
 export default async function HomePage() {
-  after(() => {
-    void syncOfficialScheduleIfStale();
-    void refreshLiveCandidatesInBackground();
-    void refreshVodsInBackground();
-  });
-
   const [scheduleLive, scheduleUpcoming, vodRows, leagueArt] = await Promise.all([
     loadScheduleMatches("live"),
     loadScheduleMatches("upcoming"),
@@ -91,6 +85,12 @@ export default async function HomePage() {
     }),
     fetchLeagueArt(),
   ]);
+
+  after(() => {
+    void syncOfficialScheduleIfStale();
+    void refreshLiveCandidatesInBackground();
+    if (scheduleLive.length === 0) void refreshVodsInBackground();
+  });
 
   const liveRows = sortLiveMatchesByLeague(scheduleLive).filter(
     (match): match is typeof match & { tournament: LiveSlide["tournament"] } =>
