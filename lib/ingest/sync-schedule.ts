@@ -155,10 +155,6 @@ export async function syncOfficialSchedule(
     where: { source: "ingest", status: "live" },
     data: { status: "ended" },
   });
-  await prisma.match.updateMany({
-    where: { source: "seed", status: "live" },
-    data: { status: "ended" },
-  });
 
   scheduleState.scheduleSyncAt = Date.now();
   persistSyncAt(scheduleState.scheduleSyncAt);

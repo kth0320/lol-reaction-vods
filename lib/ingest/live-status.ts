@@ -67,19 +67,12 @@ export function parseSoopLive(payload: unknown, channelId: string, url: string):
   };
 }
 
-export function parseSoopStation(payload: unknown): {
-  imageUrl: string;
-  viewerCount: number | null;
-  isLive: boolean;
-  title: string;
-} {
+export function parseSoopStation(payload: unknown): { imageUrl: string; viewerCount: number | null } {
   const root = asRecord(payload);
   const broad = asRecord(root?.broad);
   return {
     imageUrl: absoluteHttpUrl(text(root?.profile_image)),
     viewerCount: count(broad?.current_sum_viewer),
-    isLive: Boolean(broad),
-    title: text(broad?.broad_title),
   };
 }
 
@@ -135,9 +128,8 @@ export async function probeChzzkLive(channelId: string, url: string, fetchImpl: 
 
 export async function probeSoopLive(channelId: string, url: string, fetchImpl: typeof fetch = fetch): Promise<LiveProbe> {
   const headers = { "User-Agent": USER_AGENT };
-  let live: LiveProbe | null = null;
-  try {
-    const liveRes = await fetchOk(fetchImpl, "https://live.sooplive.com/afreeca/player_live_api.php", {
+  const [liveRes, stationRes] = await Promise.all([
+    fetchOk(fetchImpl, "https://live.sooplive.com/afreeca/player_live_api.php", {
       method: "POST",
       headers: {
         ...headers,
@@ -145,38 +137,22 @@ export async function probeSoopLive(channelId: string, url: string, fetchImpl: t
       },
       body: `bid=${encodeURIComponent(channelId)}&type=json`,
       cache: "no-store",
-    });
-    live = parseSoopLive(await readJson(liveRes), channelId, url);
-  } catch {
-    live = null;
-  }
-
-  let station = { imageUrl: "", viewerCount: null as number | null, isLive: false, title: "" };
-  try {
-    const stationRes = await fetchOk(fetchImpl, `https://chapi.sooplive.co.kr/api/${encodeURIComponent(channelId)}/station`, {
+    }),
+    fetchOk(fetchImpl, `https://chapi.sooplive.co.kr/api/${encodeURIComponent(channelId)}/station`, {
       headers,
       cache: "no-store",
-    });
+    }),
+  ]);
+  const live = parseSoopLive(await readJson(liveRes), channelId, url);
+  let station = { imageUrl: "", viewerCount: null as number | null };
+  try {
     station = parseSoopStation(await readJson(stationRes));
   } catch {
-    // player_live_api is enough; station is only for viewers/logo and a fallback
-  }
-
-  if (!live) {
-    return {
-      isLive: station.isLive,
-      title: station.title,
-      externalId: channelId,
-      liveUrl: url,
-      viewerCount: station.isLive ? station.viewerCount : null,
-      imageUrl: station.imageUrl || soopProfileImageUrl(channelId),
-    };
+    // keep player_live_api fields; WC is often 0
   }
   return {
     ...live,
-    title: live.title || station.title,
-    isLive: live.isLive || station.isLive,
-    viewerCount: live.isLive || station.isLive ? (station.viewerCount ?? live.viewerCount) : null,
+    viewerCount: live.isLive ? (station.viewerCount ?? live.viewerCount) : null,
     imageUrl: station.imageUrl || live.imageUrl,
   };
 }

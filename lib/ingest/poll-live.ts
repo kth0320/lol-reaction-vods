@@ -84,10 +84,6 @@ export async function pollLiveCandidates(options: { maxAgeMs?: number | null } =
 }
 
 async function runLivePoll(): Promise<PollRow[]> {
-  await prisma.match.updateMany({
-    where: { source: "seed", status: "live" },
-    data: { status: "ended" },
-  });
   await syncOfficialScheduleIfStale();
   await ensureCreatorCatalog();
   await ensureTeamCatalog();
