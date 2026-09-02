@@ -1,5 +1,5 @@
 import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
-import { pickMatchesForVodWithLiveTitles, type VodAttachMatch } from "@/lib/ingest/attach-vod";
+import { pickMatchesForVodWithLiveTitles, storedVodIsUnrelatedToMatch, type VodAttachMatch } from "@/lib/ingest/attach-vod";
 import { shouldFetchVods } from "@/lib/ingest/platforms";
 import { isLivePollFresh } from "@/lib/ingest/poll-fresh";
 import { collapseReactionsBySlot, pickPreferredReaction } from "@/lib/ingest/reaction-slot";
@@ -154,6 +154,7 @@ async function runVodPoll(vods: VodFetchOptions = {}): Promise<VodPollSummary> {
   }
 
   await dedupeExistingSlots(matchById);
+  await dropUnrelatedSessionVods(attachable);
 
   return { scanned, attached, skippedTwitch };
 }
@@ -231,4 +232,14 @@ async function dedupeExistingSlots(matchById: Map<string, VodAttachMatch>): Prom
   const extra = rows.filter((row) => !kept.has(row.id)).map((row) => row.id);
   if (extra.length === 0) return;
   await prisma.reactionVod.deleteMany({ where: { id: { in: extra } } });
+}
+
+async function dropUnrelatedSessionVods(attachable: VodAttachMatch[]): Promise<void> {
+  const byId = new Map(attachable.map((match) => [match.id, match]));
+  const rows = await prisma.reactionVod.findMany({ select: { id: true, title: true, matchId: true } });
+  const drop = rows
+    .filter((row) => storedVodIsUnrelatedToMatch(row.title, byId.get(row.matchId) ?? null))
+    .map((row) => row.id);
+  if (drop.length === 0) return;
+  await prisma.reactionVod.deleteMany({ where: { id: { in: drop } } });
 }

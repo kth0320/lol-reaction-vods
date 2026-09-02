@@ -9,11 +9,18 @@ export const TITLE_AFTER_VOD_MS = 12 * 60 * 60 * 1000;
 const LIVE_INSURANCE_TITLE =
   /다시보기|풀영상|풀버전|전체다시|전체보기|\breplays?\b|\bvods?\b|하이라이트|모음/i;
 const LIVE_INSURANCE_WAITING = /대기방|시참|손푼다|생각정리/;
+const UNRELATED_SESSION =
+  /솔로랭크|솔랭|피파|fco|fc\s*온라인|메이플|팰월드|퍼클런|내전/i;
+
+export function vodTitleIsUnrelatedSession(title: string): boolean {
+  return UNRELATED_SESSION.test(title.trim());
+}
 
 /** Live titles fill in a retitled replay, not a later FC Online / TFT / variety VOD. */
 export function vodTitleNeedsLiveInsurance(title: string): boolean {
   const trimmed = title.trim();
   if (trimmed.length === 0) return true;
+  if (vodTitleIsUnrelatedSession(trimmed)) return false;
   return LIVE_INSURANCE_TITLE.test(trimmed) || LIVE_INSURANCE_WAITING.test(trimmed);
 }
 

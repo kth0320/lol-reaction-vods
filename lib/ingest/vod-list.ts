@@ -397,19 +397,22 @@ export async function fetchChzzkReplays(
   return collected;
 }
 
+export function soopVodsPageUrl(channelId: string, page: number): string {
+  return `https://chapi.sooplive.co.kr/api/${encodeURIComponent(channelId)}/vods?page=${page}&orderby=reg_date`;
+}
+
 export async function fetchSoopVods(
   channelId: string,
   fetchImpl: typeof fetch = fetch,
   options: VodFetchOptions = {},
 ): Promise<VodListItem[]> {
-  const id = encodeURIComponent(channelId);
   const maxPages = Math.max(1, options.maxPages ?? VOD_LIVE_PAGES);
   const collected: VodListItem[] = [];
   for (let page = 1; page <= maxPages; page += 1) {
     let rows: VodListItem[] = [];
     try {
       const body = await readBody(
-        await fetchOk(fetchImpl, `https://chapi.sooplive.co.kr/api/${id}/vods?page=${page}`),
+        await fetchOk(fetchImpl, soopVodsPageUrl(channelId, page)),
       );
       rows = parseSoopVods(JSON.parse(body) as unknown);
     } catch {

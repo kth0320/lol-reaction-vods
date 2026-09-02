@@ -2,6 +2,7 @@ import { kstYear } from "@/lib/format";
 import {
   extraTitlesForVod,
   liveTitleMatchIdsForVod,
+  vodTitleIsUnrelatedSession,
   vodTitleNeedsLiveInsurance,
 } from "@/lib/ingest/live-title-history";
 import { aliasIndexInTitle, inferLiveMatchFromTitle, mentionedLeagues, type InferTeam } from "@/lib/ingest/infer-match";
@@ -77,6 +78,15 @@ export function vsPairInTitle(title: string, blueAliases: string[], redAliases: 
     }
   }
   return false;
+}
+
+export function storedVodIsUnrelatedToMatch(
+  title: string,
+  match: { blueAliases: string[]; redAliases: string[] } | null,
+): boolean {
+  if (!vodTitleIsUnrelatedSession(title)) return false;
+  if (!match) return true;
+  return !vsPairInTitle(title, match.blueAliases, match.redAliases);
 }
 
 function pickInferredMatch(
