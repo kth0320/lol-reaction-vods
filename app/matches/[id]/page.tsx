@@ -3,7 +3,7 @@ import { MatchTeams } from "@/components/match-teams";
 import { WatchOutbound } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
-import { pollLiveCandidates, LIVE_POLL_FRESH_MS } from "@/lib/ingest/poll-live";
+import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
 import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { lookForEvent } from "@/lib/ingest/official-stream";
 import { fetchLeagueArt, hasMatchupPlate, leagueArtForTournament, resolveMatchArt } from "@/lib/league-art";
@@ -38,10 +38,6 @@ export default async function MatchPage({
     notFound();
   }
 
-  if (head.status === "live" && usesLiveCandidates(head.source)) {
-    await pollLiveCandidates({ maxAgeMs: LIVE_POLL_FRESH_MS }).catch(() => []);
-  }
-
   const match = await prisma.match.findUnique({
     where: { id },
     include: {
@@ -69,6 +65,7 @@ export default async function MatchPage({
 
   const live = match.status === "live";
   after(() => {
+    void refreshLiveCandidatesInBackground();
     if (!live) void refreshVodsInBackground();
   });
   const leagueArt = await fetchLeagueArt();
