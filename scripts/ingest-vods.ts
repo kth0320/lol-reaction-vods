@@ -9,6 +9,7 @@ async function main() {
   await syncOfficialSchedule({ archiveYears });
   const summary = await pollReactionVods({
     maxAgeMs: null,
+    prune: false,
     vods: { maxPages: VOD_ARCHIVE_MAX_PAGES, untilYear },
   });
   console.log(

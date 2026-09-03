@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  keepStoredReplayTitle,
+  keepStoredReplayUrl,
   persistFieldsForMatch,
   pickMatchForVod,
   pickMatchesForVod,
@@ -667,5 +669,20 @@ describe("SOOP chapter attach", () => {
       title: "이상호 젠지 vs KT 대망의플레이오프 #LckWatchparty",
       url: "https://vod.sooplive.com/player/205943513?seektime=1799",
     });
+  });
+
+  it("does not rewrite an already-attached full replay to a chapter seek", () => {
+    const full = "https://vod.sooplive.com/player/205943513";
+    const seek = "https://vod.sooplive.com/player/205943513?seektime=1799";
+    assert.equal(keepStoredReplayUrl(full, seek), full);
+    assert.equal(keepStoredReplayUrl(seek, seek), seek);
+    assert.equal(keepStoredReplayUrl("", seek), seek);
+  });
+
+  it("does not overwrite a vs-pair title with a later FC온라인 list title", () => {
+    assert.equal(
+      keepStoredReplayTitle("이상호 젠지 vs KT 대망의플레이오프", "이상호 안녕하세요 3:3 FC온라인", po),
+      "이상호 젠지 vs KT 대망의플레이오프",
+    );
   });
 });
