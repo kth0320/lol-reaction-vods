@@ -2,9 +2,8 @@ import { VodHubGrid } from "@/components/vod-hub";
 import { LiveCarousel } from "@/components/live-carousel";
 import type { LiveSlide } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
+import { kickLiveIngestAfterResponse, kickVodIngestHalfHourly } from "@/lib/ingest/defer-ingest";
 import { lookForEvent } from "@/lib/ingest/official-stream";
-import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
-import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
 import { SCHEDULE_MATCH_SOURCE } from "@/lib/ingest/schedule-map";
 import { syncOfficialScheduleIfStale } from "@/lib/ingest/sync-schedule";
 import {
@@ -78,9 +77,9 @@ function emptySlide(league: LiveSlide["tournament"], leagueImageUrl: string): Li
 export default async function HomePage() {
   after(() => {
     void syncOfficialScheduleIfStale();
-    void refreshLiveCandidatesInBackground();
-    void refreshVodsInBackground();
   });
+  kickLiveIngestAfterResponse();
+  kickVodIngestHalfHourly();
 
   const [scheduleLive, scheduleUpcoming, vodRows, leagueArt] = await Promise.all([
     loadScheduleMatches("live"),

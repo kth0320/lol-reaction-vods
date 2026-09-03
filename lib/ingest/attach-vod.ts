@@ -299,6 +299,34 @@ export function persistFieldsForMatch(
   return { title: chapter.title, url: soopPlayerUrl(item.externalId, chapter.timeSec) };
 }
 
+function hasSeekTime(url: string): boolean {
+  return /[?&]seektime=\d+/i.test(url);
+}
+
+/** Do not turn an already-attached full replay into a mid-stream chapter jump. */
+export function keepStoredReplayUrl(storedUrl: string, incomingUrl: string): string {
+  const stored = storedUrl.trim();
+  const incoming = incomingUrl.trim();
+  if (!stored) return incoming;
+  if (hasSeekTime(incoming) && !hasSeekTime(stored)) return stored;
+  return incoming;
+}
+
+/** Do not overwrite a match title with a later 솔랭 / FC온라인 list title. */
+export function keepStoredReplayTitle(
+  storedTitle: string,
+  incomingTitle: string,
+  match: { blueAliases: string[]; redAliases: string[] },
+): string {
+  const stored = storedTitle.trim();
+  const incoming = incomingTitle.trim();
+  if (!stored) return incoming;
+  if (storedVodIsUnrelatedToMatch(incoming, match) && !storedVodIsUnrelatedToMatch(stored, match)) {
+    return stored;
+  }
+  return incoming;
+}
+
 /** Title match plus live-title insurance, without using the next stream's title. */
 export function pickMatchesForVodWithLiveTitles(
   item: { title: string; publishedAt: Date | null; platform?: string; extraTitles?: string[] },
