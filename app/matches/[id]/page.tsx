@@ -1,10 +1,11 @@
 import { LiveCasterBoard } from "@/components/live-caster-board";
+import { CasterAvatar } from "@/components/caster-avatar";
 import { MatchTeams } from "@/components/match-teams";
 import { WatchOutbound } from "@/components/vod-player";
 import { VsCard } from "@/components/vs-card";
 import { formatKst } from "@/lib/format";
-import { refreshLiveCandidatesInBackground } from "@/lib/ingest/poll-live";
-import { refreshVodsInBackground } from "@/lib/ingest/poll-vods";
+import { creatorProfileImage } from "@/lib/creator-image";
+import { pollLiveCandidates, LIVE_POLL_FRESH_MS } from "@/lib/ingest/poll-live";
 import { lookForEvent } from "@/lib/ingest/official-stream";
 import { fetchLeagueArt, hasMatchupPlate, leagueArtForTournament, resolveMatchArt } from "@/lib/league-art";
 import { usesLiveCandidates } from "@/lib/ingest/schedule-map";
@@ -16,7 +17,6 @@ import { vodMatchBack } from "@/lib/vod-filter";
 import { isVodHubId, matchTournamentToHub } from "@/lib/vod-hub";
 import { stageLabelForMatch } from "@/lib/vod-split";
 import Link from "next/link";
-import { after } from "next/server";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -30,16 +30,16 @@ export default async function MatchPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  after(() => {
-    void refreshLiveCandidatesInBackground();
-    void refreshVodsInBackground();
-  });
   const head = await prisma.match.findUnique({
     where: { id },
     select: { status: true, source: true },
   });
   if (!head) {
     notFound();
+  }
+
+  if (head.status === "live" && usesLiveCandidates(head.source)) {
+    await pollLiveCandidates({ maxAgeMs: LIVE_POLL_FRESH_MS }).catch(() => []);
   }
 
   const match = await prisma.match.findUnique({
@@ -57,7 +57,14 @@ export default async function MatchPage({
         orderBy: { creator: { name: "asc" } },
       },
       reactions: {
-        include: { creator: true },
+        include: {
+          creator: {
+            include: {
+              liveCandidates: { select: { platform: true, imageUrl: true } },
+              channels: { select: { platform: true, channelId: true } },
+            },
+          },
+        },
         orderBy: { publishedAt: "asc" },
       },
     },
@@ -119,6 +126,11 @@ export default async function MatchPage({
       title: reaction.title,
       url: reaction.url,
       publishedAt: reaction.publishedAt,
+      imageUrl: creatorProfileImage({
+        preferredPlatform: reaction.platform,
+        candidates: reaction.creator.liveCandidates,
+        channels: reaction.creator.channels,
+      }),
     })),
   );
 
@@ -184,7 +196,10 @@ export default async function MatchPage({
               {watchCards.map((card) => (
                 <article key={card.key} className="reaction-card">
                   <div className="reaction-head">
-                    <h2 className="creator-name">{card.creatorName}</h2>
+                    <div className="reaction-identity">
+                      <CasterAvatar name={card.creatorName} src={card.imageUrl} />
+                      <h2 className="creator-name">{card.creatorName}</h2>
+                    </div>
                     <WatchOutbound links={card.links} />
                   </div>
                   <p className="reaction-title">{card.title}</p>

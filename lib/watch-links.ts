@@ -9,6 +9,7 @@ export type ReactionForWatch = {
   title: string;
   url: string;
   publishedAt: Date | null;
+  imageUrl?: string;
 };
 
 export type WatchLink = {
@@ -24,6 +25,7 @@ export type CreatorWatchCard = {
   creatorKind: string;
   title: string;
   badge: string;
+  imageUrl: string;
   links: WatchLink[];
 };
 
@@ -70,6 +72,7 @@ function cardFor(group: ReactionForWatch[]): CreatorWatchCard {
     creatorKind: first.creatorKind,
     title: titles.join(" · "),
     badge: platforms.join(" · "),
+    imageUrl: rows.map((row) => row.imageUrl?.trim() ?? "").find(Boolean) ?? "",
     links: rows.map((row) => {
       const label = platformName(row.platform);
       return { href: row.url, platform: row.platform, label: `${label}에서 보기` };

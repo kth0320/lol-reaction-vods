@@ -85,11 +85,14 @@ export function vodAttachTournaments(): string[] {
   return VOD_HUB_CARDS.flatMap((card) => hubMatchTournaments(card.id));
 }
 
-export function vodHubMatchWhere(hubId: VodHubId) {
+export function vodHubMatchWhere(hubId: VodHubId, alsoMatchIds: string[] = []) {
+  const extraIds = [...new Set(alsoMatchIds.filter(Boolean))];
   return {
     status: "ended",
     tournament: { in: hubMatchTournaments(hubId) },
-    reactions: { some: {} },
+    OR: extraIds.length > 0
+      ? [{ reactions: { some: {} } }, { id: { in: extraIds } }]
+      : [{ reactions: { some: {} } }],
   };
 }
 

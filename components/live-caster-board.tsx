@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { CasterAvatar } from "@/components/caster-avatar";
 import { PlatformMark } from "@/components/platform-mark";
 import { formatViewers } from "@/lib/format";
 import { isPlatform, platformLabel, type Platform } from "@/lib/playback";
@@ -26,7 +27,7 @@ export function LiveCasterBoard({ casts }: { casts: LiveCasterView[] }) {
   const visible = useMemo(() => {
     return filterLiveCasts(casts, platform).slice().sort((a, b) => (b.viewerCount ?? -1) - (a.viewerCount ?? -1));
   }, [casts, platform]);
-  const platforms = Array.from(new Set(casts.map((cast) => cast.platform)));
+  const platforms = Array.from(new Set(filterLiveCasts(casts, "all").map((cast) => cast.platform)));
 
   return (
     <section className="live-board">
@@ -68,27 +69,6 @@ export function LiveCasterBoard({ casts }: { casts: LiveCasterView[] }) {
         </div>
       )}
     </section>
-  );
-}
-
-function CasterAvatar({ name, src }: { name: string; src?: string }) {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed) {
-    return (
-      <span className="caster-avatar caster-avatar-fallback" aria-hidden>
-        {name.slice(0, 1)}
-      </span>
-    );
-  }
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      className="caster-avatar"
-      src={src}
-      alt=""
-      referrerPolicy="no-referrer"
-      onError={() => setFailed(true)}
-    />
   );
 }
 

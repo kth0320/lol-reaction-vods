@@ -84,6 +84,10 @@ export async function pollLiveCandidates(options: { maxAgeMs?: number | null } =
 }
 
 async function runLivePoll(): Promise<PollRow[]> {
+  await prisma.match.updateMany({
+    where: { source: "seed", status: "live" },
+    data: { status: "ended" },
+  });
   await syncOfficialScheduleIfStale();
   await ensureCreatorCatalog();
   await ensureTeamCatalog();
@@ -170,7 +174,7 @@ async function runLivePoll(): Promise<PollRow[]> {
         isLive,
         fetchedAt: new Date(),
         viewerCount: probe?.viewerCount ?? null,
-        imageUrl: probe?.imageUrl ?? "",
+        ...(probe?.imageUrl ? { imageUrl: probe.imageUrl } : {}),
       },
     });
     await recordLiveTitle({

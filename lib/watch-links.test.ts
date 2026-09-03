@@ -49,9 +49,11 @@ describe("groupReactionsForWatch", () => {
         title: "울챔스 T1 vs HLE",
         url: "https://chzzk.naver.com/video/14594686",
         publishedAt: new Date("2026-07-12T12:00:00Z"),
+        imageUrl: "https://img.example/wolf.jpg",
       },
     ]);
     assert.equal(cards.length, 1);
+    assert.equal(cards[0].imageUrl, "https://img.example/wolf.jpg");
     assert.deepEqual(cards[0].links, [
       { href: "https://chzzk.naver.com/video/14594686", platform: "chzzk", label: "치지직에서 보기" },
     ]);
