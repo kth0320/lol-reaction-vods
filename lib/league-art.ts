@@ -1,5 +1,6 @@
 import { fetchLeagues, parseLeagues } from "@/lib/ingest/lolesports";
 import type { BackgroundBroadcast } from "@/lib/ingest/official-stream";
+import { hubMarkSrc, matchTournamentToHub } from "@/lib/vod-hub";
 
 export const LEAGUE_ART_FRESH_MS = 6 * 60 * 60 * 1000;
 
@@ -33,8 +34,13 @@ export function slugForTournament(tournament: string): string {
   return TOURNAMENT_LEAGUE_SLUG[trimmed] ?? trimmed.toLowerCase();
 }
 
-export function leagueArtForTournament(art: Map<string, string>, tournament: string): string {
-  return art.get(slugForTournament(tournament)) ?? "";
+export function localLeagueMark(tournament: string): string {
+  const hub = matchTournamentToHub(tournament);
+  return hub ? hubMarkSrc(hub) : "";
+}
+
+export function leagueArtForTournament(art: Map<string, string> | undefined, tournament: string): string {
+  return localLeagueMark(tournament) || (art?.get(slugForTournament(tournament)) ?? "");
 }
 
 export async function fetchLeagueArt(fetchImpl: typeof fetch = fetch): Promise<Map<string, string>> {
@@ -91,6 +97,7 @@ export function resolveMatchArt(input: {
   broadcast: BackgroundBroadcast | null;
 } {
   const leagueImageUrl =
+    localLeagueMark(input.tournament) ||
     (input.eventLeagueImageUrl ?? "").trim() ||
     (input.leagueArt ? leagueArtForTournament(input.leagueArt, input.tournament) : "");
   const blueImageUrl = (input.eventBlueImageUrl ?? "").trim() || (input.storedBlueImageUrl ?? "").trim();

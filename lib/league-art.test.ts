@@ -46,9 +46,10 @@ describe("official league marks", () => {
     const art = parseLeagueArt(leaguesPayload);
     assert.equal(
       leagueArtForTournament(art, "LCK"),
-      "https://static.lolesports.com/leagues/lck-color-on-black.png",
+      "/leagues/lck.png",
     );
-    assert.equal(leagueArtForTournament(art, "LEC"), "");
+    assert.equal(leagueArtForTournament(art, "LEC"), "/leagues/lec.png");
+    assert.equal(leagueArtForTournament(undefined, "LCK"), "/leagues/lck.png");
   });
 
   it("prefers event-detail logos and hides the muted stream when a plate exists", () => {
@@ -63,7 +64,7 @@ describe("official league marks", () => {
       storedRedImageUrl: "https://old.example/red.png",
       broadcast: { provider: "twitch", id: "lck" },
     });
-    assert.equal(resolved.leagueImageUrl, "https://static.lolesports.com/leagues/lck-color-on-black.png");
+    assert.equal(resolved.leagueImageUrl, "/leagues/lck.png");
     assert.equal(resolved.blueImageUrl, "https://static.lolesports.com/teams/t1.png");
     assert.equal(resolved.redImageUrl, "https://static.lolesports.com/teams/kt.png");
     assert.equal(resolved.broadcast, null);
@@ -72,7 +73,7 @@ describe("official league marks", () => {
 
   it("falls back to the muted stream when league mark and both logos are missing", () => {
     const resolved = resolveMatchArt({
-      tournament: "LEC",
+      tournament: "CBLOL",
       storedBlueImageUrl: "",
       storedRedImageUrl: "",
       broadcast: { provider: "youtube", id: "abc" },

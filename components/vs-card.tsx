@@ -80,7 +80,7 @@ export function VsCard({ slide, href }: { slide: LiveSlide; href?: string }) {
   return (
     <div className={className}>
       {href ? (
-        <Link href={href} className="vs-card-overlay">
+        <Link href={href} prefetch={false} className="vs-card-overlay">
           {overlay}
         </Link>
       ) : (

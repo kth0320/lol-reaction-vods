@@ -10,25 +10,32 @@ import {
 } from "@/lib/ingest/schedule-map";
 import { ensureScheduleTeams, ensureTeamCatalog } from "@/lib/ingest/team-catalog";
 import { prisma } from "@/lib/prisma";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 export const SCHEDULE_FRESH_MS = 120_000;
 
-const SCHEDULE_SYNC_STAMP = path.join(process.cwd(), "prisma", ".schedule-sync-at");
+/** Outside the repo so Next/Turbopack does not treat ingest as a source-file change. */
+const SCHEDULE_SYNC_STAMP = path.join(os.tmpdir(), "nureongkase-schedule-sync-at");
+const LEGACY_SCHEDULE_SYNC_STAMP = path.join(process.cwd(), "prisma", ".schedule-sync-at");
 
 const scheduleState = globalThis as unknown as {
   scheduleSyncAt?: number;
   scheduleSyncInflight?: Promise<OfficialScheduleMatch[]>;
 };
 
-function readPersistedSyncAt(): number | undefined {
+function readStampFile(file: string): number | undefined {
   try {
-    const at = Number(readFileSync(SCHEDULE_SYNC_STAMP, "utf8").trim());
+    const at = Number(readFileSync(file, "utf8").trim());
     return Number.isFinite(at) && at > 0 ? at : undefined;
   } catch {
     return undefined;
   }
+}
+
+function readPersistedSyncAt(): number | undefined {
+  return readStampFile(SCHEDULE_SYNC_STAMP) ?? readStampFile(LEGACY_SCHEDULE_SYNC_STAMP);
 }
 
 function persistSyncAt(at: number) {
@@ -36,6 +43,11 @@ function persistSyncAt(at: number) {
     writeFileSync(SCHEDULE_SYNC_STAMP, String(at));
   } catch {
     // keep the in-memory stamp if the file cannot be written
+  }
+  try {
+    unlinkSync(LEGACY_SCHEDULE_SYNC_STAMP);
+  } catch {
+    // already gone, or never existed
   }
 }
 
