@@ -15,6 +15,11 @@ export const VOD_HUB_CARDS = [...VOD_HUB_INTERNATIONAL, ...VOD_HUB_LEAGUES] as c
 
 export type VodHubId = (typeof VOD_HUB_CARDS)[number]["id"];
 
+/** Local watermark in `public/leagues/{id}.png`. */
+export function hubMarkSrc(id: VodHubId): string {
+  return `/leagues/${id}.png`;
+}
+
 const HUB_BY_ID = new Map(VOD_HUB_CARDS.map((card) => [card.id, card]));
 
 const TOURNAMENT_TO_HUB: Record<string, VodHubId> = {
@@ -85,14 +90,11 @@ export function vodAttachTournaments(): string[] {
   return VOD_HUB_CARDS.flatMap((card) => hubMatchTournaments(card.id));
 }
 
-export function vodHubMatchWhere(hubId: VodHubId, alsoMatchIds: string[] = []) {
-  const extraIds = [...new Set(alsoMatchIds.filter(Boolean))];
+export function vodHubMatchWhere(hubId: VodHubId) {
   return {
     status: "ended",
     tournament: { in: hubMatchTournaments(hubId) },
-    OR: extraIds.length > 0
-      ? [{ reactions: { some: {} } }, { id: { in: extraIds } }]
-      : [{ reactions: { some: {} } }],
+    reactions: { some: {} },
   };
 }
 

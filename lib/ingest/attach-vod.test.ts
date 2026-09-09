@@ -407,6 +407,58 @@ describe("pickMatchesForVodWithLiveTitles", () => {
     );
   });
 
+  it("does not park a chat VOD on a match just because a live title was nearby", () => {
+    const bfxDk = match({
+      id: "lck-bfx-dk",
+      tournament: "LCK",
+      blueTeamId: "bfx",
+      redTeamId: "dk",
+      blueAliases: ["BFX", "BNK FearX"],
+      redAliases: ["DK", "Dplus"],
+      startsAt: new Date("2026-09-03T08:00:00Z"),
+      bestOf: 5,
+    });
+    const hits = pickMatchesForVodWithLiveTitles(
+      { title: "소통해요!", publishedAt: new Date("2026-09-03T06:07:00Z"), platform: "chzzk" },
+      [
+        {
+          title: "LCK BFX vs DK 같이 봐요! 방장 딮기 팬ㅎㅎ #LCKWatchParty",
+          seenAt: new Date("2026-09-03T08:05:00Z"),
+          matchId: bfxDk.id,
+          platform: "chzzk",
+        },
+      ],
+      [bfxDk],
+    );
+    assert.deepEqual(hits, []);
+  });
+
+  it("still attaches when the list title itself has the match pair", () => {
+    const bfxDk = match({
+      id: "lck-bfx-dk-title",
+      tournament: "LCK",
+      blueTeamId: "bfx",
+      redTeamId: "dk",
+      blueAliases: ["BFX", "BNK FearX"],
+      redAliases: ["DK", "Dplus"],
+      startsAt: new Date("2026-09-03T08:00:00Z"),
+      bestOf: 5,
+    });
+    const hits = pickMatchesForVodWithLiveTitles(
+      {
+        title: "LCK BFX vs DK 같이 봐요! 방장 딮기 팬ㅎㅎ #LCKWatchParty",
+        publishedAt: new Date("2026-09-03T15:13:00Z"),
+        platform: "chzzk",
+      },
+      [],
+      [bfxDk],
+    );
+    assert.deepEqual(
+      hits.map((row) => row.id),
+      ["lck-bfx-dk-title"],
+    );
+  });
+
   it("does not glue FC Online / variety VODs onto an LCK match via live titles", () => {
     const dkKt = match({
       id: "lck-kt-dk",

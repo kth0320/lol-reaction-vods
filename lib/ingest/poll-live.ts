@@ -2,6 +2,7 @@ import { attachTitleToOfficial, type OfficialLiveMatch } from "@/lib/ingest/atta
 import { ensureCreatorCatalog } from "@/lib/ingest/creator-catalog";
 import { discoverLiveCostreamers } from "@/lib/ingest/discover-live";
 import { recordLiveTitle } from "@/lib/ingest/live-title-history";
+import { persistLiveCast } from "@/lib/ingest/persist-live-cast";
 import { isLivePollFresh, LIVE_POLL_FRESH_MS } from "@/lib/ingest/poll-fresh";
 import { probeLive, type LiveProbe } from "@/lib/ingest/live-status";
 import { prisma } from "@/lib/prisma";
@@ -184,6 +185,17 @@ async function runLivePoll(): Promise<PollRow[]> {
       matchId: liveMatch?.id ?? null,
       isLive,
     }).catch(() => undefined);
+    if (isLive && liveMatch?.id) {
+      await persistLiveCast({
+        matchId: liveMatch.id,
+        creatorId: creator.id,
+        platform: channel.platform,
+        title,
+        url: probe?.liveUrl ?? channel.url,
+        externalId: probe?.externalId ?? channel.channelId,
+        supportingTeamId,
+      }).catch(() => undefined);
+    }
 
     rows.push({
       creatorId: creator.id,

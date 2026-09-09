@@ -92,8 +92,9 @@ async function seriesOnAir(): Promise<boolean> {
 
 export async function refreshVodsInBackground(maxAgeMs = VOD_POLL_FRESH_MS): Promise<void> {
   try {
+    // Live board owns SQLite during a series. Do not sync-or-scrape replays mid-air.
+    if (await seriesOnAir()) return;
     await syncOfficialScheduleIfStale();
-    // Mid-series the board runs on live rows. Replay ingest waits so it does not fight the live poll for SQLite.
     if (await seriesOnAir()) return;
     await pollReactionVods({ maxAgeMs, prune: false });
   } catch {
@@ -102,16 +103,23 @@ export async function refreshVodsInBackground(maxAgeMs = VOD_POLL_FRESH_MS): Pro
 }
 
 export async function pollReactionVods(
-  options: { maxAgeMs?: number | null; vods?: VodFetchOptions; prune?: boolean } = {},
+  options: {
+    maxAgeMs?: number | null;
+    vods?: VodFetchOptions;
+    prune?: boolean;
+    /** Widen recent match window and scan all creators (server downtime catch-up). */
+    catchUpMs?: number;
+  } = {},
 ): Promise<VodPollSummary> {
   const maxAgeMs = options.maxAgeMs;
+  if (await seriesOnAir()) return { scanned: 0, attached: 0, skippedTwitch: 0 };
   if (pollState.vodPollInflight) return pollState.vodPollInflight;
   const waiting = maxAgeMs != null && maxAgeMs >= 0 ? await recentEndedMatchesWaitingForVods() : false;
   if (!waiting && maxAgeMs != null && maxAgeMs >= 0 && isLivePollFresh(pollState.vodPollAt, Date.now(), maxAgeMs)) {
     return { scanned: 0, attached: 0, skippedTwitch: 0 };
   }
 
-  const work = runVodPoll(options.vods, options.prune === true)
+  const work = runVodPoll(options.vods, options.prune === true, options.catchUpMs)
     .then((summary) => {
       pollState.vodPollAt = Date.now();
       return summary;
@@ -139,22 +147,30 @@ async function fetchChannelVods(
   }
 }
 
-async function runVodPoll(vods: VodFetchOptions = {}, prune = false): Promise<VodPollSummary> {
+async function runVodPoll(
+  vods: VodFetchOptions = {},
+  prune = false,
+  catchUpMs?: number,
+): Promise<VodPollSummary> {
+  if (await seriesOnAir()) return { scanned: 0, attached: 0, skippedTwitch: 0 };
   await syncOfficialScheduleIfStale();
+  if (await seriesOnAir()) return { scanned: 0, attached: 0, skippedTwitch: 0 };
   await ensureCreatorCatalog();
   await ensureTeamCatalog();
-  const recentOnly = (vods.maxPages ?? VOD_LIVE_PAGES) <= VOD_LIVE_PAGES;
+  const catchUp = catchUpMs != null && catchUpMs > 0;
+  const recentOnly = !catchUp && (vods.maxPages ?? VOD_LIVE_PAGES) <= VOD_LIVE_PAGES;
   // Live rows are watch-now, not the archive. Ended-match VODs stay put.
   await prisma.reactionVod.deleteMany({ where: { match: { status: "live" } } });
 
-  const recentStartFloor = new Date(Date.now() - VOD_RECENT_ENDED_MS - estimatedSeriesMs(5));
+  const recentWindowMs = catchUp ? catchUpMs! : VOD_RECENT_ENDED_MS;
+  const recentStartFloor = new Date(Date.now() - recentWindowMs - estimatedSeriesMs(5));
   const [creators, matches, liveTitles, attachedRows] = await Promise.all([
     prisma.creator.findMany({
       where: { ingestEnabled: true },
       include: { channels: true },
     }),
     prisma.match.findMany({
-      where: recentOnly
+      where: recentOnly || catchUp
         ? {
             status: "ended",
             tournament: { in: vodAttachTournaments() },
@@ -182,7 +198,11 @@ async function runVodPoll(vods: VodFetchOptions = {}, prune = false): Promise<Vo
     blueAliases: aliases(match.blueTeam),
     redAliases: aliases(match.redTeam),
   }));
-  const attachable = recentOnly ? mapped.filter((match) => matchEndedWithin(match)) : mapped;
+  const attachable = recentOnly
+    ? mapped.filter((match) => matchEndedWithin(match))
+    : catchUp
+      ? mapped.filter((match) => matchEndedWithin(match, recentWindowMs))
+      : mapped;
   const historyByCreator = new Map<string, typeof liveTitles>();
   for (const row of liveTitles) {
     const list = historyByCreator.get(row.creatorId) ?? [];
@@ -196,7 +216,8 @@ async function runVodPoll(vods: VodFetchOptions = {}, prune = false): Promise<Vo
     endedMatchIds,
     attached: attachedRows,
   });
-  const selected = recentOnly ? creators.filter((creator) => waitingIds.has(creator.id)) : creators;
+  // Catch-up: no live memos while server was down — title-scan everyone.
+  const selected = recentOnly && !catchUp ? creators.filter((creator) => waitingIds.has(creator.id)) : creators;
   const matchById = new Map(attachable.map((match) => [match.id, match]));
   const writeHits = enqueueWrites();
 
@@ -218,7 +239,10 @@ async function runVodPoll(vods: VodFetchOptions = {}, prune = false): Promise<Vo
   }
 
   async function scanChannel(creator: (typeof selected)[number], channel: (typeof selected)[number]["channels"][number]) {
-    const items = await fetchChannelVods(channel.platform, channel.channelId, vods);
+    const items = await fetchChannelVods(channel.platform, channel.channelId, {
+      maxPages: vods.maxPages ?? (catchUp ? 2 : VOD_LIVE_PAGES),
+      untilYear: vods.untilYear,
+    });
     scanned += items.length;
     if (items.length === 0) return;
     const history = historyByCreator.get(creator.id) ?? [];
@@ -277,7 +301,7 @@ async function runVodPoll(vods: VodFetchOptions = {}, prune = false): Promise<Vo
       for (const hit of collapsed) {
         const match = matchById.get(hit.matchId);
         if (!match || !matchAcceptsReactionVods(match.status)) continue;
-        if (await saveReactionSlot(hit, match, { createOnly: recentOnly })) added += 1;
+        if (await saveReactionSlot(hit, match, { createOnly: recentOnly || catchUp })) added += 1;
       }
       return added;
     });
@@ -291,7 +315,7 @@ async function runVodPoll(vods: VodFetchOptions = {}, prune = false): Promise<Vo
     ),
   );
 
-  if (!recentOnly) {
+  if (!recentOnly && !catchUp) {
     await dedupeExistingSlots(matchById);
     if (prune) await dropUnrelatedSessionVods(attachable);
   }

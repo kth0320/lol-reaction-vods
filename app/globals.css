@@ -592,14 +592,19 @@ a {
   left: 50%;
   top: 50%;
   z-index: 0;
-  width: min(70%, 128px);
-  height: min(70%, 128px);
+  width: min(72%, 136px);
+  height: min(72%, 136px);
   transform: translate(-50%, -50%);
   object-fit: contain;
-  opacity: 0.16;
-  filter: blur(0.4px);
+  opacity: 0.22;
+  filter: blur(0.35px);
   pointer-events: none;
   user-select: none;
+}
+
+.vod-hub-mark.wide {
+  width: min(88%, 210px);
+  height: min(46%, 70px);
 }
 
 .vod-hub-label {

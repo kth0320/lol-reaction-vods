@@ -4,8 +4,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "누렁카세",
-  description: "지금 경기를 중계하는 스트리머·BJ에게 연결하고, 지난 경기 리액션 다시보기를 모읍니다.",
-  icons: { icon: "/icon.png" },
+  description: "지금 경기를 중계하는 스트리머·BJ에게 연결하고, 지난 경기 다시보기를 모읍니다.",
+  icons: { icon: "/nureongkase-logo.png" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,4 +1,7 @@
 import { attachTitleToOfficial, type OfficialLiveMatch } from "@/lib/ingest/attach-live";
+import { recordLiveTitle } from "@/lib/ingest/live-title-history";
+import { persistLiveCast } from "@/lib/ingest/persist-live-cast";
+import { MIN_LIVE_VIEWERS } from "@/lib/live-filters";
 import { prisma } from "@/lib/prisma";
 
 const SEARCH_KEYWORDS = ["LCK", "LPL", "LEC", "롤드컵", "Worlds", "MSI", "퍼스트스탠드"];
@@ -10,7 +13,6 @@ const TWITCH_GQL_CLIENT_ID = process.env.TWITCH_GQL_CLIENT_ID ?? "kimne78kx3ncx6
 const USER_AGENT = "Mozilla/5.0 (compatible; lol-reaction-vods-prototype/0.1)";
 const CHZZK_POPULAR_PAGES = 8;
 const SOOP_SEARCH_PAGES = 4;
-const DISCOVER_MIN_VIEWERS = 40;
 
 type Json = Record<string, unknown>;
 
@@ -173,7 +175,7 @@ async function fetchChzzkPopularLives(fetchImpl: typeof fetch): Promise<Discover
     }
     const following = parseChzzkPopularNext(payload);
     if (!following || (cursor && following.liveId === cursor.liveId)) break;
-    if (following.concurrentUserCount < DISCOVER_MIN_VIEWERS) break;
+    if (following.concurrentUserCount < MIN_LIVE_VIEWERS) break;
     cursor = following;
   }
   return rows.sort(byViewers);
@@ -216,7 +218,7 @@ async function fetchSoopSearch(keyword: string, fetchImpl: typeof fetch): Promis
       rows.push(live);
     }
     const lastViewers = batch[batch.length - 1]?.viewerCount ?? 0;
-    if (lastViewers < DISCOVER_MIN_VIEWERS) break;
+    if (lastViewers < MIN_LIVE_VIEWERS) break;
     if (soopListEnded(payload)) break;
   }
   return rows.sort(byViewers);
@@ -245,8 +247,8 @@ export async function ensureDiscoveredCreator(live: DiscoveredLive): Promise<str
 export async function discoverLiveCostreamers(
   official: OfficialLiveMatch[],
   fetchImpl: typeof fetch = fetch,
-): Promise<number> {
-  if (official.length === 0) return 0;
+): Promise<DiscoveredLive[]> {
+  if (official.length === 0) return [];
   const pages = await Promise.all([
     fetchChzzkPopularLives(fetchImpl).catch(() => [] as DiscoveredLive[]),
     ...SEARCH_KEYWORDS.flatMap((keyword) => [
@@ -255,17 +257,63 @@ export async function discoverLiveCostreamers(
     ]),
   ]);
   const seen = new Set<string>();
-  let added = 0;
+  const attached: DiscoveredLive[] = [];
   for (const live of pages.flat()) {
     const key = `${live.platform}:${live.channelId}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    if (!attachTitleToOfficial(live.title, official)) continue;
-    const before = await prisma.creatorChannel.findUnique({
-      where: { platform_channelId: { platform: live.platform, channelId: live.channelId } },
-    });
-    await ensureDiscoveredCreator(live);
-    if (!before) added += 1;
+    if ((live.viewerCount ?? 0) < MIN_LIVE_VIEWERS) continue;
+    const match = attachTitleToOfficial(live.title, official);
+    if (!match) continue;
+    await upsertDiscoveredLive(live, match);
+    attached.push(live);
   }
-  return added;
+  return attached;
+}
+
+async function upsertDiscoveredLive(live: DiscoveredLive, match: OfficialLiveMatch): Promise<void> {
+  const creatorId = await ensureDiscoveredCreator(live);
+  await prisma.liveCandidate.upsert({
+    where: { creatorId_platform: { creatorId, platform: live.platform } },
+    create: {
+      creatorId,
+      platform: live.platform,
+      title: live.title,
+      url: live.url,
+      externalId: live.channelId,
+      matchId: match.id,
+      supportingTeamId: null,
+      status: "candidate",
+      isLive: true,
+      fetchedAt: new Date(),
+      viewerCount: live.viewerCount ?? null,
+      imageUrl: "",
+    },
+    update: {
+      title: live.title,
+      url: live.url,
+      externalId: live.channelId,
+      matchId: match.id,
+      status: "candidate",
+      isLive: true,
+      fetchedAt: new Date(),
+      viewerCount: live.viewerCount ?? null,
+    },
+  });
+  // Probe skips these channels; without a memo they never enter VOD waiting.
+  await recordLiveTitle({
+    creatorId,
+    platform: live.platform,
+    title: live.title,
+    matchId: match.id,
+    isLive: true,
+  }).catch(() => undefined);
+  await persistLiveCast({
+    matchId: match.id,
+    creatorId,
+    platform: live.platform,
+    title: live.title,
+    url: live.url,
+    externalId: live.channelId,
+  }).catch(() => undefined);
 }

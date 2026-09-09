@@ -187,10 +187,10 @@ export default async function MatchPage({
         <section className="vod-section">
           <h2 className="section-title">다시보기</h2>
           <p className="page-lead">
-            {match.blueTeam.name} vs {match.redTeam.name} 리액션 {watchCards.length}명. 로고를 누르면 원본으로 이동합니다.
+            {match.blueTeam.name} vs {match.redTeam.name} 다시보기 {watchCards.length}명. 로고를 누르면 원본으로 이동합니다.
           </p>
           {watchCards.length === 0 ? (
-            <p className="empty">아직 연결된 리액션이 없습니다.</p>
+            <p className="empty">아직 연결된 다시보기가 없습니다.</p>
           ) : (
             <div className="reaction-list">
               {watchCards.map((card) => (

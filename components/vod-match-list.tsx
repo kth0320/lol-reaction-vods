@@ -150,7 +150,7 @@ export function VodMatchList({
       ) : (
         <div className="match-list">
           {visible.map((match) => (
-            <Link key={match.id} href={vodMatchPath(match.id, hubId, year, stage, query)} className="match-card">
+            <Link key={match.id} href={vodMatchPath(match.id, hubId, year, stage, query)} prefetch={false} className="match-card">
               <div className="match-meta">
                 <span>
                   {match.tournament} {match.split}
@@ -168,7 +168,7 @@ export function VodMatchList({
                 <span>
                   {match.blueName} vs {match.redName}
                 </span>
-                <span className="reaction-count">리액션 {match.reactionCount}개</span>
+                <span className="reaction-count">다시보기 {match.reactionCount}개</span>
               </div>
             </Link>
           ))}
